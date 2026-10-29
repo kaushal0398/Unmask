@@ -1,26 +1,130 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/*
+ * Pure black, with three meanings of colour and no others:
+ *   violet = sealed (a bid nobody can see)
+ *   green  = verified (checked, and it holds)
+ *   red    = the sniper, or a check that failed
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Square boxes: every rounded-* utility draws a sharp corner. */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+
+  --color-bg: #000000;
+  --color-surface: #0a0a0b;
+  --color-raised: #111114;
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-line-strong: rgb(255 255 255 / 0.16);
+  --color-text: #ededed;
+  --color-muted: #9a9aa3;
+  --color-faint: #62626b;
+  --color-seal: #8b7bff;
+  --color-verified: #00ec97;
+  --color-danger: #ff5c5c;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-serif-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background: var(--color-bg);
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgb(139 123 255 / 0.3);
+}
+
+/* A soft violet glow behind the hero and the sealed stack. */
+.glow-seal {
+  background: radial-gradient(60% 60% at 50% 40%, rgb(139 123 255 / 0.16), transparent 70%);
+}
+.glow-verified {
+  background: radial-gradient(60% 60% at 50% 40%, rgb(0 236 151 / 0.12), transparent 70%);
+}
+
+/* A faint grid that fades out, for depth on pure black. */
+.grid-fade {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(70% 60% at 50% 30%, black, transparent);
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.3333%); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(110deg, rgb(255 255 255 / 0.04) 30%, rgb(255 255 255 / 0.1) 50%, rgb(255 255 255 / 0.04) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 2.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* A field keeps its border colour while you type in it; the cursor and a faint fill show where you are. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+.focus-box:focus-within { background: rgb(255 255 255 / 0.03); }
+
+:focus-visible {
+  outline: 2px solid var(--color-seal);
+  outline-offset: 2px;
+  border-radius: 0;
+}
+
+/* Crosshair corner marks on a box: two corners always, both lit in violet and longer on hover. */
+.corners { position: relative; }
+.corners::before,
+.corners::after {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  pointer-events: none;
+  transition: border-color 0.2s, width 0.2s, height 0.2s;
+  border: 0 solid var(--color-line-strong);
+}
+.corners::before { top: -1px; left: -1px; border-top-width: 1px; border-left-width: 1px; }
+.corners::after { right: -1px; bottom: -1px; border-right-width: 1px; border-bottom-width: 1px; }
+.corners:hover::before, .corners:hover::after, .corners:focus-within::before, .corners:focus-within::after {
+  border-color: var(--color-seal);
+  width: 18px;
+  height: 18px;
 }
