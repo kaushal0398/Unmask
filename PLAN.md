@@ -1,18 +1,17 @@
 # Snipe-Proof Meme Launch: plan at a glance
 
 Tracks: **11 Memecoins With Mechanics, 3 Privacy & Private AI, 4 Autonomous Business, 1 Unstoppable DeFi**
-Window: development 1–14 Nov 2026. Submit by **14 Nov 23:59 UTC**; aim for 13 Nov.
 
-Full detail: `../docs/snipe-proof-meme-launch/plan.md`. Product description: `../docs/snipe-proof-meme-launch/what-we-are-building.md`. Progress: `../progress.md`.
+Full detail: `docs/plan.md`. Product description: `docs/what-we-are-building.md`. Progress: `docs/whats-done.md`.
 
-| Phase | Dates | Goal | Main tasks | Done when |
-|---|---|---|---|---|
-| **0 Prepare** | 28–31 Oct | Learn and de-risk. No feature code. | Read OutLayer docs (WASM deploy, attestation check, secrets, randomness, fees); test payment checks with tiny amounts including early reclaim; set up a wallet with a few dollars; find the NEP-141 contract and storage deposit flow; check Rust and WASM toolchain; send organizer questions; create the public repo | One-page notes answer each question; public repo exists |
-| **1 Reference auction** | 1–3 Nov | A correct auction in TypeScript, plus a simulator | Read the Next.js guide in `AGENTS.md`; write `auction-core`; write shared test vectors; build the first-come versus sealed-bid comparison view; create-launch and launch pages with fake data | Invariants pass; comparison shows a bot winning in one launch and not the other |
-| **2 Enclave** | 4–7 Nov | The same auction running in a TEE | Port to Rust; compile to WebAssembly and run in OutLayer; decrypt sealed bids; return result, code hash and input hash; verify the attestation in code | Rust matches TypeScript on every vector; a real attestation verifies |
-| **3 Money and token** | 7–10 Nov | Real funds move correctly | Bid flow with payment checks; settlement (claim, run, refund, proceeds); NEP-141 distribution with storage deposits; failure handling; mainnet rehearsal with a few dollars | Funds in equal funds out; result page matches the chain |
-| **4 Polish** | 10–12 Nov | Easy to use and to verify | Verify page; error and empty states; mobile and accessibility; README | A stranger can verify a launch |
-| **5 Ship** | 12–14 Nov | Submit | Final recorded launch; demo video and X post; submission form; freeze and tag | Submitted by 13 Nov |
+| Phase | Goal | Main tasks | Done when |
+|---|---|---|---|
+| **0 Prepare** | Learn and de-risk. | Read OutLayer docs (WASM deploy, attestation check, secrets, randomness, fees); test payment checks with tiny amounts including early reclaim; set up a wallet with a few dollars; find the NEP-141 contract and storage deposit flow; check Rust and WASM toolchain; send organizer questions; create the public repo | One-page notes answer each question; public repo exists |
+| **1 Reference auction** | A correct auction in TypeScript, plus a simulator | Read the Next.js guide in `AGENTS.md`; write `auction-core`; write shared test vectors; build the first-come versus sealed-bid comparison view; create-launch and launch pages with fake data | Invariants pass; comparison shows a bot winning in one launch and not the other |
+| **2 Enclave** | The same auction running in a TEE | Port to Rust; compile to WebAssembly and run in OutLayer; decrypt sealed bids; return result, code hash and input hash; verify the attestation in code | Rust matches TypeScript on every vector; a real attestation verifies |
+| **3 Money and token** | Real funds move correctly | Bid flow with payment checks; settlement (claim, run, refund, proceeds); NEP-141 distribution with storage deposits; failure handling; mainnet rehearsal with a few dollars | Funds in equal funds out; result page matches the chain |
+| **4 Polish** | Easy to use and to verify | Verify page; error and empty states; mobile and accessibility; README | A stranger can verify a launch |
+| **5 Ship** | Submit | Final recorded launch; demo video and X post; submission form; freeze and tag | Submitted before the deadline |
 
 ## Decisions to settle early
 | ID | Question | Default |
