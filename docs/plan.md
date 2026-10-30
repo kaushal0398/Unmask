@@ -2,6 +2,10 @@
 
 How we build it. The product is described in `what-we-are-building.md`. This plan covers scope, architecture, the work in phases, tests, risks and the submission.
 
+## Status on 30 Oct
+
+The interface (all pages, wallet sign-in, browser-side bid sealing, payment-check screens, live launch states, create progress, verify page, preview images, demo mode, tests) is built on demo data. The enclave, payment checks, token and storage are not started. Task-by-task owners: [`team-handoff.md`](team-handoff.md). Phase 1 tasks 1.1, 1.2, 1.4 and 1.5 are done; 1.3 (shared `test-vectors/`) is not. In Phase 4, 4.2 and 4.3 are done on the frontend; 4.1 waits on the real attestation.
+
 ## 0. Ground rules
 
 - **Rules check:** the form says to build during the hackathon. This project folder holds only generated `create-next-app` boilerplate. Any older code we reuse is flagged for the organizers.
@@ -219,7 +223,7 @@ Fields from the hackathon form:
 - "What did you build?" (20–2,000 characters): the problem, what was built, and how NEAR fits
 
 ## 10. Roles
-To assign. Suggested split: one person on the enclave and auction core, one on the app and verify page, one on the token, money flows and the demo.
+Frontend: done on demo data, then wires the real calls. Backend/core, enclave, payments and token: see the owner lists in [`team-handoff.md`](team-handoff.md). Suggested split: one person on the enclave and auction core, one on the app and verify page, one on the token, money flows and the demo.
 
 ## 11. Risks and open questions
 

@@ -134,7 +134,6 @@ src/
     ├── verify-demo.ts   The checks the verify page runs
     └── demo.ts          Made-up launches and bids
 docs/               Project documentation (below)
-PLAN.md             The plan as one table
 ```
 
 Planned:

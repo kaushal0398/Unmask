@@ -1,6 +1,6 @@
 # NEAR protocols: what we use and where it stands
 
-**Nothing is integrated yet.** Everything below is researched from documentation. No protocol has been called from this project's code.
+**No OutLayer, NEP-141 or Intents call exists yet.** Those are researched from documentation only. The one thing in code is the browser side: wallet sign-in with near-connect and bid sealing with libsodium (a fake enclave key), both on the frontend. Backend, enclave and token work is listed in [`team-handoff.md`](team-handoff.md).
 
 ## Status levels
 

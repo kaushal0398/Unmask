@@ -2,7 +2,7 @@
 
 Tracks: **11 Memecoins With Mechanics, 3 Privacy & Private AI, 4 Autonomous Business, 1 Unstoppable DeFi**
 
-Full detail: `docs/plan.md`. Product description: `docs/what-we-are-building.md`. Progress: `docs/whats-done.md`.
+Full detail: `plan.md`. Product description: `what-we-are-building.md`. Progress: `whats-done.md`. Who does what: `team-handoff.md`.
 
 | Phase | Goal | Main tasks | Done when |
 |---|---|---|---|
@@ -27,3 +27,13 @@ Full detail: `docs/plan.md`. Product description: `docs/what-we-are-building.md`
 - OutLayer fees and limits are unknown.
 - A bidder can reclaim their own check early; the enclave must drop that bid.
 - Organizer view on pre-existing work and on a TEE service.
+
+## Where we are (30 Oct)
+| Phase | Status |
+|---|---|
+| 0 Prepare | Not started except: organizer questions drafted, not sent; repo still private |
+| 1 Reference auction | Auction in TypeScript and the comparison view are done with tests; `test-vectors/` JSON not written |
+| 2 Enclave | Not started (the browser seals bids to a fake key) |
+| 3 Money and token | Not started; screens exist against a stand-in API |
+| 4 Polish | Mostly done on the frontend: states, mobile, accessibility, preview images, Playwright; verify page still on demo data |
+| 5 Ship | Not started; demo mode and demo script are ready |
