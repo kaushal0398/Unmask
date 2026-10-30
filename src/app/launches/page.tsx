@@ -25,9 +25,7 @@ export default function LaunchesPage() {
       <Container className="py-12 sm:py-16">
         <dl className="grid grid-cols-2 gap-px border border-line-strong bg-line-strong shadow-[0_30px_60px_-30px_rgb(0_0_0/0.9)] lg:grid-cols-4">
           {boxes.map((b) => (
-            <div key={b.label} className="bg-surface p-6">
-              <Stat label={b.label} value={b.value} tone={b.tone} />
-            </div>
+            <Stat key={b.label} className="bg-surface p-6" label={b.label} value={b.value} tone={b.tone} />
           ))}
         </dl>
         <div className="mt-12 flex flex-wrap items-center justify-between gap-4">

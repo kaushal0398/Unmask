@@ -1,8 +1,12 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { AlertTriangle, Check, Copy, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { TokenArt } from "@/components/token-art";
+import { useConfirm } from "@/components/confirm";
+import { useToast } from "@/components/toast";
+import { getApi } from "@/lib/api";
+import { CreateStepError, type CreateStep, type CreateStepId } from "@/lib/api/types";
 import { Badge, ButtonLink, Button, Card, Mono, cx } from "@/components/ui";
 import { compact, tokens, usd } from "@/lib/format";
 
@@ -44,6 +48,10 @@ export function CreateForm() {
   const [touched, setTouched] = useState(false);
   const [created, setCreated] = useState<{ id: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [steps, setSteps] = useState<CreateStep[] | null>(null);
+  const [running, setRunning] = useState(false);
+  const confirm = useConfirm();
+  const toast = useToast();
 
   const supplyN = Number(supply.replaceAll(",", ""));
   const reserveN = Number(reserve);
@@ -56,6 +64,68 @@ export function CreateForm() {
   const valid = Object.values(errors).every((e) => !e);
   const show = (k: keyof typeof errors) => (touched ? errors[k] : "");
   const minRaise = valid ? supplyN * reserveN : 0;
+
+  async function run(resumeFrom?: CreateStepId) {
+    setRunning(true);
+    try {
+      const { id } = await getApi().createLaunch(
+        { name: name.trim(), symbol, supply: supplyN, reserve: reserveN, windowMinutes: Number(windowMin), capPercent: Number(cap), unsold },
+        setSteps,
+        { resumeFrom },
+      );
+      setCreated({ id });
+      setSteps(null);
+      toast(`${name.trim()} is ready to open.`, "ok");
+    } catch (e) {
+      if (!(e instanceof CreateStepError)) {
+        toast(e instanceof Error ? e.message : "Could not create the launch.", "error");
+        setSteps(null);
+      } else toast(e.message, "error");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  async function start() {
+    setTouched(true);
+    if (!valid) return;
+    const ok = await confirm({
+      title: `Create ${name.trim()}?`,
+      body: <p>This sets the rules for good: {tokens(supplyN)} tokens, reserve {usd(reserveN)}, a {WINDOWS.find((w) => w.value === windowMin)?.label} window. Nobody, you included, can change them once bidding opens.</p>,
+      confirm: "Create launch",
+      tone: "seal",
+    });
+    if (ok) await run();
+  }
+
+  const failedStep = steps?.find((x) => x.state === "failed");
+  if (steps && !created) {
+    return (
+      <Card className="mx-auto max-w-xl p-8" aria-busy={running}>
+        <h2 className="text-xl font-semibold tracking-tight">Creating {name.trim()}</h2>
+        <p className="mt-2 text-sm text-muted">Each step is done once. If one fails, you continue from it and nothing before it is repeated.</p>
+        <ol className="mt-6 space-y-3">
+          {steps.map((st) => (
+            <li key={st.id} className="flex items-start gap-3 text-sm">
+              <span className="mt-0.5">
+                {st.state === "done" ? <Check className="size-4 text-verified" /> : st.state === "running" ? <Loader2 className="size-4 animate-spin text-seal" /> : st.state === "failed" ? <AlertTriangle className="size-4 text-danger" /> : <span className="block size-4 border border-line-strong" />}
+              </span>
+              <span className={st.state === "pending" ? "text-faint" : "text-text"}>
+                {st.label}
+                {st.error && <span className="mt-1 block text-xs text-danger" role="alert">{st.error}</span>}
+              </span>
+            </li>
+          ))}
+        </ol>
+        {failedStep && !running && (
+          <div className="mt-6 flex gap-3">
+            <Button tone="seal" onClick={() => void run(failedStep.id)}>Retry from this step</Button>
+            <Button tone="ghost" onClick={() => setSteps(null)}>Back to the form</Button>
+          </div>
+        )}
+      </Card>
+    );
+  }
 
   if (created) {
     const link = `https://sealed.example/launches/${created.id}`;
@@ -87,8 +157,7 @@ export function CreateForm() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          setTouched(true);
-          if (valid) setCreated({ id: `${symbol.toLowerCase()}-${Math.abs(hueOf(name + symbol)).toString(36)}` });
+          void start();
         }}
       >
         <div className="grid gap-5 sm:grid-cols-[1.6fr_1fr]">

@@ -1,8 +1,9 @@
+import type { LaunchStatus } from "@/lib/api/types";
 import { clearAuction, type Bid, type Outcome } from "@/lib/auction";
 
 /** Everything here is made up, to show the screens. The real data comes from the enclave and the chain. */
 
-export type LaunchStatus = "open" | "sealed" | "settled";
+export type { LaunchStatus };
 
 export type Launch = {
   id: string;
@@ -45,6 +46,30 @@ const PUP_BIDS: Bid[] = [
   { id: "j", label: "sniper-4.near", limit: 0.015, qty: 150_000, isBot: true },
 ];
 
+/** Bids the open launches would reveal at the close in a demo. They are not shown while bidding is open. */
+const BEAN_BIDS: Bid[] = [
+  { id: "a", label: "mia.near", limit: 0.06, qty: 150_000 },
+  { id: "b", label: "noa.near", limit: 0.05, qty: 200_000 },
+  { id: "c", label: "oli.near", limit: 0.045, qty: 120_000 },
+  { id: "d", label: "pia.near", limit: 0.04, qty: 180_000 },
+  { id: "e", label: "quin.near", limit: 0.035, qty: 150_000 },
+  { id: "f", label: "ray.near", limit: 0.03, qty: 120_000 },
+  { id: "g", label: "sam.near", limit: 0.025, qty: 100_000 },
+  { id: "h", label: "sniper-a.near", limit: 0.012, qty: 200_000, isBot: true },
+  { id: "i", label: "sniper-b.near", limit: 0.012, qty: 200_000, isBot: true },
+];
+
+const FROG_BIDS: Bid[] = [
+  { id: "a", label: "ana.near", limit: 0.02, qty: 1_200_000 },
+  { id: "b", label: "bo.near", limit: 0.015, qty: 900_000 },
+  { id: "c", label: "cy.near", limit: 0.012, qty: 1_100_000 },
+  { id: "d", label: "di.near", limit: 0.01, qty: 800_000 },
+  { id: "e", label: "ed.near", limit: 0.009, qty: 700_000 },
+  { id: "f", label: "fi.near", limit: 0.008, qty: 600_000 },
+  { id: "g", label: "gus.near", limit: 0.0065, qty: 500_000 },
+  { id: "h", label: "sniper-c.near", limit: 0.006, qty: 1_000_000, isBot: true },
+];
+
 const SALT_BIDS: Bid[] = [
   { id: "a", label: "kai.near", limit: 0.09, qty: 80_000 },
   { id: "b", label: "lou.near", limit: 0.07, qty: 120_000 },
@@ -56,12 +81,12 @@ const SALT_BIDS: Bid[] = [
 export const LAUNCHES: Launch[] = [
   {
     id: "moonbean", name: "MoonBean", symbol: "BEAN", tagline: "The coffee coin that never sleeps.", hue: 292, emoji: "🫘", creator: "roast.near",
-    supply: 1_000_000, reserve: 0.01, cap: 0.1, status: "open", closesInMs: 14 * MIN + 32_000, bidCount: 214,
+    supply: 1_000_000, reserve: 0.01, cap: 0.1, status: "open", closesInMs: 14 * MIN + 32_000, bidCount: 214, bids: BEAN_BIDS,
     codeHash: "9f2c61b0d4e87a3c5b1f0e6d2a97c48b3e50f1a6d8c2b4970e3a5f61c8d2b7e4", tokenContract: "bean.moonbean.near",
   },
   {
     id: "frogwave", name: "FrogWave", symbol: "FROG", tagline: "Ribbit once. Everyone pays the same.", hue: 140, emoji: "🐸", creator: "pond.near",
-    supply: 5_000_000, reserve: 0.005, cap: 0.05, status: "open", closesInMs: 3 * 60 * MIN + 12 * MIN, bidCount: 87,
+    supply: 5_000_000, reserve: 0.005, cap: 0.05, status: "open", closesInMs: 3 * 60 * MIN + 12 * MIN, bidCount: 87, bids: FROG_BIDS,
     codeHash: "9f2c61b0d4e87a3c5b1f0e6d2a97c48b3e50f1a6d8c2b4970e3a5f61c8d2b7e4", tokenContract: "frog.frogwave.near",
   },
   {
@@ -87,8 +112,13 @@ export const LAUNCHES: Launch[] = [
 
 export const getLaunch = (id: string) => LAUNCHES.find((l) => l.id === id);
 
-/** The auction's result for a settled launch, computed by the same rule the enclave runs. */
+/** The auction's result for a settled launch, computed by the same rule the enclave runs. `null` until it has settled. */
 export function outcomeOf(l: Launch): Outcome | null {
+  return l.status === "settled" && l.bids ? clearAuction(l.bids, l.supply, l.reserve) : null;
+}
+
+/** What an open launch would reveal at the close, for a demo that fast-forwards the clock. Never shown while bidding is open. */
+export function revealOf(l: Launch): Outcome | null {
   return l.bids ? clearAuction(l.bids, l.supply, l.reserve) : null;
 }
 

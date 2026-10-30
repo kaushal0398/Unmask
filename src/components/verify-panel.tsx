@@ -5,6 +5,8 @@ import { Check, ChevronDown, Loader2, ShieldAlert, ShieldCheck, X } from "lucide
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { TokenArt } from "@/components/token-art";
+import { useToast } from "@/components/toast";
+import { getApi } from "@/lib/api";
 import { Badge, Button, Card, Mono, cx } from "@/components/ui";
 import type { Launch } from "@/lib/demo";
 import { shortHash } from "@/lib/format";
@@ -21,6 +23,8 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const toast = useToast();
   const launch = launches.find((l) => l.id === id)!;
 
   async function run() {
@@ -28,6 +32,17 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
     setDone(false);
     setResults([]);
     setOpen(null);
+    setFetchError(null);
+    try {
+      const published = await getApi().getResult(launch.id);
+      if (!published) throw new Error("This launch has not settled yet, so there is nothing to verify.");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Could not fetch the published result.";
+      setFetchError(message);
+      toast(message, "error");
+      setRunning(false);
+      return;
+    }
     const checks = await runChecks(launch, { tamper });
     for (const c of checks) {
       await new Promise((r) => setTimeout(r, 650));
@@ -75,6 +90,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
           {running ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
           {running ? "Checking…" : done ? "Check again" : "Run the checks"}
         </Button>
+        {fetchError && <p className="mt-3 border border-danger/50 bg-danger/5 p-3 text-sm text-danger" role="alert">{fetchError} Press the button to try again.</p>}
         <dl className="space-y-2 rounded-none border border-line p-4 text-xs text-muted">
           <div className="flex justify-between gap-3"><dt>Code hash</dt><dd><Mono>{shortHash(launch.codeHash)}</Mono></dd></div>
           <div className="flex justify-between gap-3"><dt>Input hash</dt><dd><Mono>{launch.inputHash ? shortHash(launch.inputHash) : "—"}</Mono></dd></div>

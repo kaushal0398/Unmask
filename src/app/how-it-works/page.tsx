@@ -61,7 +61,7 @@ export default function HowItWorksPage() {
 
       <section id="rule" className="scroll-mt-20 border-t border-line py-16 sm:py-24">
         <Container>
-          <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[0.9fr_1.1fr] [&>*]:min-w-0">
             <div>
               <p className="font-mono text-xs uppercase tracking-widest text-verified">The auction rule</p>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Uniform price, found after the close.</h2>
@@ -78,7 +78,7 @@ export default function HowItWorksPage() {
                 <p className="text-sm font-medium">Worked example</p>
                 <p className="mt-1 text-xs text-muted">{tokens(1_000_000)} tokens for sale, reserve {usd(0.01)}. Computed here by the same rule, not typed in.</p>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
                 <table className="w-full min-w-[480px] text-sm">
                   <thead>
                     <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-faint">

@@ -2,26 +2,81 @@
 
 import Link from "next/link";
 import { Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getApi } from "@/lib/api";
+import type { Position as ApiPosition } from "@/lib/api/types";
+import { getLaunch } from "@/lib/demo";
 import { TokenArt } from "@/components/token-art";
 import { Badge, Button, ButtonLink, Card, Mono, Stat } from "@/components/ui";
 import { useWallet } from "@/components/wallet";
 import { tokens, usd } from "@/lib/format";
 
-export type Position = {
-  launchId: string; name: string; symbol: string; emoji: string; hue: number;
-  status: "sealed-open" | "won" | "refunded";
-  limit: number; qty: number; locked: number; got: number; paid: number; refunded: number;
-};
+type View = ApiPosition & { name: string; symbol: string; emoji: string; hue: number };
 
-export function PortfolioView({ positions }: { positions: Position[] }) {
-  const { account, connect } = useWallet();
+function Skeleton() {
+  return (
+    <div aria-busy className="space-y-5">
+      <div className="h-24 shimmer" />
+      <div className="h-44 shimmer" />
+      <div className="h-44 shimmer" />
+    </div>
+  );
+}
+
+export function PortfolioView() {
+  const { account, busy, connect, connectDemo } = useWallet();
   if (!account) {
     return (
       <Card className="mx-auto max-w-xl p-10 text-center">
         <span className="mx-auto grid size-14 place-items-center border border-seal/40 bg-seal/10 text-seal"><Wallet className="size-6" /></span>
         <h2 className="mt-5 text-xl font-semibold tracking-tight">Connect a wallet to see your bids</h2>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-muted">This is a demo wallet: it holds nothing and signs nothing.</p>
-        <Button tone="seal" className="mt-7" onClick={connect}>Connect demo wallet</Button>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted">Use your NEAR wallet, or the demo wallet, which holds nothing and signs nothing.</p>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Button tone="seal" onClick={() => void connect()} disabled={busy}>Connect wallet</Button>
+          <Button tone="ghost" onClick={connectDemo}>Use demo wallet</Button>
+        </div>
+      </Card>
+    );
+  }
+  return <Positions key={account} account={account} />;
+}
+
+function Positions({ account }: { account: string }) {
+  const [positions, setPositions] = useState<View[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let live = true;
+    getApi()
+      .positions(account)
+      .then((ps) => {
+        if (!live) return;
+        setError(null);
+        setPositions(ps.flatMap((p) => { const l = getLaunch(p.launchId); return l ? [{ ...p, name: l.name, symbol: l.symbol, emoji: l.emoji, hue: l.hue }] : []; }));
+      })
+      .catch((e) => live && setError(e instanceof Error ? e.message : "Could not load your bids."));
+    return () => {
+      live = false;
+    };
+  }, [account, attempt]);
+
+  if (error) {
+    return (
+      <Card className="mx-auto max-w-xl p-8 text-center" role="alert">
+        <p className="font-semibold">We could not load your bids.</p>
+        <p className="mt-2 text-sm text-muted">{error}</p>
+        <Button tone="ghost" className="mt-5" onClick={() => { setError(null); setPositions(null); setAttempt((n) => n + 1); }}>Try again</Button>
+      </Card>
+    );
+  }
+  if (!positions) return <Skeleton />;
+  if (positions.length === 0) {
+    return (
+      <Card className="mx-auto max-w-xl p-10 text-center">
+        <h2 className="text-xl font-semibold tracking-tight">No bids yet</h2>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted">When you bid on a launch, it appears here with the money behind it.</p>
+        <ButtonLink href="/launches" tone="seal" className="mt-6">Browse launches</ButtonLink>
       </Card>
     );
   }
@@ -32,7 +87,7 @@ export function PortfolioView({ positions }: { positions: Position[] }) {
     <div className="space-y-10">
       <dl className="grid grid-cols-2 gap-px border border-line-strong bg-line-strong shadow-[0_30px_60px_-30px_rgb(0_0_0/0.9)] lg:grid-cols-4">
         {[["Account", <Mono key="a" className="text-lg">{account}</Mono>, undefined], ["Locked in open bids", usd(locked), "seal"], ["Paid for tokens", usd(paid), undefined], ["Refunded to you", usd(back), "verified"]].map(([k, v, t]) => (
-          <div key={String(k)} className="bg-surface p-6"><Stat label={String(k)} value={v as React.ReactNode} tone={t as "seal" | "verified" | undefined} /></div>
+          <Stat key={String(k)} className="bg-surface p-6" label={String(k)} value={v as React.ReactNode} tone={t as "seal" | "verified" | undefined} />
         ))}
       </dl>
       <ul className="space-y-5">

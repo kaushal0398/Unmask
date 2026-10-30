@@ -47,7 +47,7 @@ function SupplyBar({ side, tone, base }: { side: RaceSide; tone: "danger" | "sea
       </div>
       <div className="mt-2 flex justify-between text-[11px] text-faint">
         <span>first token</span>
-        <span className={tone === "danger" ? "text-danger/80" : "text-seal/80"}>{tone === "danger" ? "bought in the order people arrive" : "split by price, never by arrival"}</span>
+        <span className={tone === "danger" ? "text-danger" : "text-seal"}>{tone === "danger" ? "bought in the order people arrive" : "split by price, never by arrival"}</span>
         <span>last token</span>
       </div>
     </div>

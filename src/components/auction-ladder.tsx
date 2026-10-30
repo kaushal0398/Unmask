@@ -65,12 +65,12 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
             {yTicks.map((t) => (
               <g key={t}>
                 <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="rgb(255 255 255 / 0.06)" />
-                <text x={PAD.l - 8} y={y(t) + 4} textAnchor="end" className="fill-[#62626b] font-mono text-[10px]">
+                <text x={PAD.l - 8} y={y(t) + 4} textAnchor="end" className="fill-[#8b8b95] font-mono text-[10px]">
                   {usd(t)}
                 </text>
               </g>
             ))}
-            <text x={W - PAD.r} y={H - 8} textAnchor="end" className="fill-[#62626b] text-[10px]">
+            <text x={W - PAD.r} y={H - 8} textAnchor="end" className="fill-[#8b8b95] text-[10px]">
               tokens bought at that price or better →
             </text>
 
@@ -136,7 +136,7 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
         </div>
       </Card>
 
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable chart">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-faint">

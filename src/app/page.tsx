@@ -105,7 +105,7 @@ export default function Home() {
       {/* An auction clearing */}
       <section className="border-t border-line py-20 sm:py-28">
         <Container>
-          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-start [&>*]:min-w-0">
             <div className="lg:sticky lg:top-28">
               <SectionHeading eyebrow="See it clear" title={<>One price, found <Emph>after</Emph> the close.</>}>
                 Bids stack from the highest price down. Where the stack reaches the supply is the clearing price, and everyone to the left pays it, even if they offered more.

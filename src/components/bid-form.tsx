@@ -1,28 +1,34 @@
 "use client";
 
-import { Check, Loader2, Lock, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Check, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+import { PaymentCheckPanel } from "@/components/payment-check-panel";
+import { useToast } from "@/components/toast";
+import { useConfirm } from "@/components/confirm";
 import { Button, Card, Mono, cx } from "@/components/ui";
+import { WalletButton } from "@/components/wallet-button";
 import { useWallet } from "@/components/wallet";
+import { getApi } from "@/lib/api";
+import { ApiError } from "@/lib/api/types";
 import type { Launch } from "@/lib/demo";
 import { shortHash, tokens, usd } from "@/lib/format";
+import { newSalt, sealBid } from "@/lib/seal";
 
-const SEAL_STEPS = ["Encrypting your bid for the enclave", "Locking the most you could owe in a payment check", "Sealing and sending"];
+const SEAL_STEPS = ["Locking the most you could owe in a payment check", "Fetching the enclave's public key", "Sealing your bid in this browser", "Sending the sealed bid"];
 
-async function sha256Hex(text: string) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
-}
+type Receipt = { commitment: string; limit: number; qty: number; locked: number; checkId: string; receiptId: string };
 
-type Receipt = { commitment: string; limit: number; qty: number; locked: number };
-
-export function BidForm({ launch }: { launch: Launch }) {
-  const { account, connect } = useWallet();
+export function BidForm({ launch, closed = false }: { launch: Launch; closed?: boolean }) {
+  const { account } = useWallet();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [limit, setLimit] = useState("");
   const [qty, setQty] = useState("");
   const [phase, setPhase] = useState<"form" | "sealing" | "sealed" | "withdrawn">("form");
   const [stepIndex, setStepIndex] = useState(0);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [error, setError] = useState<{ message: string; strandedCheck?: string } | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   const cap = launch.cap ? Math.floor(launch.supply * launch.cap) : launch.supply;
   const l = Number(limit);
@@ -35,23 +41,81 @@ export function BidForm({ launch }: { launch: Launch }) {
   const locked = ready ? l * q : 0;
 
   async function submit() {
-    if (!ready) return;
+    if (!ready || !account) return;
+    const ok = await confirm({
+      title: "Seal this bid?",
+      body: (
+        <>
+          <p>This locks up to <Mono className="text-text">{usd(locked)}</Mono> in a payment check until the auction settles. If you win you pay the clearing price, which may be lower than your limit; everything unused comes back.</p>
+          <p className="mt-3">Your bid is encrypted in this browser. Nobody can read it before the close.</p>
+        </>
+      ),
+      confirm: `Lock ${usd(locked)} and seal`,
+      tone: "seal",
+    });
+    if (!ok) return;
+
+    setError(null);
     setPhase("sealing");
     setStepIndex(0);
-    const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
-    const commitment = await sha256Hex(JSON.stringify({ launch: launch.id, bidder: account, limit: l, qty: q, salt }));
-    for (let i = 1; i < SEAL_STEPS.length; i++) {
-      await new Promise((r) => setTimeout(r, 750));
-      setStepIndex(i);
+    const api = getApi();
+    let checkId: string | undefined;
+    try {
+      const { check, key } = await api.createPaymentCheck({ launchId: launch.id, amount: locked });
+      checkId = check.id;
+      setStepIndex(1);
+      const enclave = await api.getEnclaveKey(launch.id);
+      setStepIndex(2);
+      const sealed = await sealBid({ launchId: launch.id, bidder: account, limit: l, qty: q, salt: await newSalt(), paymentCheck: { id: check.id, key } }, enclave);
+      setStepIndex(3);
+      const { receiptId } = await api.submitBid(sealed);
+      setReceipt({ commitment: sealed.commitment, limit: l, qty: q, locked, checkId: check.id, receiptId });
+      setPhase("sealed");
+      toast("Your bid is sealed.", "ok");
+    } catch (e) {
+      const message = e instanceof ApiError || e instanceof Error ? e.message : "Something went wrong sealing your bid.";
+      setError({ message, strandedCheck: checkId });
+      setPhase("form");
+      toast(message, "error");
     }
-    await new Promise((r) => setTimeout(r, 750));
-    setReceipt({ commitment, limit: l, qty: q, locked: l * q });
-    setPhase("sealed");
+  }
+
+  async function releaseStranded() {
+    if (!error?.strandedCheck) return;
+    try {
+      await getApi().reclaimPaymentCheck(error.strandedCheck);
+      setError({ message: error.message });
+      toast("Your funds were released.", "ok");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not release the funds.", "error");
+    }
+  }
+
+  async function withdraw() {
+    if (!account || !receipt) return;
+    const ok = await confirm({
+      title: "Withdraw your bid?",
+      body: <p>Your bid is cancelled and the {usd(receipt.locked)} in your payment check is released to you. You can bid again until the close.</p>,
+      confirm: "Withdraw bid",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setWithdrawing(true);
+    try {
+      await getApi().withdrawBid(launch.id, account);
+      setPhase("withdrawn");
+      setReceipt(null);
+      toast("Bid withdrawn and funds released.", "ok");
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Could not withdraw the bid.", "error");
+    } finally {
+      setWithdrawing(false);
+    }
   }
 
   if (phase === "sealing") {
     return (
-      <Card className="p-6">
+      <Card className="p-6" aria-busy="true">
         <h3 className="text-lg font-semibold">Sealing your bid</h3>
         <ol className="mt-5 space-y-3">
           {SEAL_STEPS.map((s, i) => (
@@ -76,14 +140,15 @@ export function BidForm({ launch }: { launch: Launch }) {
           </div>
         </div>
         <dl className="mt-6 space-y-3 text-sm">
-          <div className="flex justify-between gap-4"><dt className="text-muted">Locked in your payment check</dt><dd><Mono>{usd(receipt.locked)}</Mono></dd></div>
+          <div className="flex justify-between gap-4"><dt className="text-muted">Receipt</dt><dd><Mono>{receipt.receiptId}</Mono></dd></div>
           <div className="flex justify-between gap-4"><dt className="text-muted">Commitment</dt><dd><Mono className="text-seal">{shortHash(receipt.commitment, 10, 8)}</Mono></dd></div>
         </dl>
-        <p className="mt-5 rounded-none border border-line bg-black/40 p-4 text-xs leading-relaxed text-muted">
-          The commitment is a hash of your bid and a secret salt that only you hold. After the close you can prove the bid was yours. If you win you pay the single clearing price, which can be lower than your limit, and the rest comes back to you. Withdrawing your payment check before the close cancels the bid.
+        <div className="mt-5"><PaymentCheckPanel checkId={receipt.checkId} /></div>
+        <p className="mt-5 border border-line bg-black/40 p-4 text-xs leading-relaxed text-muted">
+          The commitment is a hash of your bid and a secret salt. After the close it lets you prove the bid was yours. Withdrawing before the close cancels the bid and releases your funds.
         </p>
-        <Button tone="ghost" className="mt-5 w-full" onClick={() => { setPhase("withdrawn"); setReceipt(null); }}>
-          Withdraw my bid
+        <Button tone="ghost" className="mt-5 w-full" onClick={() => void withdraw()} disabled={withdrawing || closed}>
+          {withdrawing && <Loader2 className="size-4 animate-spin" />} Withdraw my bid
         </Button>
       </Card>
     );
@@ -95,7 +160,16 @@ export function BidForm({ launch }: { launch: Launch }) {
         <h3 className="text-lg font-semibold tracking-tight">Place a sealed bid</h3>
         <span className="flex items-center gap-1.5 text-xs text-seal"><Lock className="size-3.5" /> private</span>
       </div>
-      {phase === "withdrawn" && <p className="mt-3 rounded-none border border-line-strong p-3 text-sm text-muted">Bid withdrawn and your payment check released. You can bid again before the close.</p>}
+      {phase === "withdrawn" && <p className="mt-3 border border-line-strong p-3 text-sm text-muted" role="status">Bid withdrawn and your funds released. You can bid again before the close.</p>}
+      {closed && <p className="mt-3 border border-line-strong p-3 text-sm text-muted" role="status">Bidding has closed on this launch.</p>}
+      {error && (
+        <div className="mt-3 border border-danger/50 bg-danger/5 p-3 text-sm" role="alert">
+          <p className="flex items-start gap-2 text-danger"><AlertTriangle className="mt-0.5 size-4 shrink-0" /> {error.message}</p>
+          {error.strandedCheck && (
+            <p className="mt-2 text-xs text-muted">Your funds were locked before this failed. <button className="text-text underline underline-offset-4" onClick={() => void releaseStranded()}>Release them</button>, or try again and they will be used.</p>
+          )}
+        </div>
+      )}
       <form
         className="mt-5 space-y-5"
         onSubmit={(e) => {
@@ -107,14 +181,14 @@ export function BidForm({ launch }: { launch: Launch }) {
           <span className="text-sm text-muted">Most you would pay per token</span>
           <div className="mt-2 flex items-center rounded-none border border-line-strong bg-black px-4 focus-within:bg-white/[0.03]">
             <span className="text-muted">$</span>
-            <input inputMode="decimal" value={limit} onChange={(e) => setLimit(e.target.value)} placeholder={String(launch.reserve * 3)} className="w-full bg-transparent px-2 py-3 font-mono text-lg outline-none placeholder:text-faint" aria-label="Limit price per token in dollars" />
+            <input inputMode="decimal" value={limit} onChange={(e) => setLimit(e.target.value)} placeholder={String(launch.reserve * 3)} disabled={closed} className="w-full bg-transparent px-2 py-3 font-mono text-lg outline-none placeholder:text-faint" aria-label="Limit price per token in dollars" />
           </div>
           <span className="mt-1.5 block text-xs text-faint">Reserve price {usd(launch.reserve)}. You will not pay more than this, and you may pay less.</span>
         </label>
         <label className="block">
           <span className="text-sm text-muted">How many tokens you want</span>
           <div className="mt-2 flex items-center rounded-none border border-line-strong bg-black px-4 focus-within:bg-white/[0.03]">
-            <input inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} placeholder={String(Math.floor(cap / 10))} className="w-full bg-transparent py-3 font-mono text-lg outline-none placeholder:text-faint" aria-label="Quantity of tokens" />
+            <input inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} placeholder={String(Math.floor(cap / 10))} disabled={closed} className="w-full bg-transparent py-3 font-mono text-lg outline-none placeholder:text-faint" aria-label="Quantity of tokens" />
             <span className="font-mono text-sm text-muted">{launch.symbol}</span>
           </div>
           <span className="mt-1.5 block text-xs text-faint">{launch.cap ? `Up to ${tokens(cap)} per account.` : "No cap per account."}</span>
@@ -133,17 +207,15 @@ export function BidForm({ launch }: { launch: Launch }) {
         </div>
 
         {account ? (
-          <Button type="submit" tone="seal" className="w-full py-3.5 text-base" disabled={!ready}>
+          <Button type="submit" tone="seal" className="w-full py-3.5 text-base" disabled={!ready || closed}>
             <Lock className="size-4" /> Seal my bid
           </Button>
         ) : (
-          <Button type="button" tone="primary" className="w-full py-3.5 text-base" onClick={connect}>
-            Connect wallet to bid
-          </Button>
+          <div className="flex justify-center"><WalletButton /></div>
         )}
         <p className="flex items-start gap-2 text-xs leading-relaxed text-faint">
           <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-          Demo: nothing is sent and no funds move. In the real flow your bid is encrypted to the enclave and your funds sit in a payment check you control.
+          Demo: the bid is really sealed in your browser, but it goes to a stand-in for the enclave and no funds move.
         </p>
       </form>
     </Card>

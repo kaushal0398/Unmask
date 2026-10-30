@@ -63,12 +63,12 @@ export function Container({ className, ...rest }: ComponentProps<"div">) {
   return <div className={cx("mx-auto w-full max-w-6xl px-5 sm:px-8", className)} {...rest} />;
 }
 
-export function Stat({ label, value, hint, tone }: { label: string; value: ReactNode; hint?: string; tone?: "seal" | "verified" }) {
+export function Stat({ label, value, hint, tone, className }: { label: string; value: ReactNode; hint?: string; tone?: "seal" | "verified"; className?: string }) {
   return (
-    <div>
-      <p className="text-xs uppercase tracking-wider text-faint">{label}</p>
-      <p className={cx("mt-1.5 text-2xl font-semibold tabular-nums tracking-tight", tone === "seal" && "text-seal", tone === "verified" && "text-verified")}>{value}</p>
-      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+    <div className={className}>
+      <dt className="text-xs uppercase tracking-wider text-faint">{label}</dt>
+      <dd className={cx("mt-1.5 text-2xl font-semibold tabular-nums tracking-tight", tone === "seal" && "text-seal", tone === "verified" && "text-verified")}>{value}</dd>
+      {hint && <dd className="mt-1 text-xs text-muted">{hint}</dd>}
     </div>
   );
 }
