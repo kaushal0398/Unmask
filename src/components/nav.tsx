@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { LogoMark } from "@/components/art";
-import { Button, ButtonLink, cx } from "@/components/ui";
-import { useWallet } from "@/components/wallet";
+import { ButtonLink, cx } from "@/components/ui";
+import { WalletButton } from "@/components/wallet-button";
 
 const links = [
   { href: "/launches", label: "Launches" },
@@ -28,7 +28,6 @@ export function Logo({ className }: { className?: string }) {
 export function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { account, connect, disconnect } = useWallet();
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-black/70 backdrop-blur-xl">
@@ -46,15 +45,7 @@ export function Nav() {
           ))}
         </nav>
         <div className="hidden items-center gap-2 md:flex">
-          {account ? (
-            <Button tone="ghost" onClick={disconnect} className="font-mono text-xs" title="Disconnect the demo wallet">
-              {account}
-            </Button>
-          ) : (
-            <Button tone="ghost" onClick={connect}>
-              Connect wallet
-            </Button>
-          )}
+          <WalletButton />
           <ButtonLink href="/launches/new" tone="seal">
             Create launch
           </ButtonLink>
@@ -76,15 +67,7 @@ export function Nav() {
             <ButtonLink href="/launches/new" tone="seal" onClick={() => setOpen(false)}>
               Create launch
             </ButtonLink>
-            {account ? (
-              <Button tone="ghost" onClick={disconnect} className="font-mono text-xs">
-                {account}
-              </Button>
-            ) : (
-              <Button tone="ghost" onClick={connect}>
-                Connect wallet
-              </Button>
-            )}
+            <WalletButton full />
           </div>
         </div>
       )}
