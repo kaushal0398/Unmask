@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Launch {
+  id              String         @id @default(cuid())
+  name            String
+  symbol          String
+  creator         String
+  emoji           String         @default("🪙")
+  hue             Int            @default(145)
+  tagline         String         @default("A sealed-bid launch.")
+  supplyAtomic    String
+  reserveAtomic   String
+  tokenDecimals   Int
+  paymentToken    String
+  paymentDecimals Int
+  capBps          Int?
+  state           LaunchState    @default(DRAFT)
+  opensAt         DateTime?
+  closesAt        DateTime?
+  tokenContract   String?
+  codeHash        String?
+  bidCount        Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  bids            Bid[]
+  paymentChecks   PaymentCheck[]
+
+  @@index([state, closesAt])
+}
+
+model PaymentCheck {
+  id           String            @id @default(cuid())
+  launchId     String
+  bidder       String
+  token        String
+  amountAtomic String
+  state        PaymentCheckState @default(LOCKED)
+  expiresAt    DateTime
+  providerRef  String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  bid          Bid?
+  launch       Launch            @relation(fields: [launchId], references: [id])
+
+  @@index([launchId, bidder])
+}
+
+model Bid {
+  id             String       @id @default(cuid())
+  launchId       String
+  bidder         String
+  ciphertext     String
+  commitment     String
+  paymentCheckId String       @unique
+  keyId          String
+  receiptId      String       @unique
+  createdAt      DateTime     @default(now())
+  launch         Launch       @relation(fields: [launchId], references: [id])
+  paymentCheck   PaymentCheck @relation(fields: [paymentCheckId], references: [id])
+
+  @@unique([launchId, bidder])
+  @@index([launchId, createdAt])
+}
+
+enum LaunchState {
+  DRAFT
+  OPEN
+  CLOSED
+  SETTLED
+  CANCELLED
+}
+
+enum PaymentCheckState {
+  LOCKED
+  EXPIRED
+  RECLAIMED
+  CLAIMED
+  FAILED
+}
