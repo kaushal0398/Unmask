@@ -1,0 +1,35 @@
+{
+  "version": "1",
+  "description": "Canonical integer test vector for the Snipe-Proof uniform-price auction engine. Payment amounts are in payment-token atomic units; quantity and supply are in launched-token atomic units.",
+  "input": {
+    "version": "1",
+    "auctionId": "worked-example-001",
+    "supply": "1000000",
+    "reservePrice": "1000000",
+    "tokenDecimals": 0,
+    "bids": [
+      { "id": "A", "bidder": "alice.near", "limitPrice": "5000000", "quantity": "400000" },
+      { "id": "B", "bidder": "bob.near", "limitPrice": "4000000", "quantity": "300000" },
+      { "id": "C", "bidder": "carol.near", "limitPrice": "3000000", "quantity": "300000" },
+      { "id": "D", "bidder": "dave.near", "limitPrice": "2000000", "quantity": "200000" }
+    ]
+  },
+  "expected": {
+    "version": "1",
+    "auctionId": "worked-example-001",
+    "tokenDecimals": 0,
+    "clearingPrice": "3000000",
+    "supply": "1000000",
+    "sold": "1000000",
+    "unsold": "0",
+    "totalRaised": "3000000000000",
+    "totalLocked": "4500000000000",
+    "totalRefunded": "1500000000000",
+    "fills": [
+      { "bidId": "A", "bidder": "alice.near", "limitPrice": "5000000", "requested": "400000", "filled": "400000", "locked": "2000000000000", "payment": "1200000000000", "refund": "800000000000" },
+      { "bidId": "B", "bidder": "bob.near", "limitPrice": "4000000", "requested": "300000", "filled": "300000", "locked": "1200000000000", "payment": "900000000000", "refund": "300000000000" },
+      { "bidId": "C", "bidder": "carol.near", "limitPrice": "3000000", "requested": "300000", "filled": "300000", "locked": "900000000000", "payment": "900000000000", "refund": "0" },
+      { "bidId": "D", "bidder": "dave.near", "limitPrice": "2000000", "requested": "200000", "filled": "0", "locked": "400000000000", "payment": "0", "refund": "400000000000" }
+    ]
+  }
+}

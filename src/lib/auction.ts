@@ -1,29 +1,13 @@
 /**
- * The sealed-bid, uniform-price auction the launch runs, for the screens to show. The enclave runs the real one;
- * this is the same rule (docs/what-we-are-building.md, section 4) so what the pages display is computed, not
- * invented.
- *
- *  - Sort bids by limit price, highest first (ties by id, so the result is repeatable).
- *  - Fill in that order until the supply is sold. The clearing price is the limit of the last bid filled, at
- *    least in part. If demand at or above the reserve is short of the supply, the price is the reserve.
- *  - Everyone filled pays the clearing price, not their own limit.
- *  - Bids at the clearing price share what is left pro-rata (whole tokens, largest remainder, then by id).
- *  - A bid below the clearing price wins nothing and is refunded in full.
+ * Number-based presentation adapter retained for the existing demo UI.
+ * Production/protocol code must call clearAuctionExact from auction-core.ts
+ * and must pass atomic-unit integer strings. This adapter deliberately accepts
+ * only safe integer quantities and prices representable to 8 decimal places.
  */
+import { clearAuctionExact, decimalToAtomic } from "@/lib/auction-core";
 
 export type Bid = { id: string; label: string; limit: number; qty: number; isBot?: boolean };
-
-export type Fill = {
-  bid: Bid;
-  filled: number;
-  /** What they pay: filled × the clearing price. */
-  pays: number;
-  /** What they locked: limit × quantity, the most they could owe. */
-  locked: number;
-  /** What goes back to them. */
-  refund: number;
-};
-
+export type Fill = { bid: Bid; filled: number; pays: number; locked: number; refund: number };
 export type Outcome = {
   price: number;
   supply: number;
@@ -32,63 +16,60 @@ export type Outcome = {
   unsold: number;
   raised: number;
   fills: Fill[];
-  /** Bids that came in below the reserve, and so were never in the auction. */
   belowReserve: Bid[];
 };
 
-const byLimitThenId = (a: Bid, b: Bid) => b.limit - a.limit || a.id.localeCompare(b.id);
+const DEMO_PRICE_DECIMALS = 8;
+const DEMO_PRICE_SCALE = 10 ** DEMO_PRICE_DECIMALS;
+
+function safeWhole(value: number, field: string): string {
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${field} must be a positive safe integer`);
+  return String(value);
+}
+
+function scaledDemoPrice(value: number, field: string): string {
+  if (!Number.isFinite(value) || value <= 0) throw new Error(`${field} must be a positive finite number`);
+  // Number#toString gives the shortest decimal that round-trips to the supplied
+  // JS number. Convert that decimal string without multiplying floats.
+  const atomic = decimalToAtomic(value.toString(), DEMO_PRICE_DECIMALS);
+  if (Number(atomic) / DEMO_PRICE_SCALE !== value) throw new Error(`${field} supports at most ${DEMO_PRICE_DECIMALS} decimal places`);
+  return atomic;
+}
 
 export function clearAuction(bids: Bid[], supply: number, reserve: number): Outcome {
-  if (supply <= 0) throw new Error("the supply must be more than zero");
-  if (reserve <= 0) throw new Error("the reserve price must be more than zero");
-  const inPlay = bids.filter((b) => b.limit >= reserve && b.qty > 0).sort(byLimitThenId);
-  const belowReserve = bids.filter((b) => b.limit < reserve || b.qty <= 0);
-
-  // Walk down from the highest limit until the supply is covered.
-  let cumulative = 0;
-  let price = reserve;
-  for (const b of inPlay) {
-    cumulative += b.qty;
-    if (cumulative >= supply) {
-      price = b.limit;
-      break;
-    }
-  }
-
-  const filledQty = new Map<string, number>();
-  let remaining = supply;
-  const above = inPlay.filter((b) => b.limit > price);
-  for (const b of above) {
-    const q = Math.min(b.qty, remaining);
-    filledQty.set(b.id, q);
-    remaining -= q;
-  }
-  // The bids at the clearing price share what is left, pro-rata.
-  const at = inPlay.filter((b) => b.limit === price);
-  const demandAt = at.reduce((s, b) => s + b.qty, 0);
-  if (remaining > 0 && demandAt > 0) {
-    const pot = Math.min(remaining, demandAt);
-    const shares = at.map((b) => ({ b, exact: (pot * b.qty) / demandAt }));
-    let given = 0;
-    for (const s of shares) {
-      const whole = Math.floor(s.exact);
-      filledQty.set(s.b.id, whole);
-      given += whole;
-    }
-    // Largest remainder first; ties by id (the enclave uses verifiable randomness for these crumbs).
-    const order = [...shares].sort((x, y) => y.exact - Math.floor(y.exact) - (x.exact - Math.floor(x.exact)) || x.b.id.localeCompare(y.b.id));
-    for (let i = 0; given < pot && i < order.length; i++, given++) {
-      const id = order[i]!.b.id;
-      filledQty.set(id, (filledQty.get(id) ?? 0) + 1);
-    }
-  }
-
-  const fills: Fill[] = [...inPlay, ...belowReserve].map((bid) => {
-    const filled = filledQty.get(bid.id) ?? 0;
-    const locked = bid.limit * bid.qty;
-    const pays = filled * price;
-    return { bid, filled, pays, locked, refund: locked - pays };
+  const exact = clearAuctionExact({
+    version: "1",
+    auctionId: "legacy-ui-demo",
+    supply: safeWhole(supply, "supply"),
+    reservePrice: scaledDemoPrice(reserve, "reserve"),
+    tokenDecimals: 0,
+    bids: bids.map((bid) => ({
+      id: bid.id,
+      bidder: bid.label,
+      limitPrice: scaledDemoPrice(bid.limit, `bid ${bid.id} limit`),
+      quantity: safeWhole(bid.qty, `bid ${bid.id} quantity`),
+    })),
   });
-  const sold = fills.reduce((s, f) => s + f.filled, 0);
-  return { price, supply, reserve, sold, unsold: supply - sold, raised: fills.reduce((s, f) => s + f.pays, 0), fills, belowReserve };
+  const fromAtomic = (value: string) => {
+    const integer = BigInt(value);
+    if (integer > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error("demo adapter amount exceeds safe display range; use the exact core API");
+    return Number(integer) / DEMO_PRICE_SCALE;
+  };
+  const fills: Fill[] = exact.fills.map((fill, index) => ({
+    bid: bids[index]!,
+    filled: Number(fill.filled),
+    pays: fromAtomic(fill.payment),
+    locked: fromAtomic(fill.locked),
+    refund: fromAtomic(fill.refund),
+  }));
+  return {
+    price: fromAtomic(exact.clearingPrice),
+    supply,
+    reserve,
+    sold: Number(exact.sold),
+    unsold: Number(exact.unsold),
+    raised: fromAtomic(exact.totalRaised),
+    fills,
+    belowReserve: bids.filter((bid) => bid.limit < reserve),
+  };
 }
