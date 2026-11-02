@@ -116,20 +116,74 @@ function SettlingView({ l, step }: { l: Launch; step: number }) {
   );
 }
 
+
 function SettledView({ l }: { l: Launch }) {
-  const o = (outcomeOf(l) ?? revealOf(l))!;
+  const o = outcomeOf(l) ?? revealOf(l);
+
+  // Backend-created launches don't have demo outcome data yet.
+  // Never assume a settlement result exists.
+  if (!o) {
+    return (
+      <div className="space-y-8">
+        <Card className="p-6 sm:p-10">
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center border border-verified text-verified">
+              <ShieldCheck className="size-5" />
+            </span>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-verified">
+                Bidding closed
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold">
+                No more bids are accepted.
+              </h2>
+            </div>
+          </div>
+
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted">
+            This launch has reached its bidding deadline. Its settlement
+            result is not available yet. No clearing price or token
+            allocation can be displayed until a verified result is published.
+          </p>
+
+          <div className="mt-8 border-t border-line pt-6">
+            <Facts l={l} />
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="font-semibold">Settlement pending</h3>
+          <p className="mt-2 text-sm text-muted">
+            The settlement and verification integration is not connected
+            for this development launch.
+          </p>
+          <p className="mt-3 text-xs text-faint">
+            This page will not invent auction results or allocations.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   const sampled = l.status !== "settled" && l.bidCount > (l.bids?.length ?? 0);
   const bots = o.fills.filter((f) => f.bid.isBot);
   const botsFilled = bots.reduce((s, f) => s + f.filled, 0);
+
   return (
     <div className="space-y-8">
       <Card className="relative overflow-hidden p-6 sm:p-10">
         <div className="glow-verified pointer-events-none absolute inset-0" />
         <div className="relative grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:items-end">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-verified">Cleared at one price for everyone</p>
-            <p className="mt-3 font-mono text-6xl font-medium tabular-nums tracking-tight sm:text-8xl">{usd(o.price)}</p>
-            <p className="mt-3 text-muted">per {l.symbol}. Whatever they offered, every winner paid exactly this.</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-verified">
+              Cleared at one price for everyone
+            </p>
+            <p className="mt-3 font-mono text-6xl font-medium tabular-nums tracking-tight sm:text-8xl">
+              {usd(o.price)}
+            </p>
+            <p className="mt-3 text-muted">
+              per {l.symbol}. Whatever they offered, every winner paid exactly this.
+            </p>
           </div>
           <dl className="grid grid-cols-3 gap-4">
             <Stat label="Raised" value={usd(o.raised, { compact: true })} tone="verified" />
@@ -141,20 +195,44 @@ function SettledView({ l }: { l: Launch }) {
 
       <div>
         <h2 className="text-2xl font-semibold tracking-tight">The sealed bids, opened</h2>
-        <p className="mt-2 max-w-2xl text-sm text-muted">While bidding was open this looked like a stack of sealed envelopes. Open them to see how the price was found.</p>
-        {sampled && <p className="mt-2 text-xs text-faint" role="note">Demo: showing a sample of {l.bids?.length} of the {l.bidCount} bids.</p>}
-        <div className="mt-6"><AuctionLadder outcome={o} symbol={l.symbol} /></div>
+        <p className="mt-2 max-w-2xl text-sm text-muted">
+          While bidding was open this looked like a stack of sealed envelopes.
+          Open them to see how the price was found.
+        </p>
+        {sampled && (
+          <p className="mt-2 text-xs text-faint" role="note">
+            Demo: showing a sample of {l.bids?.length} of the {l.bidCount} bids.
+          </p>
+        )}
+        <div className="mt-6">
+          <AuctionLadder outcome={o} symbol={l.symbol} />
+        </div>
       </div>
 
       <Card className="p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-5">
           <div className="max-w-xl">
-            <h3 className="flex items-center gap-2 text-lg font-semibold"><ShieldCheck className="size-5 text-verified" /> Check it yourself</h3>
-            <p className="mt-2 text-sm text-muted">Everything needed to recompute this result is public: the code hash, the input hash and the attestation.</p>
+            <h3 className="flex items-center gap-2 text-lg font-semibold">
+              <ShieldCheck className="size-5 text-verified" />
+              Check it yourself
+            </h3>
+            <p className="mt-2 text-sm text-muted">
+              Everything needed to recompute this result is public:
+              the code hash, the input hash and the attestation.
+            </p>
             <dl className="mt-4 space-y-1.5 text-xs">
-              <div className="flex gap-3"><dt className="w-24 text-faint">Code hash</dt><dd><Mono>{shortHash(l.codeHash, 12, 8)}</Mono></dd></div>
-              <div className="flex gap-3"><dt className="w-24 text-faint">Input hash</dt><dd><Mono>{l.inputHash ? shortHash(l.inputHash, 12, 8) : ""}</Mono></dd></div>
-              <div className="flex gap-3"><dt className="w-24 text-faint">Attestation</dt><dd><Mono>{l.attestation ? shortHash(l.attestation, 12, 8) : ""}</Mono></dd></div>
+              <div className="flex gap-3">
+                <dt className="w-24 text-faint">Code hash</dt>
+                <dd><Mono>{shortHash(l.codeHash, 12, 8)}</Mono></dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="w-24 text-faint">Input hash</dt>
+                <dd><Mono>{l.inputHash ? shortHash(l.inputHash, 12, 8) : ""}</Mono></dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="w-24 text-faint">Attestation</dt>
+                <dd><Mono>{l.attestation ? shortHash(l.attestation, 12, 8) : ""}</Mono></dd>
+              </div>
             </dl>
           </div>
           <ButtonLink href={`/verify?launch=${l.id}`} tone="primary">
@@ -162,6 +240,7 @@ function SettledView({ l }: { l: Launch }) {
           </ButtonLink>
         </div>
       </Card>
+
       <Facts l={l} />
     </div>
   );
@@ -230,30 +309,51 @@ export function LiveLaunch({ id }: { id: string }) {
 
   const liveLaunch = { ...l, closesInMs };
 
-  const stage =
-    now === null || opened === null
-      ? null
-      : stageOf({
+  
+  const isDemoLaunch = Boolean(getLaunch(id));
+
+  const deadlinePassed =
+    Boolean(
+      liveLaunch.closesAt &&
+      now !== null &&
+      new Date(liveLaunch.closesAt).getTime() <= now
+    );
+
+  const demoStage =
+    isDemoLaunch && now !== null && opened !== null
+      ? stageOf({
           status: liveLaunch.status,
           closesInMs: liveLaunch.closesInMs,
           openedAt: opened,
           now,
-        });
+        })
+      : null;
 
-  const kind =
-    stage?.kind ??
-    (liveLaunch.status === "open"
+  const hasOutcome = Boolean(
+    outcomeOf(liveLaunch) ?? revealOf(liveLaunch)
+  );
+
+  // Demo launches use the simulated clock.
+  // Backend launches must never be marked settled without a result.
+  const kind = isDemoLaunch
+    ? demoStage?.kind ??
+      (liveLaunch.status === "open"
+        ? "open"
+        : liveLaunch.status === "sealed"
+          ? "settling"
+          : "settled")
+    : liveLaunch.status === "open" && !deadlinePassed
       ? "open"
-      : liveLaunch.status === "sealed"
-        ? "settling"
-        : "settled");
+      : liveLaunch.status === "settled" && hasOutcome
+        ? "settled"
+        : "pending";
 
   const status: LaunchStatus =
     kind === "open"
       ? "open"
-      : kind === "settling"
-        ? "sealed"
-        : "settled";
+      : kind === "settled"
+        ? "settled"
+        : "sealed";
 
   return (
     <>
@@ -265,7 +365,7 @@ export function LiveLaunch({ id }: { id: string }) {
         ) : kind === "settling" ? (
           <SettlingView
             l={liveLaunch}
-            step={stage?.kind === "settling" ? stage.step : 2}
+            step={demoStage?.kind === "settling" ? demoStage.step : 0}
           />
         ) : (
           <SettledView l={liveLaunch} />

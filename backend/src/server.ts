@@ -80,6 +80,27 @@ function isApiError(error: unknown): error is ApiError {
 function fail(statusCode: number, code: string, message: string) {
   return Object.assign(new Error(message), { statusCode, code });
 }
+async function requireSession(req: { headers: { authorization?: string } }) {
+  const authorization = req.headers.authorization;
+
+  const token =
+    typeof authorization === "string" &&
+    authorization.startsWith("Bearer ")
+      ? authorization.slice(7).trim()
+      : "";
+
+  const account = await getSessionAccount(token);
+
+  if (!account) {
+    throw fail(
+      401,
+      "unauthorized",
+      "Connect and authenticate your NEAR wallet first.",
+    );
+  }
+
+  return account;
+}
 
 function publicLaunch(l: PublicLaunchInput) {
   return {
@@ -326,6 +347,9 @@ app.post<{ Params: { id: string } }>(
       );
     }
 
+    // Require an authenticated NEAR wallet.
+    const bidder = await requireSession(req);
+
     const parsed = createCheckSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -333,6 +357,16 @@ app.post<{ Params: { id: string } }>(
         error: {
           code: "validation_error",
           details: parsed.error.flatten(),
+        },
+      });
+    }
+
+    // Prevent a user from creating a payment check for another account.
+    if (parsed.data.bidder !== bidder) {
+      return reply.code(403).send({
+        error: {
+          code: "bidder_mismatch",
+          message: "Bidder does not match the authenticated wallet.",
         },
       });
     }
@@ -374,13 +408,15 @@ app.post<{ Params: { id: string } }>(
 
     const provider = await paymentProvider.create({
       launchId: launch.id,
-      ...parsed.data,
+      bidder,
+      token: parsed.data.token,
+      amountAtomic: parsed.data.amountAtomic,
     });
 
     const check = await prisma.paymentCheck.create({
       data: {
         launchId: launch.id,
-        bidder: parsed.data.bidder,
+        bidder,
         token: parsed.data.token,
         amountAtomic: parsed.data.amountAtomic,
         expiresAt: provider.expiresAt,
@@ -408,6 +444,8 @@ app.post<{ Params: { id: string } }>(
 app.get<{ Params: { id: string } }>(
   "/v1/payment-checks/:id",
   async (req, reply) => {
+    const account = await requireSession(req);
+
     const check = await prisma.paymentCheck.findUnique({
       where: { id: req.params.id },
     });
@@ -417,6 +455,15 @@ app.get<{ Params: { id: string } }>(
         error: {
           code: "not_found",
           message: "Payment check not found",
+        },
+      });
+    }
+
+    if (check.bidder !== account) {
+      return reply.code(403).send({
+        error: {
+          code: "forbidden",
+          message: "You cannot access another wallet's payment check.",
         },
       });
     }
@@ -443,6 +490,8 @@ app.get<{ Params: { id: string } }>(
 app.post<{ Params: { id: string } }>(
   "/v1/payment-checks/:id/reclaim",
   async (req, reply) => {
+    const account = await requireSession(req);
+
     const check = await prisma.paymentCheck.findUnique({
       where: { id: req.params.id },
     });
@@ -452,6 +501,15 @@ app.post<{ Params: { id: string } }>(
         error: {
           code: "not_found",
           message: "Payment check not found",
+        },
+      });
+    }
+
+    if (check.bidder !== account) {
+      return reply.code(403).send({
+        error: {
+          code: "forbidden",
+          message: "You cannot reclaim another wallet's payment check.",
         },
       });
     }
@@ -482,6 +540,8 @@ app.post<{ Params: { id: string } }>(
         id: updated.id,
         state: "reclaimed",
       },
+      warning:
+        "DEVELOPMENT MOCK ONLY: no real funds were reclaimed.",
     };
   },
 );
@@ -501,6 +561,9 @@ app.post<{ Params: { id: string } }>(
       );
     }
 
+    // Derive bidder identity from the authenticated session.
+    const bidder = await requireSession(req);
+
     const parsed = sealedBidSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -508,6 +571,16 @@ app.post<{ Params: { id: string } }>(
         error: {
           code: "validation_error",
           details: parsed.error.flatten(),
+        },
+      });
+    }
+
+    // Reject attempts to submit a bid for another wallet.
+    if (parsed.data.bidder !== bidder) {
+      return reply.code(403).send({
+        error: {
+          code: "bidder_mismatch",
+          message: "Bidder does not match the authenticated wallet.",
         },
       });
     }
@@ -545,7 +618,7 @@ app.post<{ Params: { id: string } }>(
     if (
       !check ||
       check.launchId !== launch.id ||
-      check.bidder !== parsed.data.bidder ||
+      check.bidder !== bidder ||
       check.state !== "LOCKED" ||
       check.expiresAt <= new Date()
     ) {
@@ -571,7 +644,7 @@ app.post<{ Params: { id: string } }>(
         const created = await tx.bid.create({
           data: {
             launchId: launch.id,
-            bidder: parsed.data.bidder,
+            bidder,
             ciphertext: parsed.data.ciphertext,
             commitment: parsed.data.commitment,
             paymentCheckId: check.id,
