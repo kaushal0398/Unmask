@@ -13,7 +13,13 @@ import { ButtonLink, Card, DemoNote, Mono, Stat } from "@/components/ui";
 import { getLaunch, outcomeOf, revealOf, type Launch, type LaunchStatus } from "@/lib/demo";
 import { compact, shortHash, tokens, usd } from "@/lib/format";
 import { stageOf } from "@/lib/stage";
+import { useEffect, useState } from "react";
+import { getApi } from "@/lib/api";
 import { useNow, useOpenedAt } from "@/lib/use-now";
+
+type LiveLaunchData = Launch & {
+  closesAt?: string;
+};
 
 function Facts({ l }: { l: Launch }) {
   return (
@@ -167,19 +173,103 @@ function SettledView({ l }: { l: Launch }) {
  * settles it in steps, then the result is shown. Before the browser has the time it shows the launch as it was
  * published, so the prerendered page and the first client render match.
  */
+
 export function LiveLaunch({ id }: { id: string }) {
-  const l = getLaunch(id);
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [l, setL] = useState<LiveLaunchData | null>(null);
   const now = useNow();
   const opened = useOpenedAt();
+
+  useEffect(() => {
+    let active = true;
+
+    setLoading(true);
+    setError("");
+
+    getApi()
+      .getLaunch(id)
+      .then((launch) => {
+        if (active) {
+          setL(launch);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Could not load this launch.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (loading) {
+    return <p className="py-16 text-center text-muted">Loading launch...</p>;
+  }
+
+  if (error) {
+    return <p className="py-16 text-center text-red-400">{error}</p>;
+  }
+
   if (!l) notFound();
-  const stage = now === null || opened === null ? null : stageOf({ status: l.status, closesInMs: l.closesInMs, openedAt: opened, now });
-  const kind = stage?.kind ?? (l.status === "open" ? "open" : l.status === "sealed" ? "settling" : "settled");
-  const status: LaunchStatus = kind === "open" ? "open" : kind === "settling" ? "sealed" : "settled";
+
+  const closesInMs =
+    l.closesAt && now !== null
+      ? Math.max(0, new Date(l.closesAt).getTime() - now)
+      : l.closesInMs;
+
+  const liveLaunch = { ...l, closesInMs };
+
+  const stage =
+    now === null || opened === null
+      ? null
+      : stageOf({
+          status: liveLaunch.status,
+          closesInMs: liveLaunch.closesInMs,
+          openedAt: opened,
+          now,
+        });
+
+  const kind =
+    stage?.kind ??
+    (liveLaunch.status === "open"
+      ? "open"
+      : liveLaunch.status === "sealed"
+        ? "settling"
+        : "settled");
+
+  const status: LaunchStatus =
+    kind === "open"
+      ? "open"
+      : kind === "settling"
+        ? "sealed"
+        : "settled";
+
   return (
     <>
-      <Header l={l} status={status} />
+      <Header l={liveLaunch} status={status} />
+
       <div className="mt-10">
-        {kind === "open" ? <OpenView l={l} /> : kind === "settling" ? <SettlingView l={l} step={stage?.kind === "settling" ? stage.step : 2} /> : <SettledView l={l} />}
+        {kind === "open" ? (
+          <OpenView l={liveLaunch} />
+        ) : kind === "settling" ? (
+          <SettlingView
+            l={liveLaunch}
+            step={stage?.kind === "settling" ? stage.step : 2}
+          />
+        ) : (
+          <SettledView l={liveLaunch} />
+        )}
       </div>
     </>
   );

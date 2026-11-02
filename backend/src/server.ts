@@ -228,6 +228,7 @@ app.get<{ Params: { id: string } }>(
   },
 );
 
+
 app.post("/v1/launches", async (req, reply) => {
   if (!isDev) {
     throw fail(
@@ -235,6 +236,26 @@ app.post("/v1/launches", async (req, reply) => {
       "not_implemented",
       "Production launch creation requires the NEAR deployment adapter.",
     );
+  }
+
+  // Require a valid authenticated NEAR wallet session.
+  const authorization = req.headers.authorization;
+
+  const token =
+    typeof authorization === "string" &&
+    authorization.startsWith("Bearer ")
+      ? authorization.slice(7).trim()
+      : "";
+
+  const creator = await getSessionAccount(token);
+
+  if (!creator) {
+    return reply.code(401).send({
+      error: {
+        code: "unauthorized",
+        message: "Connect and authenticate your NEAR wallet first.",
+      },
+    });
   }
 
   const parsed = createLaunchSchema.safeParse(req.body);
@@ -267,7 +288,10 @@ app.post("/v1/launches", async (req, reply) => {
     data: {
       name: input.name,
       symbol: input.symbol.toUpperCase(),
-      creator: input.creator,
+
+      // Always use the authenticated wallet.
+      creator,
+
       supplyAtomic: input.supplyAtomic,
       reserveAtomic: input.reserveAtomic,
       tokenDecimals: input.tokenDecimals,
