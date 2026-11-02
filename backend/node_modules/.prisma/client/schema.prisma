@@ -84,3 +84,30 @@ enum PaymentCheckState {
   CLAIMED
   FAILED
 }
+
+model AuthChallenge {
+  id         String    @id @default(cuid())
+  accountId  String
+  nonce      String    @unique
+  message    String
+  recipient  String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([accountId, expiresAt])
+  @@index([expiresAt])
+}
+
+model AuthSession {
+  id        String    @id @default(cuid())
+  accountId String
+  publicKey String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([accountId, expiresAt])
+  @@index([expiresAt])
+}

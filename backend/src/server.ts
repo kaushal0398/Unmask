@@ -1,6 +1,8 @@
 
 import Fastify from "fastify";
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
+
 import { prisma } from "./db.js";
 import {
   createCheckSchema,
@@ -8,6 +10,10 @@ import {
   sealedBidSchema,
 } from "./schemas.js";
 import { MockPaymentProvider } from "./payment-provider.js";
+import {
+  createChallenge,
+  verifyChallenge,
+} from "./auth.js";
 
 const app = Fastify({
   logger: true,
@@ -16,6 +22,18 @@ const app = Fastify({
 
 const paymentProvider = new MockPaymentProvider();
 const isDev = process.env.NODE_ENV !== "production";
+
+// Authentication request schemas
+const authChallengeSchema = z.object({
+  accountId: z.string().trim().min(2).max(64),
+});
+
+const authVerifySchema = z.object({
+  challengeId: z.string().min(1).max(128),
+  accountId: z.string().trim().min(2).max(64),
+  publicKey: z.string().min(1).max(128),
+  signature: z.string().min(1).max(256),
+});
 
 type PublicLaunchInput = {
   id: string;
@@ -76,11 +94,89 @@ function publicLaunch(l: PublicLaunchInput) {
   };
 }
 
+// --------------------------------------------------
+// HEALTH
+// --------------------------------------------------
+
 app.get("/health", async () => ({
   ok: true,
   service: "snipe-proof-api",
   mode: isDev ? "development" : "production",
 }));
+
+// --------------------------------------------------
+// NEAR WALLET AUTHENTICATION
+// --------------------------------------------------
+
+app.post("/v1/auth/challenge", async (req, reply) => {
+  const parsed = authChallengeSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return reply.code(400).send({
+      error: {
+        code: "validation_error",
+        details: parsed.error.flatten(),
+      },
+    });
+  }
+
+  try {
+    const challenge = await createChallenge(
+      parsed.data.accountId,
+    );
+
+    return reply.code(201).send({
+      challenge,
+    });
+  } catch (error) {
+    app.log.error(error);
+
+    return reply.code(503).send({
+      error: {
+        code: "challenge_unavailable",
+        message: "Could not create authentication challenge",
+      },
+    });
+  }
+});
+
+app.post("/v1/auth/verify", async (req, reply) => {
+  const parsed = authVerifySchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return reply.code(400).send({
+      error: {
+        code: "validation_error",
+        details: parsed.error.flatten(),
+      },
+    });
+  }
+
+  try {
+    const session = await verifyChallenge(parsed.data);
+
+    return reply.code(200).send({
+      session,
+    });
+  } catch (error) {
+    app.log.warn(
+      { err: error },
+      "NEAR authentication failed",
+    );
+
+    return reply.code(401).send({
+      error: {
+        code: "authentication_failed",
+        message:
+          "Invalid, expired, or already-used authentication challenge",
+      },
+    });
+  }
+});
+
+// --------------------------------------------------
+// LAUNCHES
+// --------------------------------------------------
 
 app.get("/v1/launches", async () => {
   const launches = await prisma.launch.findMany({
@@ -143,7 +239,9 @@ app.post("/v1/launches", async (req, reply) => {
 
   const input = parsed.data;
   const close = new Date(input.closesAt);
-  const open = input.opensAt ? new Date(input.opensAt) : new Date();
+  const open = input.opensAt
+    ? new Date(input.opensAt)
+    : new Date();
 
   if (close <= open) {
     return reply.code(400).send({
@@ -168,7 +266,8 @@ app.post("/v1/launches", async (req, reply) => {
       opensAt: open,
       closesAt: close,
       state: "OPEN",
-      tagline: "Development launch — token deployment is not yet connected.",
+      tagline:
+        "Development launch — token deployment is not yet connected.",
     },
   });
 
@@ -176,6 +275,10 @@ app.post("/v1/launches", async (req, reply) => {
     launch: publicLaunch(launch),
   });
 });
+
+// --------------------------------------------------
+// PAYMENT CHECKS
+// --------------------------------------------------
 
 app.post<{ Params: { id: string } }>(
   "/v1/launches/:id/payment-checks",
@@ -348,6 +451,10 @@ app.post<{ Params: { id: string } }>(
   },
 );
 
+// --------------------------------------------------
+// SEALED BIDS
+// --------------------------------------------------
+
 app.post<{ Params: { id: string } }>(
   "/v1/launches/:id/bids",
   async (req, reply) => {
@@ -462,7 +569,8 @@ app.post<{ Params: { id: string } }>(
         return reply.code(409).send({
           error: {
             code: "duplicate_bid",
-            message: "This account already submitted a bid for this launch",
+            message:
+              "This account already submitted a bid for this launch",
           },
         });
       }
@@ -472,11 +580,21 @@ app.post<{ Params: { id: string } }>(
   },
 );
 
+// --------------------------------------------------
+// ERROR HANDLER
+// --------------------------------------------------
+
 app.setErrorHandler((error: unknown, _req, reply) => {
   app.log.error(error);
 
-  const status = isApiError(error) ? error.statusCode ?? 500 : 500;
-  const code = isApiError(error) ? error.code ?? "internal_error" : "internal_error";
+  const status = isApiError(error)
+    ? error.statusCode ?? 500
+    : 500;
+
+  const code = isApiError(error)
+    ? error.code ?? "internal_error"
+    : "internal_error";
+
   const message =
     status >= 500
       ? "Internal server error"
@@ -491,6 +609,10 @@ app.setErrorHandler((error: unknown, _req, reply) => {
     },
   });
 });
+
+// --------------------------------------------------
+// SERVER STARTUP AND SHUTDOWN
+// --------------------------------------------------
 
 const host = process.env.HOST ?? "127.0.0.1";
 const port = Number(process.env.PORT ?? 4001);
