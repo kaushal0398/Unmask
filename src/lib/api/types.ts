@@ -171,7 +171,11 @@ export interface LaunchApi {
   getEnclaveKey(launchId: string): Promise<EnclaveKey>;
 
   /** Lock funds for a bid. Resolves once the check is `locked`; rejects with `ApiError("payment_failed")`. */
-  createPaymentCheck(input: { launchId: string; amount: number }): Promise<{ check: PaymentCheck; key: string }>;
+  createPaymentCheck(input: {
+  launchId: string;
+  bidder: string;
+  amount: number;
+}): Promise<{ check: PaymentCheck; key: string }>;
   getPaymentCheck(id: string): Promise<PaymentCheck | null>;
   /** Take the funds back. Works while the check is `locked` or `expired`. */
   reclaimPaymentCheck(id: string): Promise<PaymentCheck>;

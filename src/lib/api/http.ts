@@ -6,6 +6,7 @@ import {
   type CreateStep,
   type Launch,
   type LaunchApi,
+  type PaymentCheck,
 } from "@/lib/api/types";
 import { MockLaunchApi } from "@/lib/api/mock";
 
@@ -40,8 +41,53 @@ type BackendLaunch = {
   codeHash: string | null;
 };
 
+type BackendPaymentCheck = {
+  id: string;
+  token: string;
+  amountAtomic: string;
+  state: string;
+  expiresAt: string;
+};
+
 function units(atomic: string, decimals: number): number {
   return Number(atomic) / 10 ** decimals;
+}
+
+function paymentToAtomic(amount: number): string {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new ApiError("payment_failed", "Payment amount must be positive.");
+  }
+
+  return BigInt(
+    Math.round(amount * 10 ** PAYMENT_DECIMALS),
+  ).toString();
+}
+
+function mapPaymentCheck(item: BackendPaymentCheck): PaymentCheck {
+  const states = [
+    "creating",
+    "locked",
+    "failed",
+    "expired",
+    "reclaimed",
+    "claimed",
+  ] as const;
+
+  const normalizedState = item.state.toLowerCase();
+
+  const state = states.includes(
+    normalizedState as (typeof states)[number],
+  )
+    ? (normalizedState as (typeof states)[number])
+    : "failed";
+
+  return {
+    id: item.id,
+    token: item.token,
+    amount: units(item.amountAtomic, PAYMENT_DECIMALS),
+    state,
+    expiresAt: item.expiresAt,
+  };
 }
 
 function mapLaunch(item: BackendLaunch): Launch {
@@ -96,7 +142,8 @@ async function request<T>(
 
   if (!response.ok) {
     const message =
-      data?.error?.message ?? `Backend request failed (${response.status}).`;
+      data?.error?.message ??
+      `Backend request failed (${response.status}).`;
 
     if (response.status === 404) {
       throw new ApiError("not_found", message);
@@ -104,6 +151,13 @@ async function request<T>(
 
     if (response.status === 409) {
       throw new ApiError("closed", message);
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new ApiError(
+        "network",
+        "Your wallet session is invalid or expired. Please reconnect and authenticate.",
+      );
     }
 
     throw new ApiError("network", message);
@@ -117,6 +171,17 @@ export class HttpLaunchApi implements LaunchApi {
 
   constructor(private readonly sessionToken?: string) {}
 
+  private requireSession(): string {
+    if (!this.sessionToken) {
+      throw new ApiError(
+        "network",
+        "Connect and authenticate your real NEAR wallet first.",
+      );
+    }
+
+    return this.sessionToken;
+  }
+
   async listLaunches(): Promise<Launch[]> {
     const [demoLaunches, response] = await Promise.all([
       this.demo.listLaunches(),
@@ -124,11 +189,15 @@ export class HttpLaunchApi implements LaunchApi {
     ]);
 
     const backendLaunches = response.launches.map(mapLaunch);
-    const existingIds = new Set(backendLaunches.map((launch) => launch.id));
+    const existingIds = new Set(
+      backendLaunches.map((launch) => launch.id),
+    );
 
     return [
       ...backendLaunches,
-      ...demoLaunches.filter((launch) => !existingIds.has(launch.id)),
+      ...demoLaunches.filter(
+        (launch) => !existingIds.has(launch.id),
+      ),
     ];
   }
 
@@ -137,11 +206,16 @@ export class HttpLaunchApi implements LaunchApi {
       const response = await request<{ launch: BackendLaunch }>(
         `/v1/launches/${encodeURIComponent(id)}`,
       );
+
       return mapLaunch(response.launch);
     } catch (error) {
-      if (error instanceof ApiError && error.code === "not_found") {
+      if (
+        error instanceof ApiError &&
+        error.code === "not_found"
+      ) {
         return this.demo.getLaunch(id);
       }
+
       throw error;
     }
   }
@@ -150,12 +224,7 @@ export class HttpLaunchApi implements LaunchApi {
     input: CreateLaunchInput,
     onStep: (steps: CreateStep[]) => void,
   ): Promise<{ id: string }> {
-    if (!this.sessionToken) {
-      throw new ApiError(
-        "network",
-        "Connect your real NEAR wallet before creating a launch.",
-      );
-    }
+    const token = this.requireSession();
 
     const step: CreateStep = {
       id: "register-launch",
@@ -193,12 +262,14 @@ export class HttpLaunchApi implements LaunchApi {
             paymentToken: PAYMENT_TOKEN,
             paymentDecimals: PAYMENT_DECIMALS,
             capBps:
-              input.capPercent > 0 ? input.capPercent * 100 : null,
+              input.capPercent > 0
+                ? input.capPercent * 100
+                : null,
             opensAt: opensAt.toISOString(),
             closesAt: closesAt.toISOString(),
           }),
         },
-        this.sessionToken,
+        token,
       );
 
       step.state = "done";
@@ -208,7 +279,9 @@ export class HttpLaunchApi implements LaunchApi {
     } catch (error) {
       step.state = "failed";
       step.error =
-        error instanceof Error ? error.message : "Launch creation failed.";
+        error instanceof Error
+          ? error.message
+          : "Launch creation failed.";
 
       onStep([{ ...step }]);
 
@@ -224,20 +297,96 @@ export class HttpLaunchApi implements LaunchApi {
     return this.demo.getEnclaveKey(id);
   }
 
-  createPaymentCheck(input: { launchId: string; amount: number }) {
-    return this.demo.createPaymentCheck(input);
+  async createPaymentCheck(input: {
+    launchId: string;
+    bidder: string;
+    amount: number;
+  }): Promise<{ check: PaymentCheck; key: string }> {
+    const token = this.requireSession();
+
+    const response = await request<{
+      check: BackendPaymentCheck;
+      claimKey: string;
+      warning?: string;
+    }>(
+      `/v1/launches/${encodeURIComponent(input.launchId)}/payment-checks`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          bidder: input.bidder,
+          token: PAYMENT_TOKEN,
+          amountAtomic: paymentToAtomic(input.amount),
+        }),
+      },
+      token,
+    );
+
+    return {
+      check: mapPaymentCheck(response.check),
+      key: response.claimKey,
+    };
   }
 
-  getPaymentCheck(id: string) {
-    return this.demo.getPaymentCheck(id);
+  async getPaymentCheck(id: string): Promise<PaymentCheck | null> {
+    const token = this.requireSession();
+
+    try {
+      const response = await request<{
+        check: BackendPaymentCheck;
+      }>(
+        `/v1/payment-checks/${encodeURIComponent(id)}`,
+        {},
+        token,
+      );
+
+      return mapPaymentCheck(response.check);
+    } catch (error) {
+      if (
+        error instanceof ApiError &&
+        error.code === "not_found"
+      ) {
+        return null;
+      }
+
+      throw error;
+    }
   }
 
-  reclaimPaymentCheck(id: string) {
-    return this.demo.reclaimPaymentCheck(id);
+  async reclaimPaymentCheck(id: string): Promise<PaymentCheck> {
+    const token = this.requireSession();
+
+    const response = await request<{
+      check: BackendPaymentCheck;
+    }>(
+      `/v1/payment-checks/${encodeURIComponent(id)}/reclaim`,
+      {
+        method: "POST",
+      },
+      token,
+    );
+
+    return mapPaymentCheck(response.check);
   }
 
-  submitBid(bid: Parameters<LaunchApi["submitBid"]>[0]) {
-    return this.demo.submitBid(bid);
+  async submitBid(
+    bid: Parameters<LaunchApi["submitBid"]>[0],
+  ): Promise<{ receiptId: string }> {
+    const token = this.requireSession();
+
+    return request<{ receiptId: string }>(
+      `/v1/launches/${encodeURIComponent(bid.launchId)}/bids`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          bidder: bid.bidder,
+          ciphertext: bid.ciphertext,
+          commitment: bid.commitment,
+          paymentCheckId: bid.paymentCheckId,
+          keyId: bid.keyId,
+        }),
+      },
+      token,
+    );
   }
 
   withdrawBid(launchId: string, bidder: string) {
