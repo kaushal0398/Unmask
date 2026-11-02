@@ -1,20 +1,58 @@
+
 /**
- * Signing in with a NEAR wallet, kept apart from React so it can be tested with a stand-in connector. The sign-in is a
- * signed message (NEP-413): it proves the buyer holds the account without sending a transaction or spending gas.
+ * NEAR wallet authentication using backend-generated NEP-413 challenges.
+ * The wallet signs a message without sending a transaction or spending gas.
  */
+
 export type NearNetwork = "mainnet" | "testnet";
 
-export type SignedIn = { accountId: string; publicKey: string; signature: string; nonce: string; message: string; recipient: string };
+export type SignedIn = {
+  accountId: string;
+  publicKey: string;
+  signature: string;
+  nonce: string;
+  message: string;
+  recipient: string;
+  token: string;
+  expiresAt: string;
+};
 
-/** The slice of `@hot-labs/near-connect` this app uses. */
 export interface ConnectorLike {
   connect(): Promise<WalletLike>;
   disconnect(): Promise<void>;
 }
+
 export interface WalletLike {
   getAccounts(): Promise<Array<{ accountId: string }>>;
-  signMessage(p: { message: string; recipient: string; nonce: Uint8Array }): Promise<{ accountId: string; publicKey: string; signature: string }>;
+  signMessage(p: {
+    message: string;
+    recipient: string;
+    nonce: Uint8Array;
+  }): Promise<{
+    accountId: string;
+    publicKey: string;
+    signature: string;
+  }>;
 }
+
+type ChallengeResponse = {
+  challenge: {
+    challengeId: string;
+    accountId: string;
+    nonce: string;
+    message: string;
+    recipient: string;
+    expiresAt: string;
+  };
+};
+
+type VerifyResponse = {
+  session: {
+    accountId: string;
+    token: string;
+    expiresAt: string;
+  };
+};
 
 export class WalletError extends Error {
   constructor(
@@ -26,27 +64,188 @@ export class WalletError extends Error {
   }
 }
 
-export const networkFromEnv = (v: string | undefined): NearNetwork => (v === "mainnet" ? "mainnet" : "testnet");
+export const networkFromEnv = (
+  value: string | undefined,
+): NearNetwork => (value === "mainnet" ? "mainnet" : "testnet");
+
 export const APP_RECIPIENT = "sealed.launch";
 
-const hex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
-const looksCancelled = (e: unknown) => /reject|cancel|denied|closed|declin/i.test(e instanceof Error ? e.message : String(e));
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4001"
+).replace(/\/+$/, "");
 
-/** Open the wallet picker, then ask the chosen wallet to sign a fresh message. */
-export async function signInWithWallet(connector: ConnectorLike, opts: { random?: (n: number) => Uint8Array; now?: () => Date } = {}): Promise<SignedIn> {
-  const random = opts.random ?? ((n: number) => globalThis.crypto.getRandomValues(new Uint8Array(n)));
+function hexToBytes(value: string): Uint8Array {
+  if (!/^(?:[0-9a-f]{2})+$/i.test(value)) {
+    throw new WalletError("failed", "Backend returned an invalid challenge nonce.");
+  }
+
+  const bytes = new Uint8Array(value.length / 2);
+
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = Number.parseInt(value.slice(i * 2, i * 2 + 2), 16);
+  }
+
+  return bytes;
+}
+
+function looksCancelled(error: unknown): boolean {
+  return /reject|cancel|denied|closed|declin/i.test(
+    error instanceof Error ? error.message : String(error),
+  );
+}
+
+async function postJson<T>(
+  path: string,
+  body: unknown,
+): Promise<T> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new WalletError(
+      "unavailable",
+      "Could not reach the authentication server. Check that the backend is running.",
+    );
+  }
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message =
+      data?.error?.message ??
+      `Authentication request failed (${response.status}).`;
+
+    throw new WalletError(
+      "failed",
+      typeof message === "string" ? message : "Authentication request failed.",
+    );
+  }
+
+  return data as T;
+}
+
+/**
+ * Connect the wallet, request a backend challenge, sign it,
+ * and exchange the signature for an authenticated session.
+ */
+export async function signInWithWallet(
+  connector: ConnectorLike,
+): Promise<SignedIn> {
   try {
     const wallet = await connector.connect();
+
     const [account] = await wallet.getAccounts();
-    if (!account) throw new WalletError("failed", "The wallet did not return an account.");
-    const nonce = random(32);
-    const message = `Sign in to Sealed as ${account.accountId}. This does not move funds. ${(opts.now?.() ?? new Date()).toISOString()}`;
-    const signed = await wallet.signMessage({ message, recipient: APP_RECIPIENT, nonce });
-    if (!signed.signature || !signed.publicKey) throw new WalletError("failed", "The wallet returned no signature.");
-    return { accountId: signed.accountId || account.accountId, publicKey: signed.publicKey, signature: signed.signature, nonce: hex(nonce), message, recipient: APP_RECIPIENT };
-  } catch (e) {
-    if (e instanceof WalletError) throw e;
-    if (looksCancelled(e)) throw new WalletError("cancelled", "You closed the wallet before signing in.");
-    throw new WalletError("failed", e instanceof Error ? e.message : "The wallet could not be reached.");
+
+    if (!account?.accountId) {
+      throw new WalletError(
+        "failed",
+        "The wallet did not return an account.",
+      );
+    }
+
+    // Step 1: Ask the backend for a fresh challenge.
+    const challengeResponse = await postJson<ChallengeResponse>(
+      "/v1/auth/challenge",
+      {
+        accountId: account.accountId,
+      },
+    );
+
+    const challenge = challengeResponse.challenge;
+
+    if (
+      !challenge ||
+      challenge.accountId !== account.accountId ||
+      challenge.recipient !== APP_RECIPIENT
+    ) {
+      throw new WalletError(
+        "failed",
+        "The backend returned an invalid authentication challenge.",
+      );
+    }
+
+    // Step 2: Decode the backend-generated nonce.
+    const nonceBytes = hexToBytes(challenge.nonce);
+
+    // Step 3: Ask the wallet to sign the exact backend message.
+    const signed = await wallet.signMessage({
+      message: challenge.message,
+      recipient: challenge.recipient,
+      nonce: nonceBytes,
+    });
+
+    if (!signed.signature || !signed.publicKey) {
+      throw new WalletError(
+        "failed",
+        "The wallet returned no signature.",
+      );
+    }
+
+    if (signed.accountId !== account.accountId) {
+      throw new WalletError(
+        "failed",
+        "The signing wallet account does not match the connected account.",
+      );
+    }
+
+    // Step 4: Send the signature to the backend for verification.
+    const verifyResponse = await postJson<VerifyResponse>(
+      "/v1/auth/verify",
+      {
+        challengeId: challenge.challengeId,
+        accountId: signed.accountId,
+        publicKey: signed.publicKey,
+        signature: signed.signature,
+      },
+    );
+
+    const session = verifyResponse.session;
+
+    if (
+      !session?.token ||
+      session.accountId !== account.accountId
+    ) {
+      throw new WalletError(
+        "failed",
+        "The authentication server returned an invalid session.",
+      );
+    }
+
+    // Step 5: Return the authenticated session to React.
+    return {
+      accountId: session.accountId,
+      publicKey: signed.publicKey,
+      signature: signed.signature,
+      nonce: challenge.nonce,
+      message: challenge.message,
+      recipient: challenge.recipient,
+      token: session.token,
+      expiresAt: session.expiresAt,
+    };
+  } catch (error) {
+    if (error instanceof WalletError) {
+      throw error;
+    }
+
+    if (looksCancelled(error)) {
+      throw new WalletError(
+        "cancelled",
+        "You closed the wallet before signing in.",
+      );
+    }
+
+    throw new WalletError(
+      "failed",
+      error instanceof Error
+        ? error.message
+        : "The wallet could not complete authentication.",
+    );
   }
 }

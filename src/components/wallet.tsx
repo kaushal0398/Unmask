@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { useToast } from "@/components/toast";
+
 import {
   WalletError,
   networkFromEnv,
@@ -48,7 +49,9 @@ async function loadConnector(): Promise<ConnectorLike> {
 
   return new NearConnector({
     network: networkFromEnv(process.env.NEXT_PUBLIC_NEAR_NETWORK),
-    features: { signMessage: true },
+    features: {
+      signMessage: true,
+    },
   }) as unknown as ConnectorLike;
 }
 
@@ -72,29 +75,42 @@ export function WalletProvider({
     setMode("demo");
     setAuth(null);
 
-    toast("Demo wallet connected. It signs nothing and holds nothing.", "info");
+    toast(
+      "Demo wallet connected. It signs nothing and holds nothing.",
+      "info",
+    );
   }, [toast]);
 
   const connect = useCallback(async () => {
     setBusy(true);
 
     try {
-      const c = connector ?? (await loader());
-      setConnector(c);
+      const currentConnector = connector ?? (await loader());
 
-      const signed = await signInWithWallet(c);
+      setConnector(currentConnector);
+
+      // Performs wallet connection, backend challenge,
+      // NEP-413 signing, and backend verification.
+      const signed = await signInWithWallet(currentConnector);
 
       setAccount(signed.accountId);
       setMode("real");
       setAuth(signed);
 
       toast(`Signed in as ${signed.accountId}.`, "ok");
-    } catch (e) {
-      if (e instanceof WalletError && e.kind === "cancelled") {
-        toast(e.message, "info");
+    } catch (error) {
+      if (
+        error instanceof WalletError &&
+        error.kind === "cancelled"
+      ) {
+        toast(error.message, "info");
       } else {
         toast(
-          `${e instanceof Error ? e.message : "The wallet could not be reached."} Use the demo wallet to keep looking around.`,
+          `${
+            error instanceof Error
+              ? error.message
+              : "The wallet could not be reached."
+          } Use the demo wallet to keep looking around.`,
           "error",
         );
       }
@@ -105,9 +121,11 @@ export function WalletProvider({
 
   const disconnect = useCallback(async () => {
     try {
-      if (mode === "real") await connector?.disconnect();
+      if (mode === "real") {
+        await connector?.disconnect();
+      }
     } catch {
-      // Signing out locally still works if the wallet does not answer.
+      // Local sign-out still works if the wallet does not respond.
     }
 
     setAccount(null);
@@ -116,7 +134,15 @@ export function WalletProvider({
   }, [connector, mode]);
 
   const value = useMemo(
-    () => ({ account, mode, busy, auth, connect, connectDemo, disconnect }),
+    () => ({
+      account,
+      mode,
+      busy,
+      auth,
+      connect,
+      connectDemo,
+      disconnect,
+    }),
     [account, mode, busy, auth, connect, connectDemo, disconnect],
   );
 

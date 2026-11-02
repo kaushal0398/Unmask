@@ -2,7 +2,7 @@
 import Fastify from "fastify";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-
+import cors from "@fastify/cors";
 import { prisma } from "./db.js";
 import {
   createCheckSchema,
@@ -18,6 +18,16 @@ import {
 const app = Fastify({
   logger: true,
   bodyLimit: 128 * 1024,
+});
+
+// Register CORS here
+await app.register(cors, {
+  origin: [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+  ],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 
 const paymentProvider = new MockPaymentProvider();
