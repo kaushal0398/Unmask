@@ -156,3 +156,27 @@ export async function verifyChallenge(input: {
     expiresAt: expiresAt.toISOString(),
   };
 }
+
+export async function getSessionAccount(token: string) {
+  if (!token || token.length > 256) {
+    return null;
+  }
+
+  const tokenHash = createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  const session = await prisma.authSession.findUnique({
+    where: { tokenHash },
+  });
+
+  if (
+    !session ||
+    session.revokedAt ||
+    session.expiresAt <= new Date()
+  ) {
+    return null;
+  }
+
+  return session.accountId;
+}

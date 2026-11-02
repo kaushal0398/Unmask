@@ -9,6 +9,7 @@ import { getApi } from "@/lib/api";
 import { CreateStepError, type CreateStep, type CreateStepId } from "@/lib/api/types";
 import { Badge, ButtonLink, Button, Card, Mono, cx } from "@/components/ui";
 import { compact, tokens, usd } from "@/lib/format";
+import { useWallet } from "@/components/wallet";
 
 const WINDOWS = [
   { value: "15", label: "15 minutes" },
@@ -38,6 +39,7 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
 const inputClass = "w-full rounded-none border border-line-strong bg-black px-4 py-3 text-base outline-none placeholder:text-faint focus:bg-white/[0.03]";
 
 export function CreateForm() {
+  const { auth, mode } = useWallet();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [supply, setSupply] = useState("1000000");
@@ -66,25 +68,46 @@ export function CreateForm() {
   const minRaise = valid ? supplyN * reserveN : 0;
 
   async function run(resumeFrom?: CreateStepId) {
-    setRunning(true);
-    try {
-      const { id } = await getApi().createLaunch(
-        { name: name.trim(), symbol, supply: supplyN, reserve: reserveN, windowMinutes: Number(windowMin), capPercent: Number(cap), unsold },
-        setSteps,
-        { resumeFrom },
+  setRunning(true);
+
+  try {
+    if (mode !== "real" || !auth?.token) {
+      throw new Error(
+        "Connect your real NEAR wallet before creating a launch.",
       );
-      setCreated({ id });
-      setSteps(null);
-      toast(`${name.trim()} is ready to open.`, "ok");
-    } catch (e) {
-      if (!(e instanceof CreateStepError)) {
-        toast(e instanceof Error ? e.message : "Could not create the launch.", "error");
-        setSteps(null);
-      } else toast(e.message, "error");
-    } finally {
-      setRunning(false);
     }
+
+    const { id } = await getApi(auth.token).createLaunch(
+      {
+        name: name.trim(),
+        symbol,
+        supply: supplyN,
+        reserve: reserveN,
+        windowMinutes: Number(windowMin),
+        capPercent: Number(cap),
+        unsold,
+      },
+      setSteps,
+      { resumeFrom },
+    );
+
+    setCreated({ id });
+    setSteps(null);
+    toast(`${name.trim()} is ready to open.`, "ok");
+  } catch (e) {
+    if (!(e instanceof CreateStepError)) {
+      toast(
+        e instanceof Error ? e.message : "Could not create the launch.",
+        "error",
+      );
+      setSteps(null);
+    } else {
+      toast(e.message, "error");
+    }
+  } finally {
+    setRunning(false);
   }
+}
 
   async function start() {
     setTouched(true);

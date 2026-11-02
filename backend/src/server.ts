@@ -13,6 +13,7 @@ import { MockPaymentProvider } from "./payment-provider.js";
 import {
   createChallenge,
   verifyChallenge,
+  getSessionAccount,
 } from "./auth.js";
 
 const app = Fastify({
