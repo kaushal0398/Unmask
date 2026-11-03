@@ -14,6 +14,7 @@ import {
   type Position,
   type Result,
   type SealedBid,
+  type MyBid, 
 } from "@/lib/api/types";
 import { clock } from "@/lib/clock";
 import { LAUNCHES, outcomeOf, type Launch as DemoLaunch } from "@/lib/demo";
@@ -231,6 +232,9 @@ export class MockLaunchApi implements LaunchApi {
     });
     return { id };
   }
+  async getMyBids(): Promise<MyBid[]> {
+  return [];
+}
 
   // ---- the buyer's own bids ---------------------------------------------------------------------
 

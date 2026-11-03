@@ -7,6 +7,8 @@ import {
   type Launch,
   type LaunchApi,
   type PaymentCheck,
+  type MyBid,
+
 } from "@/lib/api/types";
 import { MockLaunchApi } from "@/lib/api/mock";
 
@@ -47,6 +49,34 @@ type BackendPaymentCheck = {
   amountAtomic: string;
   state: string;
   expiresAt: string;
+};
+
+type BackendMyBid = {
+  id: string;
+  launchId: string;
+  bidder: string;
+  commitment: string;
+  paymentCheckId: string;
+  keyId: string;
+  receiptId: string;
+  createdAt: string;
+
+  launch: {
+    id: string;
+    name: string;
+    symbol: string;
+    emoji: string;
+    hue: number;
+    state: string;
+    closesAt: string | null;
+  };
+
+  paymentCheck: {
+    token: string;
+    amountAtomic: string;
+    state: string;
+    expiresAt: string;
+  };
 };
 
 function units(atomic: string, decimals: number): number {
@@ -150,6 +180,10 @@ async function request<T>(
     }
 
     if (response.status === 409) {
+      if (data?.error?.code === "duplicate_bid") {
+        throw new ApiError("duplicate_bid", message);
+      }
+
       throw new ApiError("closed", message);
     }
 
@@ -389,6 +423,55 @@ export class HttpLaunchApi implements LaunchApi {
     );
   }
 
+  async getMyBids(): Promise<MyBid[]> {
+  const token = this.requireSession();
+
+  const response = await request<{
+    bids: BackendMyBid[];
+  }>("/v1/me/bids", {}, token);
+
+  return response.bids.map((bid) => {
+    const states = [
+      "creating",
+      "locked",
+      "failed",
+      "expired",
+      "reclaimed",
+      "claimed",
+    ] as const;
+
+    const normalizedState = bid.paymentCheck.state.toLowerCase();
+
+    const paymentState = states.includes(
+      normalizedState as (typeof states)[number]
+    )
+      ? (normalizedState as (typeof states)[number])
+      : "failed";
+
+    return {
+      id: bid.id,
+      launchId: bid.launchId,
+      bidder: bid.bidder,
+      commitment: bid.commitment,
+      paymentCheckId: bid.paymentCheckId,
+      keyId: bid.keyId,
+      receiptId: bid.receiptId,
+      createdAt: bid.createdAt,
+
+      launch: bid.launch,
+
+      paymentCheck: {
+        token: bid.paymentCheck.token,
+        amount: units(
+          bid.paymentCheck.amountAtomic,
+          PAYMENT_DECIMALS
+        ),
+        state: paymentState,
+        expiresAt: bid.paymentCheck.expiresAt,
+      },
+    };
+  });
+}
   withdrawBid(launchId: string, bidder: string) {
     return this.demo.withdrawBid(launchId, bidder);
   }

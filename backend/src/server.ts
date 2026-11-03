@@ -688,6 +688,91 @@ app.post<{ Params: { id: string } }>(
   },
 );
 
+
+// --------------------------------------------------
+// MY BIDS
+// --------------------------------------------------
+
+app.get("/v1/me/bids", async (req) => {
+  // Identify the wallet from its authenticated session.
+  const account = await requireSession(req);
+
+  const bids = await prisma.bid.findMany({
+    where: {
+      bidder: account,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 100,
+    select: {
+      id: true,
+      launchId: true,
+      bidder: true,
+      commitment: true,
+      paymentCheckId: true,
+      keyId: true,
+      receiptId: true,
+      createdAt: true,
+
+      launch: {
+        select: {
+          id: true,
+          name: true,
+          symbol: true,
+          emoji: true,
+          hue: true,
+          state: true,
+          closesAt: true,
+        },
+      },
+
+      paymentCheck: {
+        select: {
+          token: true,
+          amountAtomic: true,
+          state: true,
+          expiresAt: true,
+        },
+      },
+    },
+  });
+
+  return {
+    bids: bids.map((bid) => {
+      const paymentCheckExpired =
+        bid.paymentCheck.state === "LOCKED" &&
+        bid.paymentCheck.expiresAt <= new Date();
+
+      return {
+        id: bid.id,
+        launchId: bid.launchId,
+        bidder: bid.bidder,
+        commitment: bid.commitment,
+        paymentCheckId: bid.paymentCheckId,
+        keyId: bid.keyId,
+        receiptId: bid.receiptId,
+        createdAt: bid.createdAt.toISOString(),
+
+        launch: {
+          ...bid.launch,
+          state: bid.launch.state.toLowerCase(),
+          closesAt: bid.launch.closesAt?.toISOString() ?? null,
+        },
+
+        paymentCheck: {
+          token: bid.paymentCheck.token,
+          amountAtomic: bid.paymentCheck.amountAtomic,
+          state: paymentCheckExpired
+            ? "expired"
+            : bid.paymentCheck.state.toLowerCase(),
+          expiresAt: bid.paymentCheck.expiresAt.toISOString(),
+        },
+      };
+    }),
+  };
+});
+
 // --------------------------------------------------
 // ERROR HANDLER
 // --------------------------------------------------

@@ -142,7 +142,13 @@ export class CreateStepError extends Error {
 
 export class ApiError extends Error {
   constructor(
-    public readonly code: "payment_failed" | "not_found" | "bid_rejected" | "closed" | "network",
+    public readonly code:
+      | "payment_failed"
+      | "not_found"
+      | "bid_rejected"
+      | "duplicate_bid"
+      | "closed"
+      | "network",
     message: string,
   ) {
     super(message);
@@ -161,6 +167,35 @@ export type Position = {
   paid: number;
   refunded: number;
   paymentCheckId?: string;
+};
+
+/** An authenticated user's bid returned by the backend. */
+export type MyBid = {
+  id: string;
+  launchId: string;
+  bidder: string;
+  commitment: string;
+  paymentCheckId: string;
+  keyId: string;
+  receiptId: string;
+  createdAt: string;
+
+  launch: {
+    id: string;
+    name: string;
+    symbol: string;
+    emoji: string;
+    hue: number;
+    state: string;
+    closesAt: string | null;
+  };
+
+  paymentCheck: {
+    token: string;
+    amount: number;
+    state: PaymentCheckState;
+    expiresAt: string;
+  };
 };
 
 export interface LaunchApi {
@@ -187,5 +222,8 @@ export interface LaunchApi {
   /** Runs the steps in order, reporting each. Rejects with `CreateStepError`; call again with `resumeFrom` to continue. */
   createLaunch(input: CreateLaunchInput, onStep: (steps: CreateStep[]) => void, opts?: { resumeFrom?: CreateStepId }): Promise<{ id: string }>;
 
+  /** Fetch the authenticated wallet's bids from the backend. */
+  getMyBids(): Promise<MyBid[]>;
+  
   positions(account: string): Promise<Position[]>;
 }

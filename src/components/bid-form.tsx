@@ -49,34 +49,40 @@ export function BidForm({
   const confirm = useConfirm();
 
   const [limit, setLimit] = useState(() =>
-  String(launch.reserve * 3)
-);
+    String(launch.reserve * 3)
+  );
 
-const [qty, setQty] = useState(() =>
-  String(
-    Math.floor(
-      (launch.cap
-        ? launch.supply * launch.cap
-        : launch.supply) / 10
+  const [qty, setQty] = useState(() =>
+    String(
+      Math.floor(
+        (launch.cap
+          ? launch.supply * launch.cap
+          : launch.supply) / 10
+      )
     )
-  )
-);
+  );
+
   const [phase, setPhase] = useState<
     "form" | "sealing" | "sealed" | "withdrawn"
   >("form");
+
   const [stepIndex, setStepIndex] = useState(0);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+
   const [error, setError] = useState<{
     message: string;
     strandedCheck?: string;
+    duplicateBid?: boolean;
   } | null>(null);
+
   const [withdrawing, setWithdrawing] = useState(false);
   const [reclaiming, setReclaiming] = useState(false);
 
   const biddingClosed = closed;
 
-  const authenticated =
-    Boolean(account && auth?.token && mode === "real");
+  const authenticated = Boolean(
+    account && auth?.token && mode === "real"
+  );
 
   const cap = launch.cap
     ? Math.floor(launch.supply * launch.cap)
@@ -89,7 +95,7 @@ const [qty, setQty] = useState(() =>
 
   if (limit !== "" && !(l >= launch.reserve)) {
     problems.push(
-      `The limit price must be at least the reserve, ${usd(launch.reserve)}.`,
+      `The limit price must be at least the reserve, ${usd(launch.reserve)}.`
     );
   }
 
@@ -99,7 +105,7 @@ const [qty, setQty] = useState(() =>
 
   if (qty !== "" && q > cap) {
     problems.push(
-      `The most one account may bid for is ${tokens(cap)} tokens.`,
+      `The most one account may bid for is ${tokens(cap)} tokens.`
     );
   }
 
@@ -108,9 +114,20 @@ const [qty, setQty] = useState(() =>
 
   const locked = ready ? l * q : 0;
 
+  // Once the backend confirms a duplicate bid, prevent another attempt.
+  const duplicateBid = error?.duplicateBid === true;
+
   async function submit() {
     if (biddingClosed) {
       toast("Bidding has closed for this launch.", "error");
+      return;
+    }
+
+    if (duplicateBid) {
+      toast(
+        "Your wallet has already submitted a bid for this launch.",
+        "error"
+      );
       return;
     }
 
@@ -119,7 +136,7 @@ const [qty, setQty] = useState(() =>
     if (!auth?.token || mode !== "real") {
       toast(
         "Connect and authenticate your real NEAR wallet before bidding.",
-        "error",
+        "error"
       );
       return;
     }
@@ -133,11 +150,13 @@ const [qty, setQty] = useState(() =>
             provider. The current implementation does not transfer or lock
             real funds.
           </p>
+
           <p className="mt-3">
             Your bid data is sealed in this browser using the currently
             configured development enclave key. A production TEE integration
             is not connected yet.
           </p>
+
           <p className="mt-3">
             Maximum bid amount:{" "}
             <Mono className="text-text">{usd(locked)}</Mono>
@@ -186,7 +205,7 @@ const [qty, setQty] = useState(() =>
             key,
           },
         },
-        enclave,
+        enclave
       );
 
       setStepIndex(3);
@@ -206,17 +225,23 @@ const [qty, setQty] = useState(() =>
       setPhase("sealed");
       toast("Your bid was submitted.", "ok");
     } catch (e) {
-      const message =
-        e instanceof Error
+      const isDuplicate =
+        e instanceof ApiError && e.code === "duplicate_bid";
+
+      const message = isDuplicate
+        ? "Your wallet has already submitted a bid for this launch. Only one bid per wallet is currently allowed."
+        : e instanceof Error
           ? e.message
           : "Something went wrong sealing your bid.";
 
       setError({
         message,
         strandedCheck: checkId,
+        duplicateBid: isDuplicate,
       });
 
       setPhase("form");
+
       toast(message, "error");
     }
   }
@@ -231,21 +256,24 @@ const [qty, setQty] = useState(() =>
 
     try {
       await getApi(auth.token).reclaimPaymentCheck(
-        error.strandedCheck,
+        error.strandedCheck
       );
 
-      setError({ message: error.message });
+      setError({
+        message: error.message,
+        duplicateBid: error.duplicateBid,
+      });
 
       toast(
         "Payment check reclaimed. No real funds were transferred.",
-        "ok",
+        "ok"
       );
     } catch (e) {
       toast(
         e instanceof Error
           ? e.message
           : "Could not reclaim the payment check.",
-        "error",
+        "error"
       );
     } finally {
       setReclaiming(false);
@@ -277,13 +305,16 @@ const [qty, setQty] = useState(() =>
       setPhase("withdrawn");
       setReceipt(null);
 
-      toast("Bid withdrawal completed in the current implementation.", "ok");
+      toast(
+        "Bid withdrawal completed in the current implementation.",
+        "ok"
+      );
     } catch (e) {
       toast(
         e instanceof ApiError
           ? e.message
           : "Could not withdraw the bid.",
-        "error",
+        "error"
       );
     } finally {
       setWithdrawing(false);
@@ -303,7 +334,7 @@ const [qty, setQty] = useState(() =>
               key={step}
               className={cx(
                 "flex items-center gap-3 text-sm transition-colors",
-                i <= stepIndex ? "text-text" : "text-faint",
+                i <= stepIndex ? "text-text" : "text-faint"
               )}
             >
               {i < stepIndex ? (
@@ -334,6 +365,7 @@ const [qty, setQty] = useState(() =>
             <h3 className="text-lg font-semibold">
               Your bid was submitted
             </h3>
+
             <p className="text-sm text-muted">
               Your bid commitment and backend receipt have been recorded.
             </p>
@@ -432,12 +464,19 @@ const [qty, setQty] = useState(() =>
             {error.message}
           </p>
 
+          {duplicateBid && (
+            <p className="mt-2 text-xs text-muted">
+              Your existing bid remains recorded. Visit My Bids to view
+              its receipt. You cannot submit another bid from this wallet
+              for this launch.
+            </p>
+          )}
+
           {error.strandedCheck && (
             <p className="mt-2 text-xs text-muted">
               A development payment check was created before the
               bid failed. You can attempt to reclaim it after it
-              expires.
-              {" "}
+              expires.{" "}
               <button
                 className="text-text underline underline-offset-4 disabled:opacity-50"
                 onClick={() => void releaseStranded()}
@@ -470,7 +509,7 @@ const [qty, setQty] = useState(() =>
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
               placeholder={String(launch.reserve * 3)}
-              disabled={biddingClosed}
+              disabled={biddingClosed || duplicateBid}
               className="w-full bg-transparent px-2 py-3 font-mono text-lg outline-none placeholder:text-faint"
               aria-label="Limit price per token in dollars"
             />
@@ -492,7 +531,7 @@ const [qty, setQty] = useState(() =>
               value={qty}
               onChange={(e) => setQty(e.target.value)}
               placeholder={String(Math.floor(cap / 10))}
-              disabled={biddingClosed}
+              disabled={biddingClosed || duplicateBid}
               className="w-full bg-transparent py-3 font-mono text-lg outline-none placeholder:text-faint"
               aria-label="Quantity of tokens"
             />
@@ -509,7 +548,7 @@ const [qty, setQty] = useState(() =>
           </span>
         </label>
 
-        {problems.length > 0 && (
+        {problems.length > 0 && !duplicateBid && (
           <ul
             className="space-y-1 text-sm text-danger"
             role="alert"
@@ -538,17 +577,21 @@ const [qty, setQty] = useState(() =>
             <span className="text-text">No</span>
           </div>
         </div>
-        
 
         {account ? (
           <Button
             type="submit"
             tone="seal"
             className="w-full py-3.5 text-base"
-            disabled={!ready || biddingClosed || !authenticated}
+            disabled={
+              !ready ||
+              biddingClosed ||
+              !authenticated ||
+              duplicateBid
+            }
           >
             <Lock className="size-4" />
-            Seal my bid
+            {duplicateBid ? "Bid already submitted" : "Seal my bid"}
           </Button>
         ) : (
           <div className="flex justify-center">
