@@ -28,6 +28,19 @@ const SEAL_STEPS = [
   "Sending the sealed bid to the backend",
 ];
 
+type BidRevealFile = {
+  format: "sealed-launchpad-bid-reveal";
+  version: 1;
+  receiptId: string;
+  launchId: string;
+  bidder: string;
+  limit: number;
+  qty: number;
+  paymentCheckId: string;
+  salt: string;
+  commitment: string;
+};
+
 type Receipt = {
   commitment: string;
   limit: number;
@@ -35,7 +48,23 @@ type Receipt = {
   locked: number;
   checkId: string;
   receiptId: string;
+  reveal: BidRevealFile;
 };
+
+function downloadRevealFile(reveal: BidRevealFile) {
+  const blob = new Blob([JSON.stringify(reveal, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `bid-reveal-${reveal.receiptId}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
 export function BidForm({
   launch,
@@ -193,25 +222,40 @@ export function BidForm({
       setStepIndex(2);
 
       // Step 3: Seal the bid locally.
-      const sealed = await sealBid(
-        {
-          launchId: launch.id,
-          bidder: account,
-          limit: l,
-          qty: q,
-          salt: await newSalt(),
-          paymentCheck: {
-            id: check.id,
-            key,
-          },
+      // Keep the salt so the bidder can independently recompute the
+      // commitment later. It is never sent to the backend as plaintext.
+      const salt = await newSalt();
+      const plaintextBid = {
+        launchId: launch.id,
+        bidder: account,
+        limit: l,
+        qty: q,
+        salt,
+        paymentCheck: {
+          id: check.id,
+          key,
         },
-        enclave
-      );
+      };
+
+      const sealed = await sealBid(plaintextBid, enclave);
 
       setStepIndex(3);
 
       // Step 4: Submit the sealed bid using the authenticated API.
       const { receiptId } = await api.submitBid(sealed);
+
+      const reveal: BidRevealFile = {
+        format: "sealed-launchpad-bid-reveal",
+        version: 1,
+        receiptId,
+        launchId: launch.id,
+        bidder: account,
+        limit: l,
+        qty: q,
+        paymentCheckId: check.id,
+        salt,
+        commitment: sealed.commitment,
+      };
 
       setReceipt({
         commitment: sealed.commitment,
@@ -220,7 +264,12 @@ export function BidForm({
         locked,
         checkId: check.id,
         receiptId,
+        reveal,
       });
+
+      // Download immediately so navigating away cannot silently discard
+      // the only copy of the bidder's private reveal material.
+      downloadRevealFile(reveal);
 
       setPhase("sealed");
       toast("Your bid was submitted.", "ok");
@@ -392,6 +441,24 @@ export function BidForm({
 
         <div className="mt-5">
           <PaymentCheckPanel checkId={receipt.checkId} />
+        </div>
+
+        <div className="mt-5 border border-seal/30 bg-seal/5 p-4">
+          <p className="text-sm font-medium text-text">
+            Private bid reveal file
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-muted">
+            A JSON backup containing your bid values and salt was downloaded.
+            Keep it private. Anyone with this file can learn your bid. Do not
+            share it until the auction has closed and disclosure is safe.
+          </p>
+          <Button
+            tone="seal"
+            className="mt-3 w-full"
+            onClick={() => downloadRevealFile(receipt.reveal)}
+          >
+            Download reveal file again
+          </Button>
         </div>
 
         <p className="mt-5 border border-line bg-black/40 p-4 text-xs leading-relaxed text-muted">

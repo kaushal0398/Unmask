@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { TokenArt } from "@/components/token-art";
 import { useToast } from "@/components/toast";
 import { useWallet } from "@/components/wallet";
@@ -48,6 +48,13 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
     useState<ReceiptVerification | null>(null);
   const [receiptError, setReceiptError] = useState<string | null>(null);
   const [receiptRunning, setReceiptRunning] = useState(false);
+  const [revealRunning, setRevealRunning] = useState(false);
+  const [revealCheck, setRevealCheck] = useState<{
+    passed: boolean;
+    computedCommitment: string;
+    message: string;
+  } | null>(null);
+  const [revealError, setRevealError] = useState<string | null>(null);
 
   const toast = useToast();
   const launch = launches.find((l) => l.id === id)!;
@@ -75,6 +82,8 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
     try {
       const verification = await getApi(auth.token).verifyReceipt(normalizedReceiptId);
       setReceiptResult(verification);
+      setRevealCheck(null);
+      setRevealError(null);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not verify this receipt.";
@@ -82,6 +91,120 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
       toast(message, "error");
     } finally {
       setReceiptRunning(false);
+    }
+  }
+
+  async function verifyRevealFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    // Allow selecting the same file again after a failed attempt.
+    event.target.value = "";
+
+    if (!file) return;
+
+    if (!receiptResult || receiptResult.status !== "record_verified") {
+      setRevealError("Verify the backend receipt successfully before checking its reveal file.");
+      return;
+    }
+
+    setRevealRunning(true);
+    setRevealError(null);
+    setRevealCheck(null);
+
+    try {
+      const raw = await file.text();
+      const parsed: unknown = JSON.parse(raw);
+
+      if (!parsed || typeof parsed !== "object") {
+        throw new Error("The selected file is not a valid bid reveal JSON object.");
+      }
+
+      const reveal = parsed as Record<string, unknown>;
+      const requiredStringFields = [
+        "receiptId",
+        "launchId",
+        "bidder",
+        "paymentCheckId",
+        "salt",
+        "commitment",
+      ] as const;
+
+      for (const field of requiredStringFields) {
+        if (typeof reveal[field] !== "string" || !reveal[field]) {
+          throw new Error(`The reveal file is missing a valid ${field} field.`);
+        }
+      }
+
+      if (
+        reveal.format !== "sealed-launchpad-bid-reveal" ||
+        reveal.version !== 1
+      ) {
+        throw new Error("Unsupported bid reveal file format or version.");
+      }
+
+      if (
+        typeof reveal.limit !== "number" ||
+        !Number.isFinite(reveal.limit) ||
+        reveal.limit <= 0 ||
+        typeof reveal.qty !== "number" ||
+        !Number.isSafeInteger(reveal.qty) ||
+        reveal.qty <= 0
+      ) {
+        throw new Error("The reveal file contains an invalid limit price or quantity.");
+      }
+
+      if (!/^[0-9a-f]{32}$/i.test(reveal.salt as string)) {
+        throw new Error("The reveal file salt is not a valid 16-byte hexadecimal value.");
+      }
+
+      const receiptMatches =
+        reveal.receiptId === receiptResult.receiptId &&
+        reveal.launchId === receiptResult.bid.launchId &&
+        reveal.bidder === receiptResult.bid.bidder &&
+        reveal.paymentCheckId === receiptResult.bid.paymentCheckId &&
+        (reveal.commitment as string).toLowerCase() ===
+          receiptResult.bid.commitment.toLowerCase();
+
+      const commitmentInput = JSON.stringify([
+        reveal.launchId,
+        reveal.bidder,
+        reveal.limit,
+        reveal.qty,
+        reveal.paymentCheckId,
+        reveal.salt,
+      ]);
+
+      const digest = await globalThis.crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(commitmentInput),
+      );
+      const computedCommitment = Array.from(
+        new Uint8Array(digest),
+        (byte) => byte.toString(16).padStart(2, "0"),
+      ).join("");
+
+      const hashMatches =
+        computedCommitment.toLowerCase() ===
+        (reveal.commitment as string).toLowerCase();
+
+      const passed = receiptMatches && hashMatches;
+
+      setRevealCheck({
+        passed,
+        computedCommitment,
+        message: !receiptMatches
+          ? "The reveal file does not match the verified backend receipt."
+          : hashMatches
+            ? "The SHA-256 commitment was independently recomputed and matches the backend record."
+            : "The recomputed SHA-256 commitment does not match the backend record.",
+      });
+    } catch (error) {
+      setRevealError(
+        error instanceof Error
+          ? error.message
+          : "Could not read or verify this reveal file.",
+      );
+    } finally {
+      setRevealRunning(false);
     }
   }
 
@@ -231,6 +354,69 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
                 {receiptResult.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}
               </ul>
             </div>
+            <div className="border border-seal/30 bg-seal/5 p-4">
+              <p className="text-xs uppercase tracking-wider text-faint">
+                Independent commitment verification
+              </p>
+              <h3 className="mt-2 text-sm font-semibold">
+                Verify your private bid reveal file
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-muted">
+                Select the JSON file downloaded when you submitted this bid.
+                It is read and hashed locally in your browser; the file and its
+                salt are not uploaded to the backend.
+              </p>
+              <label className="mt-4 block">
+                <span className="sr-only">Bid reveal JSON file</span>
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={(event) => void verifyRevealFile(event)}
+                  disabled={revealRunning || receiptResult.status !== "record_verified"}
+                  className="block w-full text-xs text-muted file:mr-3 file:border file:border-line-strong file:bg-black file:px-3 file:py-2 file:text-xs file:text-text hover:file:bg-white/5 disabled:opacity-50"
+                />
+              </label>
+              {revealRunning && (
+                <p className="mt-3 flex items-center gap-2 text-xs text-muted" aria-live="polite">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Recomputing SHA-256 commitment locally…
+                </p>
+              )}
+              {revealError && (
+                <p className="mt-3 border border-danger/50 bg-danger/5 p-3 text-xs text-danger" role="alert">
+                  {revealError}
+                </p>
+              )}
+              {revealCheck && (
+                <div className={cx(
+                  "mt-3 border p-3",
+                  revealCheck.passed
+                    ? "border-verified/40 bg-verified/10"
+                    : "border-danger/40 bg-danger/10",
+                )}>
+                  <p className={cx(
+                    "text-sm font-semibold",
+                    revealCheck.passed ? "text-verified" : "text-danger",
+                  )}>
+                    {revealCheck.passed
+                      ? "Commitment independently verified"
+                      : "Commitment verification failed"}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted">
+                    {revealCheck.message}
+                  </p>
+                  <p className="mt-3 text-xs text-faint">Computed SHA-256</p>
+                  <p className="mt-1 break-all font-mono text-[11px] text-text">
+                    {revealCheck.computedCommitment}
+                  </p>
+                </div>
+              )}
+              <p className="mt-3 text-[11px] leading-relaxed text-faint">
+                Only verify a reveal after bidding has closed and disclosure is
+                safe. Anyone who obtains the reveal file can see the bid values.
+              </p>
+            </div>
+
             <p className="text-xs text-faint">
               Verification level: <Mono>{receiptResult.verificationLevel}</Mono>
             </p>
