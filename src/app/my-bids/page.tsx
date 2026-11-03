@@ -269,9 +269,12 @@ export default function MyBidsPage() {
                   <p className="text-xs text-muted">
                     Receipt ID
                   </p>
-                  <p className="mt-1 break-all font-mono text-xs">
+                  <Link
+                    href={`/my-bids/${encodeURIComponent(bid.id)}`}
+                    className="mt-1 block break-all font-mono text-xs text-seal hover:underline"
+                  >
                     {bid.receiptId}
-                  </p>
+                  </Link>
                 </div>
 
                 <div>
