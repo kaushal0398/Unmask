@@ -773,6 +773,124 @@ app.get("/v1/me/bids", async (req) => {
   };
 });
 
+
+// --------------------------------------------------
+// BID RECEIPT VERIFICATION
+// --------------------------------------------------
+
+app.get<{ Params: { receiptId: string } }>(
+  "/v1/receipts/:receiptId/verify",
+  async (req, reply) => {
+    const account = await requireSession(req);
+
+    const bid = await prisma.bid.findUnique({
+      where: {
+        receiptId: req.params.receiptId,
+      },
+      include: {
+        launch: true,
+        paymentCheck: true,
+      },
+    });
+
+    // Do not reveal whether another wallet owns a receipt.
+    if (!bid || bid.bidder !== account) {
+      return reply.code(404).send({
+        error: {
+          code: "not_found",
+          message: "Receipt not found for this wallet.",
+        },
+      });
+    }
+
+    const checks = [
+      {
+        id: "receipt",
+        label: "Receipt exists",
+        passed: Boolean(bid.receiptId),
+        detail: "The receipt ID matches a stored bid record.",
+      },
+      {
+        id: "ownership",
+        label: "Wallet ownership",
+        passed: bid.bidder === account,
+        detail: "The bid belongs to the authenticated wallet.",
+      },
+      {
+        id: "launch",
+        label: "Launch relationship",
+        passed: bid.launch.id === bid.launchId,
+        detail: "The bid references its recorded launch.",
+      },
+      {
+        id: "payment",
+        label: "Payment-check relationship",
+        passed:
+          bid.paymentCheck.id === bid.paymentCheckId &&
+          bid.paymentCheck.launchId === bid.launchId &&
+          bid.paymentCheck.bidder === bid.bidder,
+        detail:
+          "The payment check references the same launch and bidder.",
+      },
+      {
+        id: "commitment",
+        label: "Commitment record",
+        passed: /^[0-9a-f]{64}$/i.test(bid.commitment),
+        detail:
+          "A SHA-256-format commitment is recorded. Its original bid data and salt have not been independently recomputed.",
+      },
+      {
+        id: "ciphertext",
+        label: "Encrypted bid record",
+        passed:
+          bid.ciphertext.length > 0 &&
+          !bid.ciphertext.trim().startsWith("{"),
+        detail:
+          "An encrypted bid payload is recorded rather than a plaintext JSON bid.",
+      },
+    ];
+
+    const passed = checks.every((check) => check.passed);
+
+    return {
+      receiptId: bid.receiptId,
+      status: passed ? "record_verified" : "record_check_failed",
+      verificationLevel: "backend_record_only",
+      checks,
+
+      bid: {
+        id: bid.id,
+        launchId: bid.launchId,
+        bidder: bid.bidder,
+        commitment: bid.commitment,
+        paymentCheckId: bid.paymentCheckId,
+        keyId: bid.keyId,
+        createdAt: bid.createdAt.toISOString(),
+      },
+
+      launch: {
+        id: bid.launch.id,
+        name: bid.launch.name,
+        symbol: bid.launch.symbol,
+      },
+
+      paymentCheck: {
+        id: bid.paymentCheck.id,
+        token: bid.paymentCheck.token,
+        state: bid.paymentCheck.state.toLowerCase(),
+        expiresAt: bid.paymentCheck.expiresAt.toISOString(),
+      },
+
+      limitations: [
+        "The original bid salt and plaintext are not stored by the backend.",
+        "The commitment has not been independently recomputed.",
+        "TEE attestation and on-chain settlement are not verified.",
+      ],
+    };
+  }
+);
+
+
 // --------------------------------------------------
 // ERROR HANDLER
 // --------------------------------------------------

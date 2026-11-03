@@ -198,6 +198,45 @@ export type MyBid = {
   };
 };
 
+export type ReceiptVerificationCheck = {
+  id: string;
+  label: string;
+  passed: boolean;
+  detail: string;
+};
+
+export type ReceiptVerification = {
+  receiptId: string;
+  status: "record_verified" | "record_check_failed";
+  verificationLevel: "backend_record_only";
+  checks: ReceiptVerificationCheck[];
+
+  bid: {
+    id: string;
+    launchId: string;
+    bidder: string;
+    commitment: string;
+    paymentCheckId: string;
+    keyId: string;
+    createdAt: string;
+  };
+
+  launch: {
+    id: string;
+    name: string;
+    symbol: string;
+  };
+
+  paymentCheck: {
+    id: string;
+    token: string;
+    state: string;
+    expiresAt: string;
+  };
+
+  limitations: string[];
+};
+
 export interface LaunchApi {
   listLaunches(): Promise<Launch[]>;
   getLaunch(id: string): Promise<Launch | null>;
@@ -224,6 +263,8 @@ export interface LaunchApi {
 
   /** Fetch the authenticated wallet's bids from the backend. */
   getMyBids(): Promise<MyBid[]>;
+
+  verifyReceipt(receiptId: string): Promise<ReceiptVerification>;
   
   positions(account: string): Promise<Position[]>;
 }

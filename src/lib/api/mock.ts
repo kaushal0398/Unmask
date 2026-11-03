@@ -14,7 +14,8 @@ import {
   type Position,
   type Result,
   type SealedBid,
-  type MyBid, 
+  type MyBid,
+  type ReceiptVerification,
 } from "@/lib/api/types";
 import { clock } from "@/lib/clock";
 import { LAUNCHES, outcomeOf, type Launch as DemoLaunch } from "@/lib/demo";
@@ -233,8 +234,17 @@ export class MockLaunchApi implements LaunchApi {
     return { id };
   }
   async getMyBids(): Promise<MyBid[]> {
-  return [];
-}
+    return [];
+  }
+
+  async verifyReceipt(
+    _receiptId: string,
+  ): Promise<ReceiptVerification> {
+    throw new ApiError(
+      "not_found",
+      "Receipt verification is only available with the backend API.",
+    );
+  }
 
   // ---- the buyer's own bids ---------------------------------------------------------------------
 

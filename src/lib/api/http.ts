@@ -8,7 +8,7 @@ import {
   type LaunchApi,
   type PaymentCheck,
   type MyBid,
-
+  type ReceiptVerification,
 } from "@/lib/api/types";
 import { MockLaunchApi } from "@/lib/api/mock";
 
@@ -424,54 +424,63 @@ export class HttpLaunchApi implements LaunchApi {
   }
 
   async getMyBids(): Promise<MyBid[]> {
-  const token = this.requireSession();
+    const token = this.requireSession();
 
-  const response = await request<{
-    bids: BackendMyBid[];
-  }>("/v1/me/bids", {}, token);
+    const response = await request<{
+      bids: BackendMyBid[];
+    }>("/v1/me/bids", {}, token);
 
-  return response.bids.map((bid) => {
-    const states = [
-      "creating",
-      "locked",
-      "failed",
-      "expired",
-      "reclaimed",
-      "claimed",
-    ] as const;
+    return response.bids.map((bid) => {
+      const states = [
+        "creating",
+        "locked",
+        "failed",
+        "expired",
+        "reclaimed",
+        "claimed",
+      ] as const;
 
-    const normalizedState = bid.paymentCheck.state.toLowerCase();
+      const normalizedState = bid.paymentCheck.state.toLowerCase();
 
-    const paymentState = states.includes(
-      normalizedState as (typeof states)[number]
-    )
-      ? (normalizedState as (typeof states)[number])
-      : "failed";
+      const paymentState = states.includes(
+        normalizedState as (typeof states)[number]
+      )
+        ? (normalizedState as (typeof states)[number])
+        : "failed";
 
-    return {
-      id: bid.id,
-      launchId: bid.launchId,
-      bidder: bid.bidder,
-      commitment: bid.commitment,
-      paymentCheckId: bid.paymentCheckId,
-      keyId: bid.keyId,
-      receiptId: bid.receiptId,
-      createdAt: bid.createdAt,
+      return {
+        id: bid.id,
+        launchId: bid.launchId,
+        bidder: bid.bidder,
+        commitment: bid.commitment,
+        paymentCheckId: bid.paymentCheckId,
+        keyId: bid.keyId,
+        receiptId: bid.receiptId,
+        createdAt: bid.createdAt,
+        launch: bid.launch,
+        paymentCheck: {
+          token: bid.paymentCheck.token,
+          amount: units(
+            bid.paymentCheck.amountAtomic,
+            PAYMENT_DECIMALS
+          ),
+          state: paymentState,
+          expiresAt: bid.paymentCheck.expiresAt,
+        },
+      };
+    });
+  }
 
-      launch: bid.launch,
+  async verifyReceipt(receiptId: string): Promise<ReceiptVerification> {
+    const token = this.requireSession();
 
-      paymentCheck: {
-        token: bid.paymentCheck.token,
-        amount: units(
-          bid.paymentCheck.amountAtomic,
-          PAYMENT_DECIMALS
-        ),
-        state: paymentState,
-        expiresAt: bid.paymentCheck.expiresAt,
-      },
-    };
-  });
-}
+    return request<ReceiptVerification>(
+      `/v1/receipts/${encodeURIComponent(receiptId)}/verify`,
+      {},
+      token,
+    );
+  }
+
   withdrawBid(launchId: string, bidder: string) {
     return this.demo.withdrawBid(launchId, bidder);
   }
