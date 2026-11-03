@@ -1,0 +1,10 @@
+{
+  "action": "clear_auction",
+  "supply": 100,
+  "reserve_price": 10,
+  "bids": [
+    {"bidder": "alice", "quantity": 60, "limit_price": 20},
+    {"bidder": "bob", "quantity": 80, "limit_price": 15},
+    {"bidder": "charlie", "quantity": 50, "limit_price": 15}
+  ]
+}
