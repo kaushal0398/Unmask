@@ -77,7 +77,7 @@ The clearing price is **$0.03**. A pays $12,000 (not $0.05), B pays $9,000, C pa
 
 ## The interface
 
-Pure black, square boxes, violet for *masked*, green for *verified*, red for a bot or a failed check. Every screen runs on demo data and says so.
+Pure black, square boxes, pink for *masked*, green for *verified*, red for a bot or a failed check. Every screen runs on demo data and says so.
 
 | Route | What it is |
 |---|---|

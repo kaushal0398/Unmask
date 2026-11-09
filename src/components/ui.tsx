@@ -20,8 +20,8 @@ const buttonBase =
   "inline-flex items-center justify-center gap-2 rounded-none px-5 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40";
 const buttonTone = {
   primary: "bg-text text-bg hover:bg-white",
-  seal: "bg-seal text-black hover:bg-[#a395ff]",
-  ghost: "border border-line-strong text-text hover:bg-white/5",
+  seal: "border border-white bg-bg text-white hover:bg-white hover:text-black",
+  ghost: "border border-white/40 bg-bg text-text hover:border-white hover:bg-white/10",
 } as const;
 
 export function ButtonLink({ href, tone = "primary", className, ...rest }: { href: string; tone?: keyof typeof buttonTone } & Omit<ComponentProps<typeof Link>, "href">) {
@@ -36,15 +36,17 @@ export function Card({ className, ...rest }: ComponentProps<"div">) {
   return <div className={cx("corners rounded-none border border-line bg-surface shadow-[inset_0_1px_0_rgb(255_255_255/0.05),0_28px_56px_-32px_rgb(0_0_0/0.95)]", className)} {...rest} />;
 }
 
-export function Eyebrow({ children, tone = "seal" }: { children: ReactNode; tone?: "seal" | "verified" | "muted" }) {
+type AccentTone = "seal" | "verified" | "muted" | "near" | "price" | "hot";
+
+export function Eyebrow({ children, tone = "seal" }: { children: ReactNode; tone?: AccentTone }) {
   return (
-    <p className={cx("text-xs font-medium uppercase tracking-[0.18em]", tone === "seal" && "text-seal", tone === "verified" && "text-verified", tone === "muted" && "text-faint")}>
+    <p className={cx("text-xs font-medium uppercase tracking-[0.18em]", tone === "seal" && "text-seal", tone === "verified" && "text-verified", tone === "muted" && "text-faint", tone === "near" && "text-near", tone === "price" && "text-price", tone === "hot" && "text-hot")}>
       {children}
     </p>
   );
 }
 
-export function SectionHeading({ eyebrow, title, children, tone }: { eyebrow?: string; title: ReactNode; children?: ReactNode; tone?: "seal" | "verified" | "muted" }) {
+export function SectionHeading({ eyebrow, title, children, tone }: { eyebrow?: string; title: ReactNode; children?: ReactNode; tone?: AccentTone }) {
   return (
     <div className="max-w-2xl">
       {eyebrow && <Eyebrow tone={tone}>{eyebrow}</Eyebrow>}
@@ -55,7 +57,7 @@ export function SectionHeading({ eyebrow, title, children, tone }: { eyebrow?: s
 }
 
 /** Italic serif for the word a headline turns on. */
-export const Emph = ({ children }: { children: ReactNode }) => <em className="font-serif font-normal italic tracking-normal">{children}</em>;
+export const Emph = ({ children }: { children: ReactNode }) => <em className="pr-1 font-serif text-seal font-normal italic tracking-normal">{children}</em>;
 
 export const Mono = ({ children, className }: { children: ReactNode; className?: string }) => <span className={cx("font-mono text-[0.92em] tabular-nums", className)}>{children}</span>;
 

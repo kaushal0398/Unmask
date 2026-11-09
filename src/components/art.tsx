@@ -2,20 +2,29 @@ import { cx } from "@/components/ui";
 
 /**
  * The product's drawings, all inline SVG so they stay sharp at any size and cost no requests. Strokes use
- * `currentColor` so a parent sets the line colour; violet is the sealed accent and green the verified one.
+ * `currentColor` so a parent sets the line colour; pink is the sealed accent and green the verified one.
  */
-const V = "#8b7bff";
+const V = "#e501a5";
 const G = "#00ec97";
 const R = "#ff5c5c";
 
-/** The mark: a square envelope with a violet seal. Also the favicon (src/app/icon.svg). */
+/** The Unmask mask: a white mask with one pink eye and one black eye. */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden fill="none">
-      <rect x="1.5" y="1.5" width="29" height="29" stroke="currentColor" strokeOpacity="0.9" />
-      <path d="M1.5 1.5 L16 15 L30.5 1.5" stroke="currentColor" strokeOpacity="0.55" />
-      <rect x="11.5" y="11.5" width="9" height="9" fill={V} />
-      <rect x="14.5" y="14.5" width="3" height="3" fill="#000" />
+      <path d="M3 10L16 7L29 10V17L22 24L16 20L10 24L3 17Z" fill="#ffffff" />
+      <path d="M6 13L13 15V18L7 16Z" fill="#e501a5" />
+      <path d="M26 13L19 15V18L25 16Z" fill="#000000" />
+    </svg>
+  );
+}
+
+/** The NEAR "N" mark on its green tile. */
+export function NearLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 554 554" className={className} role="img" aria-label="NEAR">
+      <rect width="554" height="554" fill="#5de595" />
+      <path d="M139 165 Q139 135 169 135 L178 135 Q190 135 198 146 L372 352 L372 193 L313 240 Q300 247 303 234 L360 147 Q369 135 385 135 Q415 135 415 165 L415 389 Q415 419 385 419 L376 419 Q364 419 356 408 L182 202 L182 361 L241 314 Q254 307 251 320 L194 407 Q185 419 169 419 Q139 419 139 389 L139 165 Z" fill="#000" />
     </svg>
   );
 }
@@ -26,12 +35,12 @@ export function EnvelopeArt({ className, seal = true }: { className?: string; se
     <svg viewBox="0 0 240 160" className={className} aria-hidden fill="none">
       <defs>
         <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#1b1b21" />
-          <stop offset="1" stopColor="#0b0b0e" />
+          <stop offset="0" stopColor="#0b0b0b" />
+          <stop offset="1" stopColor="#0b0b0b" />
         </linearGradient>
         <linearGradient id="wax" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#a99dff" />
-          <stop offset="1" stopColor="#6a55f2" />
+          <stop offset="0" stopColor="#e501a5" />
+          <stop offset="1" stopColor="#e501a5" />
         </linearGradient>
       </defs>
       <rect x="1" y="1" width="238" height="158" fill="url(#paper)" stroke="rgb(255 255 255 / 0.16)" />
