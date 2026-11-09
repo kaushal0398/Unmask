@@ -36,7 +36,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           settle(false);
         }}
         aria-labelledby="confirm-title"
-        className="m-auto w-[min(92vw,26rem)] border border-line-strong bg-black p-6 text-text shadow-[6px_6px_0_0_rgba(139,123,255,0.25)] backdrop:bg-black/70"
+        className="m-auto w-[min(92vw,26rem)] border border-line-strong bg-bg p-6 text-text shadow-[6px_6px_0_0_rgba(229,1,165,0.25)] backdrop:bg-bg/80"
       >
         {pending && (
           <>

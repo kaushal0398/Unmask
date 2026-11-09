@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
         <Container>
           <ol className="grid gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-3">
             {STEPS.map((s) => (
-              <li key={s.n} className="bg-black p-6 sm:p-7">
+              <li key={s.n} className="bg-bg p-6 sm:p-7">
                 <div className="flex items-center justify-between font-mono text-xs text-faint">
                   <span>{s.n}</span>
                   <span className="border border-line-strong px-2 py-0.5">{s.who}</span>
@@ -116,7 +116,7 @@ export default function HowItWorksPage() {
           <h2 className="text-3xl font-semibold tracking-tight">Words you will see</h2>
           <dl className="mt-10 grid gap-px border border-line bg-line sm:grid-cols-2">
             {GLOSSARY.map(([k, v]) => (
-              <div key={k} className="bg-black p-6">
+              <div key={k} className="bg-bg p-6">
                 <dt className="font-medium text-text">{k}</dt>
                 <dd className="mt-2 text-sm leading-relaxed text-muted">{v}</dd>
               </div>

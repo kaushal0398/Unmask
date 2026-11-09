@@ -49,7 +49,7 @@ export function DemoPanel() {
     toast(label, "info");
   };
   return (
-    <aside aria-label="Demo controls" className="fixed bottom-4 left-4 z-50 w-[min(92vw,20rem)] border border-seal/50 bg-black p-4 text-sm shadow-[6px_6px_0_0_rgba(139,123,255,0.25)]">
+    <aside aria-label="Demo controls" className="fixed bottom-4 left-4 z-50 w-[min(92vw,20rem)] border border-seal/50 bg-bg p-4 text-sm shadow-[6px_6px_0_0_rgba(229,1,165,0.25)]">
       <div className="flex items-center justify-between">
         <p className="flex items-center gap-2 font-semibold text-seal"><FastForward className="size-4" /> Demo controls</p>
         <button onClick={() => set(false)} aria-label="Close demo controls" className="text-muted hover:text-text"><X className="size-4" /></button>

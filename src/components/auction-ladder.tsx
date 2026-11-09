@@ -8,7 +8,7 @@ import { Badge, Button, Card, Mono, cx } from "@/components/ui";
 import { tokens, usd } from "@/lib/format";
 
 const W = 760;
-const H = 300;
+const H = 340;
 const PAD = { l: 52, r: 16, t: 16, b: 34 };
 
 /**
@@ -59,6 +59,28 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
         </div>
       </div>
 
+      <dl className="mt-4 grid grid-cols-2 gap-px border border-line bg-line sm:grid-cols-4">
+        {(revealed
+          ? [
+              ["Clearing price", usd(outcome.price), "text-price"],
+              ["Sold", `${tokens(outcome.sold)} ${symbol}`, "text-verified"],
+              ["Raised", usd(outcome.raised), "text-near"],
+              ["Refunded", usd(outcome.fills.reduce((a, f) => a + f.refund, 0)), "text-muted"],
+            ]
+          : [
+              ["Clearing price", "sealed", "text-seal"],
+              ["Sold", "sealed", "text-seal"],
+              ["Raised", "sealed", "text-seal"],
+              ["Bids", String(rows.length), "text-text"],
+            ]
+        ).map(([k, v, c]) => (
+          <div key={k} className="bg-surface px-4 py-4">
+            <dt className="text-[10px] uppercase tracking-wider text-faint">{k}</dt>
+            <dd className={cx("mt-1 font-mono text-xl font-semibold tabular-nums", c)}>{v}</dd>
+          </div>
+        ))}
+      </dl>
+
       <Card className="mt-4 overflow-hidden p-3 sm:p-5">
         <div className="relative">
           <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Sealed-bid order book">
@@ -86,8 +108,9 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
                     x={x(x0) + 1}
                     width={Math.max(0, x(x1) - x(x0) - 2)}
                     rx={0}
-                    fill={revealed ? (isBot ? "rgb(255 92 92 / 0.12)" : "rgb(255 255 255 / 0.05)") : "rgb(139 123 255 / 0.1)"}
-                    stroke={revealed ? (isBot ? "rgb(255 92 92 / 0.5)" : "rgb(255 255 255 / 0.14)") : "rgb(139 123 255 / 0.4)"}
+                    fill={revealed ? (isBot ? "#ff5c5c" : "#34343c") : "#e501a5"}
+                    stroke="#000"
+                    strokeWidth={1.5}
                     initial={false}
                     animate={{ y: revealed ? top : base - 46, height: revealed ? base - top : 46 }}
                     transition={{ delay: revealed ? i * 0.1 : 0, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
@@ -97,15 +120,16 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
                       x={x(x0) + 1}
                       width={Math.max(0, x(x0 + winPart) - x(x0) - 2)}
                       rx={0}
-                      fill="rgb(0 236 151 / 0.2)"
-                      stroke="rgb(0 236 151 / 0.75)"
+                      fill="#00ec97"
+                      stroke="#000"
+                      strokeWidth={1.5}
                       initial={{ y: base, height: 0 }}
                       animate={{ y: top, height: base - top }}
                       transition={{ delay: 0.3 + i * 0.1, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                     />
                   )}
                   {!revealed && (
-                    <text x={(x(x0) + x(x1)) / 2} y={base - 18} textAnchor="middle" className="fill-[#8b7bff] font-mono text-[11px]">
+                    <text x={(x(x0) + x(x1)) / 2} y={base - 18} textAnchor="middle" className="fill-black font-mono text-[12px] font-bold">
                       ••••
                     </text>
                   )}
@@ -116,12 +140,12 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
             <AnimatePresence>
               {revealed && (
                 <motion.g key={`line-${pass}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 + rows.length * 0.1, duration: 0.5 }}>
-                  <line x1={PAD.l} x2={W - PAD.r} y1={y(outcome.price)} y2={y(outcome.price)} stroke="#00ec97" strokeDasharray="5 5" />
-                  <text x={W - PAD.r - 4} y={y(outcome.price) - 8} textAnchor="end" className="fill-[#00ec97] font-mono text-[11px] font-semibold">
+                  <line x1={PAD.l} x2={W - PAD.r} y1={y(outcome.price)} y2={y(outcome.price)} stroke="#ffb547" strokeWidth={2} strokeDasharray="6 4" />
+                  <text x={W - PAD.r - 4} y={y(outcome.price) - 8} textAnchor="end" className="fill-[#ffb547] font-mono text-[12px] font-bold">
                     clearing price {usd(outcome.price)}
                   </text>
-                  <line x1={x(outcome.supply)} x2={x(outcome.supply)} y1={PAD.t} y2={H - PAD.b} stroke="rgb(255 255 255 / 0.5)" strokeDasharray="3 5" />
-                  <text x={x(outcome.supply) + 6} y={PAD.t + 10} className="fill-[#9a9aa3] text-[10px]">
+                  <line x1={x(outcome.supply)} x2={x(outcome.supply)} y1={PAD.t} y2={H - PAD.b} stroke="#38d5ff" strokeWidth={2} strokeDasharray="3 5" />
+                  <text x={x(outcome.supply) + 6} y={PAD.t + 10} className="fill-[#38d5ff] font-mono text-[11px] font-bold">
                     supply {tokens(outcome.supply)}
                   </text>
                 </motion.g>
@@ -130,9 +154,11 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
           </svg>
         </div>
         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 border-t border-line pt-3 text-xs text-muted">
-          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-none bg-verified/60" /> filled, pays the clearing price</span>
-          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-none border border-line-strong bg-white/5" /> priced out, refunded</span>
-          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-none border border-danger/60 bg-danger/20" /> a bot cluster</span>
+          <span className="flex items-center gap-1.5"><span className="size-3 bg-verified" /> filled, pays the clearing price</span>
+          <span className="flex items-center gap-1.5"><span className="size-3 bg-[#34343c]" /> priced out, refunded</span>
+          <span className="flex items-center gap-1.5"><span className="size-3 bg-danger" /> a bot cluster</span>
+          <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-price" /> clearing price</span>
+          <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-near" /> supply</span>
         </div>
       </Card>
 
@@ -150,7 +176,7 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.bid.id} className="border-b border-line/60">
+              <tr key={r.bid.id} className={cx("border-b border-line/60", revealed && r.bid.isBot && "bg-danger/10", revealed && !r.bid.isBot && r.filled > 0 && "bg-verified/5")}>
                 <td className="py-2.5 pr-3">
                   <span className="font-mono text-[13px]">{revealed ? r.bid.label : "•••••••"}</span>
                   {revealed && r.bid.isBot && <Badge tone="danger" className="ml-2 px-2 py-0.5">bot</Badge>}

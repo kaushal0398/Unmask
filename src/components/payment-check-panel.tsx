@@ -156,7 +156,7 @@ export function PaymentCheckPanel({
 
   return (
     <div
-      className="border border-line bg-black/40 p-4 text-sm"
+      className="border border-line bg-bg/40 p-4 text-sm"
       aria-live="polite"
     >
       <div className="flex items-center justify-between gap-3">

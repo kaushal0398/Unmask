@@ -138,21 +138,21 @@ export default function MyBidsPage() {
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="border border-line bg-black/40 p-4">
+        <div className="border border-line bg-bg/40 p-4">
           <p className="text-xs text-muted">Total bids</p>
           <p className="mt-2 font-mono text-2xl">
             {bids.length}
           </p>
         </div>
 
-        <div className="border border-line bg-black/40 p-4">
+        <div className="border border-line bg-bg/40 p-4">
           <p className="text-xs text-muted">Locked checks</p>
           <p className="mt-2 font-mono text-2xl">
             {bids.filter((b) => b.paymentCheck.state === "locked").length}
           </p>
         </div>
 
-        <div className="col-span-2 border border-line bg-black/40 p-4 sm:col-span-1">
+        <div className="col-span-2 border border-line bg-bg/40 p-4 sm:col-span-1">
           <p className="text-xs text-muted">Wallet</p>
           <p className="mt-2 truncate font-mono text-sm">
             {account ?? "Not connected"}
@@ -161,7 +161,7 @@ export default function MyBidsPage() {
       </div>
 
       {!sessionToken && (
-        <div className="mt-8 border border-line bg-black/40 p-8 text-center">
+        <div className="mt-8 border border-line bg-bg/40 p-8 text-center">
           <Wallet className="mx-auto size-8 text-seal" />
 
           <h2 className="mt-4 text-lg font-semibold">
@@ -204,7 +204,7 @@ export default function MyBidsPage() {
       )}
 
       {sessionToken && !loading && !error && bids.length === 0 && (
-        <div className="mt-8 border border-line bg-black/40 p-10 text-center">
+        <div className="mt-8 border border-line bg-bg/40 p-10 text-center">
           <Lock className="mx-auto size-8 text-muted" />
 
           <h2 className="mt-4 text-lg font-semibold">
@@ -230,7 +230,7 @@ export default function MyBidsPage() {
           {bids.map((bid) => (
             <article
               key={bid.id}
-              className="border border-line bg-black/40 p-5 sm:p-6"
+              className="border border-line bg-bg/40 p-5 sm:p-6"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex items-center gap-3">

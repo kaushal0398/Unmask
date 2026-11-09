@@ -109,7 +109,7 @@ export default function BidReceiptPage() {
   if (!sessionToken) {
     return (
       <main className="mx-auto max-w-4xl px-5 py-16">
-        <div className="border border-line bg-black/40 p-8 text-center">
+        <div className="border border-line bg-bg/40 p-8 text-center">
           <Lock className="mx-auto size-8 text-seal" />
 
           <h1 className="mt-4 text-xl font-semibold">
@@ -183,7 +183,7 @@ export default function BidReceiptPage() {
       </div>
 
       {/* Launch information */}
-      <section className="mt-8 border border-line bg-black/40 p-6">
+      <section className="mt-8 border border-line bg-bg/40 p-6">
         <div className="flex items-center gap-4">
           <div
             className="grid size-14 place-items-center text-2xl"
@@ -233,7 +233,7 @@ export default function BidReceiptPage() {
       </section>
 
       {/* Receipt identifiers */}
-      <section className="mt-5 border border-line bg-black/40 p-6">
+      <section className="mt-5 border border-line bg-bg/40 p-6">
         <h2 className="font-semibold">
           Receipt information
         </h2>
@@ -276,7 +276,7 @@ export default function BidReceiptPage() {
       </section>
 
       {/* Payment check */}
-      <section className="mt-5 border border-line bg-black/40 p-6">
+      <section className="mt-5 border border-line bg-bg/40 p-6">
         <h2 className="font-semibold">
           Payment check
         </h2>

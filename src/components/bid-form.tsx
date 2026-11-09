@@ -461,7 +461,7 @@ export function BidForm({
           </Button>
         </div>
 
-        <p className="mt-5 border border-line bg-black/40 p-4 text-xs leading-relaxed text-muted">
+        <p className="mt-5 border border-line bg-bg/40 p-4 text-xs leading-relaxed text-muted">
           Development mode: the payment provider and enclave are
           currently mocks. No real funds are locked, and production
           settlement and TEE privacy are not yet implemented.
@@ -568,7 +568,7 @@ export function BidForm({
             Most you would pay per token
           </span>
 
-          <div className="mt-2 flex items-center rounded-none border border-line-strong bg-black px-4 focus-within:bg-white/[0.03]">
+          <div className="mt-2 flex items-center rounded-none border border-line-strong bg-bg px-4 focus-within:bg-white/[0.03]">
             <span className="text-muted">$</span>
 
             <input
@@ -592,7 +592,7 @@ export function BidForm({
             How many tokens you want
           </span>
 
-          <div className="mt-2 flex items-center rounded-none border border-line-strong bg-black px-4 focus-within:bg-white/[0.03]">
+          <div className="mt-2 flex items-center rounded-none border border-line-strong bg-bg px-4 focus-within:bg-white/[0.03]">
             <input
               inputMode="numeric"
               value={qty}
@@ -626,7 +626,7 @@ export function BidForm({
           </ul>
         )}
 
-        <div className="rounded-none border border-line bg-black/40 p-4 text-sm">
+        <div className="rounded-none border border-line bg-bg/40 p-4 text-sm">
           <div className="flex justify-between">
             <span className="text-muted">
               Maximum bid amount

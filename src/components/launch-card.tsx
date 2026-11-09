@@ -28,35 +28,39 @@ export function LaunchCard({ launch, index = 0 }: { launch: Launch; index?: numb
   const tilt = index % 2 === 0 ? -1.2 : 1.2;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 18, rotate: tilt }} whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: (index % 3) * 0.08, duration: 0.5 }} whileHover={{ y: -5, x: -3, rotate: tilt * 1.2 }} className="h-full">
-      <Link href={`/launches/${launch.id}`} className="group relative block h-full overflow-hidden rounded-none border bg-surface transition-shadow duration-200" style={{ borderColor: `hsl(${h} 80% 60% / 0.45)`, boxShadow: `7px 7px 0 hsl(${h} 75% 45% / 0.32), 0 30px 60px -28px hsl(${h} 90% 55% / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.06)` }}>
-        <div className="relative h-36 overflow-hidden" style={{ background: `radial-gradient(120% 140% at 20% 0%, hsl(${h} 95% 62%), hsl(${h} 80% 38%) 55%, hsl(${(h + 40) % 360} 70% 14%))` }}>
-          <div className="absolute inset-0 opacity-30 mix-blend-overlay" style={{ backgroundImage: "radial-gradient(rgb(255 255 255 / 0.5) 1px, transparent 1px)", backgroundSize: "14px 14px" }} />
-          <motion.span aria-hidden className="absolute -bottom-3 right-3 select-none text-[104px] leading-none drop-shadow-[0_10px_20px_rgb(0_0_0/0.45)]" animate={{ rotate: [-6, 6, -6], y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 5 + index * 0.6, ease: "easeInOut" }}>
+    <motion.div initial={{ opacity: 0, y: 18, rotate: tilt }} whileInView={{ opacity: 1, y: 0, rotate: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: (index % 3) * 0.08, duration: 0.5 }} whileHover={{ y: -4, x: -4 }} className="h-full">
+      <Link
+        href={`/launches/${launch.id}`}
+        className="group relative block h-full overflow-hidden rounded-none border-2 bg-surface transition-transform duration-200"
+        style={{ borderColor: `hsl(${h} 85% 60%)`, boxShadow: `8px 8px 0 hsl(${h} 85% 60% / 0.35)` }}
+      >
+        {/* Solid colour header: flat, bright, no gradient */}
+        <div className="relative h-40 overflow-hidden" style={{ background: `hsl(${h} 90% 62%)` }}>
+          <motion.span aria-hidden className="absolute -bottom-2 right-4 select-none text-[112px] leading-none" animate={{ rotate: [-6, 6, -6], y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 5 + index * 0.6, ease: "easeInOut" }}>
             {launch.emoji}
           </motion.span>
           <div className="absolute left-4 top-4"><StatusBadge status={launch.status} /></div>
-          <span className="absolute bottom-4 left-4 rounded-none border border-white/20 bg-black/60 px-3 py-1 font-mono text-xs font-semibold backdrop-blur">${launch.symbol}</span>
-          <span className="absolute right-4 top-4 font-mono text-[10px] font-semibold tracking-widest text-black/55">No. {String(index + 1).padStart(3, "0")}</span>
+          <span className="absolute right-4 top-4 font-mono text-[10px] font-bold tracking-widest text-black/60">No. {String(index + 1).padStart(3, "0")}</span>
+          <span className="absolute bottom-4 left-4 border-2 border-black bg-bg px-3 py-1 font-mono text-sm font-bold" style={{ color: `hsl(${h} 90% 70%)` }}>${launch.symbol}</span>
         </div>
         <div className="p-5">
-          <h3 className="text-xl font-semibold tracking-tight">{launch.name}</h3>
+          <h3 className="text-2xl font-semibold tracking-tight">{launch.name}</h3>
           <p className="mt-1.5 line-clamp-2 min-h-10 text-sm leading-relaxed text-muted">{launch.tagline}</p>
           {launch.status === "open" && launch.closesInMs !== undefined && (
-            <div className="mt-4 flex items-center justify-between rounded-none border border-seal/25 bg-seal/5 px-3.5 py-2.5">
-              <span className="text-xs text-seal">closes in</span>
-              <Countdown closesInMs={launch.closesInMs} size="sm" className="font-semibold text-seal" />
+            <div className="mt-4 flex items-center justify-between border border-seal bg-seal px-3.5 py-2.5 text-black">
+              <span className="text-xs font-bold uppercase tracking-wider">closes in</span>
+              <Countdown closesInMs={launch.closesInMs} size="sm" className="font-bold text-black" />
             </div>
           )}
           <dl className="mt-4 grid grid-cols-3 gap-px border border-line bg-line text-center">
             {[
-              ["Supply", compact(launch.supply)],
-              [outcome ? "Cleared" : "Reserve", usd(outcome ? outcome.price : launch.reserve)],
-              ["Bids", launch.bidCount.toLocaleString("en-US")],
-            ].map(([k, v]) => (
+              ["Supply", compact(launch.supply), "text-near"],
+              [outcome ? "Cleared" : "Reserve", usd(outcome ? outcome.price : launch.reserve), outcome ? "text-verified" : "text-price"],
+              ["Bids", launch.bidCount.toLocaleString("en-US"), "text-seal"],
+            ].map(([k, v, c]) => (
               <div key={k} className="bg-surface px-2 py-3">
                 <dt className="text-[10px] uppercase tracking-wider text-faint">{k}</dt>
-                <dd className="mt-0.5 font-mono text-sm font-medium tabular-nums">{v}</dd>
+                <dd className={cx("mt-0.5 font-mono text-base font-semibold tabular-nums", c)}>{v}</dd>
               </div>
             ))}
           </dl>

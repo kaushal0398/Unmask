@@ -11,7 +11,7 @@ export function Ticker() {
   }));
   const loop = [...items, ...items, ...items];
   return (
-    <div className="relative overflow-hidden border-y border-line bg-black py-3" aria-hidden>
+    <div className="relative overflow-hidden bg-bg py-3" aria-hidden>
       <div className="flex w-max animate-[ticker_38s_linear_infinite] gap-10 whitespace-nowrap">
         {loop.map((it, i) => (
           <span key={`${it.key}-${i}`} className="flex items-center gap-2.5 text-sm text-muted">

@@ -262,7 +262,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
             }}
             placeholder="Paste receipt ID (e.g. rcpt_0001)"
             autoComplete="off"
-            className="min-w-0 flex-1 rounded-none border border-line bg-black/30 px-4 py-3 text-sm text-text outline-none transition-colors placeholder:text-faint focus:border-verified/60"
+            className="min-w-0 flex-1 rounded-none border border-line bg-bg/30 px-4 py-3 text-sm text-text outline-none transition-colors placeholder:text-faint focus:border-verified/60"
           />
           <button
             type="submit"
@@ -373,7 +373,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
                   accept=".json,application/json"
                   onChange={(event) => void verifyRevealFile(event)}
                   disabled={revealRunning || receiptResult.status !== "record_verified"}
-                  className="block w-full text-xs text-muted file:mr-3 file:border file:border-line-strong file:bg-black file:px-3 file:py-2 file:text-xs file:text-text hover:file:bg-white/5 disabled:opacity-50"
+                  className="block w-full text-xs text-muted file:mr-3 file:border file:border-line-strong file:bg-bg file:px-3 file:py-2 file:text-xs file:text-text hover:file:bg-white/5 disabled:opacity-50"
                 />
               </label>
               {revealRunning && (
@@ -504,7 +504,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                           <div className="border-t border-line px-5 pb-5 pt-4">
                             <p className={cx("text-sm leading-relaxed", r.status === "fail" ? "text-danger" : "text-muted")}>{r.detail}</p>
-                            <dl className="mt-4 space-y-2 rounded-none bg-black/50 p-4 text-xs">
+                            <dl className="mt-4 space-y-2 rounded-none bg-bg/50 p-4 text-xs">
                               {r.evidence.map(([k, v]) => (
                                 <div key={k} className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-6">
                                   <dt className="text-faint">{k}</dt>

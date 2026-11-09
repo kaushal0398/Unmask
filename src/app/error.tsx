@@ -24,7 +24,7 @@ export default function ErrorPage({
       </p>
 
       {process.env.NODE_ENV === "development" && (
-        <pre className="mx-auto mt-6 max-w-2xl overflow-auto border border-danger/30 bg-black p-4 text-left text-xs text-red-400">
+        <pre className="mx-auto mt-6 max-w-2xl overflow-auto border border-danger/30 bg-bg p-4 text-left text-xs text-red-400">
           {error.message}
           {"\n\n"}
           {error.stack}

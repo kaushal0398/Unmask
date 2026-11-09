@@ -22,7 +22,7 @@ function SupplyBar({ side, tone, base }: { side: RaceSide; tone: "danger" | "sea
   let human = -1;
   return (
     <div>
-      <div className="flex h-14 w-full overflow-hidden rounded-none border border-line-strong bg-black p-1 sm:h-16" role="img" aria-label={`Supply split: bots hold ${Math.round(side.botShare * 100)} percent`}>
+      <div className="flex h-14 w-full overflow-hidden rounded-none border border-line-strong bg-bg p-1 sm:h-16" role="img" aria-label={`Supply split: bots hold ${Math.round(side.botShare * 100)} percent`}>
         {side.slices.map((s, i) => {
           if (s.kind === "human") human++;
           const unsold = s.kind === "unsold";
