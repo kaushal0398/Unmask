@@ -56,7 +56,7 @@ export function LaunchCard({ launch, index = 0 }: { launch: Launch; index?: numb
             {[
               ["Supply", compact(launch.supply), "text-near"],
               [outcome ? "Cleared" : "Reserve", usd(outcome ? outcome.price : launch.reserve), outcome ? "text-verified" : "text-price"],
-              ["Bids", launch.bidCount.toLocaleString("en-US"), "text-seal"],
+              ["Bids", launch.bidCount.toLocaleString("en-US"), "text-seal-fg"],
             ].map(([k, v, c]) => (
               <div key={k} className="bg-surface px-2 py-3">
                 <dt className="text-[10px] uppercase tracking-wider text-faint">{k}</dt>

@@ -68,7 +68,7 @@ export function CompareLab() {
           <span className="mt-2 block text-xs text-faint">Each one asks for 15% of the supply.</span>
         </label>
         <label className="block">
-          <span className="flex items-baseline justify-between text-sm"><span className="font-medium">What the bots will pay</span><Mono className="text-lg text-seal">{usd(botLimit)}</Mono></span>
+          <span className="flex items-baseline justify-between text-sm"><span className="font-medium">What the bots will pay</span><Mono className="text-lg text-seal-fg">{usd(botLimit)}</Mono></span>
           <input type="range" min={0.011} max={0.06} step={0.001} value={botLimit} onChange={(e) => setBotLimit(Number(e.target.value))} className="mt-4 w-full accent-[#e501a5]" aria-label="Bot limit price" />
           <span className="mt-2 block text-xs text-faint">Raise it and the bots start to win the sealed launch too: they have to pay for it.</span>
         </label>

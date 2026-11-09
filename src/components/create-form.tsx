@@ -131,7 +131,7 @@ export function CreateForm() {
           {steps.map((st) => (
             <li key={st.id} className="flex items-start gap-3 text-sm">
               <span className="mt-0.5">
-                {st.state === "done" ? <Check className="size-4 text-verified" /> : st.state === "running" ? <Loader2 className="size-4 animate-spin text-seal" /> : st.state === "failed" ? <AlertTriangle className="size-4 text-danger" /> : <span className="block size-4 border border-line-strong" />}
+                {st.state === "done" ? <Check className="size-4 text-verified" /> : st.state === "running" ? <Loader2 className="size-4 animate-spin text-seal-fg" /> : st.state === "failed" ? <AlertTriangle className="size-4 text-danger" /> : <span className="block size-4 border border-line-strong" />}
               </span>
               <span className={st.state === "pending" ? "text-faint" : "text-text"}>
                 {st.label}

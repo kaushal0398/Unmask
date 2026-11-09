@@ -29,7 +29,7 @@ export default function FaqPage() {
             <details key={q} className="group border-b border-line bg-surface last:border-b-0 open:bg-raised">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-6 p-6 text-left [&::-webkit-details-marker]:hidden">
                 <span className="flex items-baseline gap-4"><span className="font-mono text-xs text-faint">{String(i + 1).padStart(2, "0")}</span><span className="font-medium">{q}</span></span>
-                <Plus className="size-5 shrink-0 text-faint transition-transform group-open:rotate-45 group-open:text-seal" />
+                <Plus className="size-5 shrink-0 text-faint transition-transform group-open:rotate-45 group-open:text-seal-fg" />
               </summary>
               <p className="px-6 pb-6 pl-[4.25rem] text-sm leading-relaxed text-muted">{a}</p>
             </details>

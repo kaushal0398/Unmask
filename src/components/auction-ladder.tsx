@@ -68,9 +68,9 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
               ["Refunded", usd(outcome.fills.reduce((a, f) => a + f.refund, 0)), "text-muted"],
             ]
           : [
-              ["Clearing price", "sealed", "text-seal"],
-              ["Sold", "sealed", "text-seal"],
-              ["Raised", "sealed", "text-seal"],
+              ["Clearing price", "sealed", "text-seal-fg"],
+              ["Sold", "sealed", "text-seal-fg"],
+              ["Raised", "sealed", "text-seal-fg"],
               ["Bids", String(rows.length), "text-text"],
             ]
         ).map(([k, v, c]) => (
@@ -181,8 +181,8 @@ export function AuctionLadder({ outcome, symbol, startRevealed = false }: { outc
                   <span className="font-mono text-[13px]">{revealed ? r.bid.label : "•••••••"}</span>
                   {revealed && r.bid.isBot && <Badge tone="danger" className="ml-2 px-2 py-0.5">bot</Badge>}
                 </td>
-                <td className="px-3 py-2.5 text-right"><Mono className={revealed ? "" : "text-seal"}>{revealed ? usd(r.bid.limit) : "••••"}</Mono></td>
-                <td className="px-3 py-2.5 text-right"><Mono className={revealed ? "" : "text-seal"}>{revealed ? tokens(r.bid.qty) : "••••"}</Mono></td>
+                <td className="px-3 py-2.5 text-right"><Mono className={revealed ? "" : "text-seal-fg"}>{revealed ? usd(r.bid.limit) : "••••"}</Mono></td>
+                <td className="px-3 py-2.5 text-right"><Mono className={revealed ? "" : "text-seal-fg"}>{revealed ? tokens(r.bid.qty) : "••••"}</Mono></td>
                 <td className={cx("px-3 py-2.5 text-right", revealed && r.filled > 0 && "text-verified")}><Mono>{revealed ? tokens(r.filled) : "••••"}</Mono></td>
                 <td className="px-3 py-2.5 text-right"><Mono>{revealed ? usd(r.pays) : "••••"}</Mono></td>
                 <td className="py-2.5 pl-3 text-right"><Mono className="text-muted">{revealed ? usd(r.refund) : "••••"}</Mono></td>

@@ -62,7 +62,7 @@ export default function Home() {
           <dl className="grid grid-cols-2 md:grid-cols-4 [&>div]:px-5 [&>div]:py-8 first:[&>div]:pl-0">
             {[
               ["1", "clearing price for every winner", "text-price"],
-              ["0", "bids readable while bidding is open", "text-seal"],
+              ["0", "bids readable while bidding is open", "text-seal-fg"],
               ["100%", "of unused funds refunded", "text-verified"],
               ["5", "checks anyone can re-run in a browser", "text-near"],
             ].map(([n, label, color]) => (
@@ -149,7 +149,7 @@ export default function Home() {
                 Bids stack from the highest price down. Where the stack reaches the supply is the clearing price, and everyone to the left pays it, even if they offered more.
               </SectionHeading>
               <ul className="mt-8 space-y-4 text-sm leading-relaxed text-muted">
-                <li className="flex gap-3"><Eye className="mt-0.5 size-4 shrink-0 text-seal" /> Press <strong className="text-text">Open the bids</strong> to break the seals.</li>
+                <li className="flex gap-3"><Eye className="mt-0.5 size-4 shrink-0 text-seal-fg" /> Press <strong className="text-text">Open the bids</strong> to break the seals.</li>
                 <li className="flex gap-3"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-verified" /> The four red bars are bot wallets that bid low, hoping for a cheap start. They are priced out and refunded.</li>
               </ul>
             </div>
@@ -164,12 +164,12 @@ export default function Home() {
           <SectionHeading eyebrow="Privacy and proof" title="Hidden while it matters. Public once it can&apos;t hurt.">Secrecy protects the bidding. Openness protects everyone after it.</SectionHeading>
           <div className="mt-12 grid gap-5 md:grid-cols-2">
             <Card className="border-seal/25 p-7">
-              <p className="flex items-center gap-2 text-sm font-medium text-seal"><EyeOff className="size-4" /> During bidding</p>
+              <p className="flex items-center gap-2 text-sm font-medium text-seal-fg"><EyeOff className="size-4" /> During bidding</p>
               <dl className="mt-6 space-y-4 text-sm">
                 <div className="flex justify-between gap-6 border-b border-line pb-4"><dt className="text-muted">Launch rules and reserve</dt><dd>public</dd></div>
                 <div className="flex justify-between gap-6 border-b border-line pb-4"><dt className="text-muted">How many bids</dt><dd>public</dd></div>
-                <div className="flex justify-between gap-6 border-b border-line pb-4"><dt className="text-muted">Prices and quantities</dt><dd className="text-seal">sealed</dd></div>
-                <div className="flex justify-between gap-6"><dt className="text-muted">Who bid what</dt><dd className="text-seal">sealed</dd></div>
+                <div className="flex justify-between gap-6 border-b border-line pb-4"><dt className="text-muted">Prices and quantities</dt><dd className="text-seal-fg">sealed</dd></div>
+                <div className="flex justify-between gap-6"><dt className="text-muted">Who bid what</dt><dd className="text-seal-fg">sealed</dd></div>
               </dl>
             </Card>
             <Card className="border-verified/25 p-7">
@@ -190,7 +190,7 @@ export default function Home() {
         <Container>
           <p className="text-center text-xs uppercase tracking-widest text-faint">Built on</p>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 font-mono text-sm text-muted">
-            {[["NEAR", "border-near/40 text-near"], ["OutLayer enclave (TEE)", "border-seal/40 text-seal"], ["Payment checks", "border-verified/40 text-verified"], ["NEP-141 tokens", "border-price/40 text-price"], ["NEAR Intents", "border-hot/40 text-hot"]].map(([t, c]) => (
+            {[["NEAR", "border-near/40 text-near"], ["OutLayer enclave (TEE)", "border-seal/40 text-seal-fg"], ["Payment checks", "border-verified/40 text-verified"], ["NEP-141 tokens", "border-price/40 text-price"], ["NEAR Intents", "border-hot/40 text-hot"]].map(([t, c]) => (
               <li key={t} className={`border px-4 py-2 ${c}`}>{t}</li>
             ))}
           </ul>

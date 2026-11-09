@@ -43,7 +43,7 @@ export default function LimitsPage() {
           </ul>
         </Card>
         <Card className="p-7">
-          <h2 className="font-mono text-xs uppercase tracking-widest text-seal">What you are trusting</h2>
+          <h2 className="font-mono text-xs uppercase tracking-widest text-seal-fg">What you are trusting</h2>
           <dl className="mt-6 space-y-5">
             {TRUST.map(([k, v]) => (
               <div key={k}>

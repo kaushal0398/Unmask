@@ -28,7 +28,7 @@ export default function CreatorsPage() {
       </PageHeader>
       <Container className="grid gap-8 py-14 sm:py-20 lg:grid-cols-2">
         <Card className="p-7">
-          <h2 className="font-mono text-xs uppercase tracking-widest text-seal">What you set</h2>
+          <h2 className="font-mono text-xs uppercase tracking-widest text-seal-fg">What you set</h2>
           <dl className="mt-6 divide-y divide-line border-y border-line">
             {SET.map(([k, v]) => (
               <div key={k} className="py-4"><dt className="text-sm font-medium">{k}</dt><dd className="mt-1 text-sm text-muted">{v}</dd></div>

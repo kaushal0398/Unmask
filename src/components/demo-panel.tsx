@@ -51,18 +51,18 @@ export function DemoPanel() {
   return (
     <aside aria-label="Demo controls" className="fixed bottom-4 left-4 z-50 w-[min(92vw,20rem)] border border-seal/50 bg-bg p-4 text-sm shadow-[6px_6px_0_0_rgba(229,1,165,0.25)]">
       <div className="flex items-center justify-between">
-        <p className="flex items-center gap-2 font-semibold text-seal"><FastForward className="size-4" /> Demo controls</p>
+        <p className="flex items-center gap-2 font-semibold text-seal-fg"><FastForward className="size-4" /> Demo controls</p>
         <button onClick={() => set(false)} aria-label="Close demo controls" className="text-muted hover:text-text"><X className="size-4" /></button>
       </div>
       <p className="mt-3 text-xs uppercase tracking-wider text-faint">Clock speed</p>
       <div className="mt-2 flex gap-2">
         {SPEEDS.map((s) => (
-          <button key={s} onClick={() => clock.setSpeed(s)} aria-pressed={speed === s} className={cx("flex-1 border px-2 py-1.5 font-mono text-xs", speed === s ? "border-seal bg-seal/15 text-seal" : "border-line-strong text-muted hover:text-text")}>{s}×</button>
+          <button key={s} onClick={() => clock.setSpeed(s)} aria-pressed={speed === s} className={cx("flex-1 border px-2 py-1.5 font-mono text-xs", speed === s ? "border-seal bg-seal/15 text-seal-fg" : "border-line-strong text-muted hover:text-text")}>{s}×</button>
         ))}
       </div>
       <p className="mt-4 text-xs uppercase tracking-wider text-faint">Skip ahead</p>
       <button
-        className="mt-2 w-full border border-seal/50 px-3 py-1.5 text-xs text-seal hover:bg-seal/10"
+        className="mt-2 w-full border border-seal/50 px-3 py-1.5 text-xs text-seal-fg hover:bg-seal/10"
         onClick={() => {
           const t = clock.now();
           const left = LAUNCHES.filter((l) => l.status === "open").map((l) => clock.sessionStart() + (l.closesInMs ?? 0) - t).filter((x) => x > 0);

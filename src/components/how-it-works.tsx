@@ -13,7 +13,7 @@ type Step = {
 };
 
 const steps: Step[] = [
-  { Art: SealStepArt, title: "Seal", tag: "you see: your bid · they see: nothing", color: "text-seal", bar: "bg-seal", border: "border-seal/50", text: "Choose the most you'd pay per token and how many you want. Your bid is encrypted so only the enclave can read it, and the most you could owe is locked in a payment check." },
+  { Art: SealStepArt, title: "Seal", tag: "you see: your bid · they see: nothing", color: "text-seal-fg", bar: "bg-seal", border: "border-seal/50", text: "Choose the most you'd pay per token and how many you want. Your bid is encrypted so only the enclave can read it, and the most you could owe is locked in a payment check." },
   { Art: WaitStepArt, title: "Wait for the close", tag: "public: a count · hidden: every amount", color: "text-price", bar: "bg-price", border: "border-price/50", text: "The page shows a countdown and how many bids there are. Never an amount. Arriving first gives no edge, and no one can read the order book." },
   { Art: ClearStepArt, title: "Clear", tag: "one price · everyone pays it", color: "text-near", bar: "bg-near", border: "border-near/50", text: "At the deadline the enclave finds the single price that sells the supply. Everyone who wins pays that price, not their own limit. Everyone else gets everything back." },
   { Art: VerifyStepArt, title: "Verify", tag: "everything public · anyone can re-run it", color: "text-verified", bar: "bg-verified", border: "border-verified/50", text: "The code hash, the attestation, the result and the transfers are published. Anyone can recompute them and see that the auction ran as promised." },

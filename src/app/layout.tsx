@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Suspense } from "react";
 import { DemoPanel } from "@/components/demo-panel";
 import { ConfirmProvider } from "@/components/confirm";
 import { Footer } from "@/components/footer";
-import { Nav } from "@/components/nav";
+import { Logo, Nav } from "@/components/nav";
 import { ToastProvider } from "@/components/toast";
 import { WalletProvider } from "@/components/wallet";
 import "./globals.css";
@@ -29,7 +30,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ToastProvider>
           <ConfirmProvider>
             <WalletProvider>
-              <Nav />
+              {/* The nav reads the current path, which is unknown while a dynamic route is prerendered. */}
+              <Suspense
+                fallback={
+                  <header className="sticky top-0 z-40 border-b border-line bg-bg/80">
+                    <div className="mx-auto flex h-16 w-full max-w-6xl items-center px-5 sm:px-8">
+                      <Logo />
+                    </div>
+                  </header>
+                }
+              >
+                <Nav />
+              </Suspense>
               <main id="main" className="flex-1">{children}</main>
               <Footer />
               <DemoPanel />

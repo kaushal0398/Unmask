@@ -27,6 +27,8 @@
   --color-muted: #a9a9b3;
   --color-faint: #8b8b95;
   --color-seal: #e501a5;
+  /* Pink for TEXT: #E501A5 is just under WCAG AA for small text on black, this is 7:1. Fills and borders keep #E501A5. */
+  --color-seal-fg: #ff4fcf;
   --color-verified: #00ec97;
   --color-danger: #ff5c5c;
   --color-price: #ffb547;

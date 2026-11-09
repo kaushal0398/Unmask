@@ -7,7 +7,7 @@ type Tone = "neutral" | "seal" | "verified" | "danger";
 
 const toneClass: Record<Tone, string> = {
   neutral: "border-line-strong text-muted",
-  seal: "border-seal/30 bg-seal/10 text-seal",
+  seal: "border-seal/30 bg-seal/10 text-seal-fg",
   verified: "border-verified/30 bg-verified/10 text-verified",
   danger: "border-danger/30 bg-danger/10 text-danger",
 };
@@ -40,7 +40,7 @@ type AccentTone = "seal" | "verified" | "muted" | "near" | "price" | "hot";
 
 export function Eyebrow({ children, tone = "seal" }: { children: ReactNode; tone?: AccentTone }) {
   return (
-    <p className={cx("text-xs font-medium uppercase tracking-[0.18em]", tone === "seal" && "text-seal", tone === "verified" && "text-verified", tone === "muted" && "text-faint", tone === "near" && "text-near", tone === "price" && "text-price", tone === "hot" && "text-hot")}>
+    <p className={cx("text-xs font-medium uppercase tracking-[0.18em]", tone === "seal" && "text-seal-fg", tone === "verified" && "text-verified", tone === "muted" && "text-faint", tone === "near" && "text-near", tone === "price" && "text-price", tone === "hot" && "text-hot")}>
       {children}
     </p>
   );
@@ -57,7 +57,7 @@ export function SectionHeading({ eyebrow, title, children, tone }: { eyebrow?: s
 }
 
 /** Italic serif for the word a headline turns on. */
-export const Emph = ({ children }: { children: ReactNode }) => <em className="pr-1 font-serif text-seal font-normal italic tracking-normal">{children}</em>;
+export const Emph = ({ children }: { children: ReactNode }) => <em className="pr-1 font-serif text-seal-fg font-normal italic tracking-normal">{children}</em>;
 
 export const Mono = ({ children, className }: { children: ReactNode; className?: string }) => <span className={cx("font-mono text-[0.92em] tabular-nums", className)}>{children}</span>;
 
@@ -69,7 +69,7 @@ export function Stat({ label, value, hint, tone, className }: { label: string; v
   return (
     <div className={className}>
       <dt className="text-xs uppercase tracking-wider text-faint">{label}</dt>
-      <dd className={cx("mt-1.5 text-2xl font-semibold tabular-nums tracking-tight", tone === "seal" && "text-seal", tone === "verified" && "text-verified")}>{value}</dd>
+      <dd className={cx("mt-1.5 text-2xl font-semibold tabular-nums tracking-tight", tone === "seal" && "text-seal-fg", tone === "verified" && "text-verified")}>{value}</dd>
       {hint && <dd className="mt-1 text-xs text-muted">{hint}</dd>}
     </div>
   );
