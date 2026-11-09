@@ -4,6 +4,7 @@ import { ArrowLeft, Check, ExternalLink, Loader2, ShieldCheck } from "lucide-rea
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AuctionLadder } from "@/components/auction-ladder";
+import { BackendResult } from "@/components/backend-result";
 import { BidForm } from "@/components/bid-form";
 import { Countdown } from "@/components/countdown";
 import { StatusBadge } from "@/components/launch-card";
@@ -62,7 +63,7 @@ function OpenView({ l }: { l: Launch }) {
         <Card className="relative overflow-hidden p-6 sm:p-8">
           <div className="glow-seal pointer-events-none absolute inset-0 opacity-60" />
           <div className="relative">
-            <p className="text-xs uppercase tracking-[0.2em] text-seal">Bidding closes in</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-seal-fg">Bidding closes in</p>
             <Countdown closesInMs={l.closesInMs ?? 0} className="mt-4" />
             <SealedStack base={l.bidCount} className="mt-6" />
           </div>
@@ -101,7 +102,7 @@ function SettlingView({ l, step }: { l: Launch; step: number }) {
             const state = stateOf(i, step);
             return (
               <li key={label} className="flex items-center gap-3.5">
-                <span className={`grid size-7 place-items-center rounded-none border ${state === "done" ? "border-verified bg-verified text-black" : state === "active" ? "border-seal text-seal" : "border-line-strong text-faint"}`}>
+                <span className={`grid size-7 place-items-center rounded-none border ${state === "done" ? "border-verified bg-verified text-black" : state === "active" ? "border-seal text-seal-fg" : "border-line-strong text-faint"}`}>
                   {state === "done" ? <Check className="size-4" strokeWidth={3} /> : state === "active" ? <Loader2 className="size-4 animate-spin" /> : null}
                 </span>
                 <span className={state === "todo" ? "text-faint" : "text-text"}>{label}</span>
@@ -120,49 +121,10 @@ function SettlingView({ l, step }: { l: Launch; step: number }) {
 function SettledView({ l }: { l: Launch }) {
   const o = outcomeOf(l) ?? revealOf(l);
 
-  // Backend-created launches don't have demo outcome data yet.
+  // Backend-created launches have no demo outcome: show the backend's own result, or say there is none yet.
   // Never assume a settlement result exists.
   if (!o) {
-    return (
-      <div className="space-y-8">
-        <Card className="p-6 sm:p-10">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center border border-verified text-verified">
-              <ShieldCheck className="size-5" />
-            </span>
-            <div>
-              <p className="text-xs uppercase tracking-widest text-verified">
-                Bidding closed
-              </p>
-              <h2 className="mt-1 text-2xl font-semibold">
-                No more bids are accepted.
-              </h2>
-            </div>
-          </div>
-
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted">
-            This launch has reached its bidding deadline. Its settlement
-            result is not available yet. No clearing price or token
-            allocation can be displayed until a verified result is published.
-          </p>
-
-          <div className="mt-8 border-t border-line pt-6">
-            <Facts l={l} />
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="font-semibold">Settlement pending</h3>
-          <p className="mt-2 text-sm text-muted">
-            The settlement and verification integration is not connected
-            for this development launch.
-          </p>
-          <p className="mt-3 text-xs text-faint">
-            This page will not invent auction results or allocations.
-          </p>
-        </Card>
-      </div>
-    );
+    return <BackendResult launch={{ id: l.id, symbol: l.symbol, creator: l.creator, supply: l.supply }} />;
   }
 
   const sampled = l.status !== "settled" && l.bidCount > (l.bids?.length ?? 0);
@@ -368,7 +330,9 @@ export function LiveLaunch({ id }: { id: string }) {
             step={demoStage?.kind === "settling" ? demoStage.step : 0}
           />
         ) : (
-          <SettledView l={liveLaunch} />
+          // A sample launch is opened from its own sample bids: the API adapter keeps them out of the launch it
+          // returns, so that bids can never leak while bidding is open.
+          <SettledView l={isDemoLaunch ? { ...getLaunch(id)!, closesInMs: liveLaunch.closesInMs } : liveLaunch} />
         )}
       </div>
     </>

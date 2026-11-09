@@ -13,6 +13,7 @@ const HUMAN_TINTS = ["#f4f4f5", "#d4d4d8", "#a1a1aa", "#e4e4e7", "#8b8b93", "#c4
 
 function sliceColor(s: Slice, humanIndex: number) {
   if (s.kind === "bot") return "var(--color-danger)";
+  if (s.kind === "agent") return "var(--color-near)";
   if (s.kind === "unsold") return "transparent";
   return HUMAN_TINTS[humanIndex % HUMAN_TINTS.length]!;
 }
@@ -47,7 +48,7 @@ function SupplyBar({ side, tone, base }: { side: RaceSide; tone: "danger" | "sea
       </div>
       <div className="mt-2 flex justify-between text-[11px] text-faint">
         <span>first token</span>
-        <span className={tone === "danger" ? "text-danger" : "text-seal"}>{tone === "danger" ? "bought in the order people arrive" : "split by price, never by arrival"}</span>
+        <span className={tone === "danger" ? "text-danger" : "text-seal-fg"}>{tone === "danger" ? "bought in the order people arrive" : "split by price, never by arrival"}</span>
         <span>last token</span>
       </div>
     </div>
@@ -55,7 +56,7 @@ function SupplyBar({ side, tone, base }: { side: RaceSide; tone: "danger" | "sea
 }
 
 function Panel({ title, tone, line, side, base, children }: { title: string; tone: "danger" | "seal"; line: string; side: RaceSide; base: number; children: React.ReactNode }) {
-  const avgHuman = side.slices.filter((s) => s.kind === "human" && s.avgPrice).map((s) => s.avgPrice!);
+  const avgHuman = side.slices.filter((s) => (s.kind === "human" || s.kind === "agent") && s.avgPrice).map((s) => s.avgPrice!);
   const priceText = avgHuman.length ? (Math.min(...avgHuman) === Math.max(...avgHuman) ? usd(avgHuman[0]!) : `${usd(Math.min(...avgHuman))} to ${usd(Math.max(...avgHuman))}`) : "no one";
   return (
     <Card className={cx("relative overflow-hidden p-5 sm:p-6", tone === "danger" ? "border-danger/20" : "border-seal/25")}>
@@ -118,7 +119,7 @@ export function RaceDemo() {
         <Panel title="A sealed-bid launch" tone="seal" line="order does not matter" side={sb} base={1.2}>
           <Step delay={1.2}>The same ten bids go in sealed. Nobody, the creator included, sees an amount.</Step>
           <Step delay={2.0}>At the close the enclave finds one price that sells the supply: <Mono className="text-text">{usd(sb.finalPrice)}</Mono>.</Step>
-          <Step delay={2.8}>The bots had bid low, hoping for a cheap start. They win nothing and are refunded. {sb.humansServed} people are served at the same price.</Step>
+          <Step delay={2.8}>The bots had bid low, hoping for a cheap start. They win nothing and are refunded. {sb.humansServed} people are served at the same price, including your agent (cyan), which bid inside rules you signed.</Step>
         </Panel>
       </div>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
