@@ -13,7 +13,7 @@ export function ogImage(opts: { eyebrow: string; title: string; sub: string; hue
           <div style={{ display: "flex", fontSize: 120, fontWeight: 700, lineHeight: 1.05 }}>{opts.title}</div>
           <div style={{ display: "flex", fontSize: 38, color: "#a1a1aa", marginTop: 24 }}>{opts.sub}</div>
         </div>
-        <div style={{ display: "flex", fontSize: 28, color: "#a1a1aa" }}>Sealed · bid in secret, pay one price · built on NEAR</div>
+        <div style={{ display: "flex", fontSize: 28, color: "#a1a1aa" }}>Unmask · bots lose their edge · built on NEAR</div>
       </div>
     ),
     OG_SIZE,

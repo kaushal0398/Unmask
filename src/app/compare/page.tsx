@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { RaceDemo } from "@/components/race-demo";
 import { Container, Emph, SectionHeading } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Sealed vs first-come" };
+export const metadata: Metadata = { title: "Unmask vs first-come" };
 
 export default function ComparePage() {
   return (

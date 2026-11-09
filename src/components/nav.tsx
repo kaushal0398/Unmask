@@ -26,10 +26,10 @@ export function Logo({ className }: { className?: string }) {
         "flex items-center gap-2.5 font-semibold tracking-tight",
         className
       )}
-      aria-label="Sealed, home"
+      aria-label="Unmask, home"
     >
       <LogoMark className="size-7 text-text" />
-      Sealed
+      Unmask
     </Link>
   );
 }

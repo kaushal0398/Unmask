@@ -2,8 +2,8 @@ import { OG_SIZE, ogImage } from "@/lib/og";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-export const alt = "Sealed: snipe-proof token launches";
+export const alt = "Unmask: the token launch where bots lose their edge";
 
 export default function Image() {
-  return ogImage({ eyebrow: "Snipe-proof token launches", title: "Sealed", sub: "Everyone bids in secret. Everyone pays the same price." });
+  return ogImage({ eyebrow: "The token launch where bots lose their edge", title: "Unmask", sub: "Bid blind, win fair, check everything." });
 }

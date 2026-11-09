@@ -132,7 +132,7 @@ function publicLaunch(l: PublicLaunchInput) {
 
 app.get("/health", async () => ({
   ok: true,
-  service: "snipe-proof-api",
+  service: "unmask-api",
   mode: isDev ? "development" : "production",
 }));
 

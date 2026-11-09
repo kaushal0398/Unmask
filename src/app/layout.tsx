@@ -14,9 +14,9 @@ const serif = Instrument_Serif({ variable: "--font-serif-display", subsets: ["la
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: { default: "Sealed — snipe-proof token launches", template: "%s · Sealed" },
+  title: { default: "Unmask — the token launch where bots lose their edge", template: "%s · Unmask" },
   description:
-    "A token launch where everyone bids in secret, everyone pays the same price, and anyone can check afterwards that the auction was run fairly.",
+    "The token launch where bots lose their edge. Bid blind, win fair, check everything.",
 };
 
 export const viewport: Viewport = { themeColor: "#000000", colorScheme: "dark" };

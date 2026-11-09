@@ -7,6 +7,6 @@ export const alt = "A sealed launch";
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const l = getLaunch((await params).id);
-  if (!l) return ogImage({ eyebrow: "Sealed", title: "Launch", sub: "Bid in secret, pay one price." });
+  if (!l) return ogImage({ eyebrow: "Unmask", title: "Launch", sub: "Bid in secret, pay one price." });
   return ogImage({ eyebrow: l.status === "settled" ? "Settled launch" : "Sealed bids", title: `${l.name} $${l.symbol}`, sub: l.tagline, hue: l.hue });
 }
