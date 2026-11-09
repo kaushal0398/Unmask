@@ -2,5 +2,16 @@
 name = "auction-engine"
 version = "0.1.0"
 edition = "2024"
+description = "Deterministic integer-only uniform-price auction (v1). Mirrors src/lib/auction-core.ts exactly."
+
+[lib]
+name = "auction_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "auction-engine"
+path = "src/main.rs"
 
 [dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

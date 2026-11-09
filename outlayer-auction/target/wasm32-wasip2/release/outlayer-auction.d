@@ -1,1 +1,0 @@
-C:\Users\kaush\Meme-Proof-Near\outlayer-auction\target\wasm32-wasip2\release\outlayer-auction.wasm: C:\Users\kaush\Meme-Proof-Near\outlayer-auction\src\lib.rs C:\Users\kaush\Meme-Proof-Near\outlayer-auction\src\main.rs

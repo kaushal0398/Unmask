@@ -1,0 +1,1148 @@
+{
+  "version": "1",
+  "description": "Generated from src/lib/auction-core.ts by scripts/gen-test-vectors.ts. The Rust engine must match every expected outcome.",
+  "cases": [
+    {
+      "name": "worked example from the README",
+      "input": {
+        "version": "1",
+        "auctionId": "worked-example-001",
+        "supply": "1000000",
+        "reservePrice": "1000000",
+        "tokenDecimals": 0,
+        "bids": [
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "5000000",
+            "quantity": "400000"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "4000000",
+            "quantity": "300000"
+          },
+          {
+            "id": "C",
+            "bidder": "c.near",
+            "limitPrice": "3000000",
+            "quantity": "300000"
+          },
+          {
+            "id": "D",
+            "bidder": "d.near",
+            "limitPrice": "2000000",
+            "quantity": "200000"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "worked-example-001",
+        "tokenDecimals": 0,
+        "clearingPrice": "3000000",
+        "supply": "1000000",
+        "sold": "1000000",
+        "unsold": "0",
+        "totalRaised": "3000000000000",
+        "totalLocked": "4500000000000",
+        "totalRefunded": "1500000000000",
+        "fills": [
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "5000000",
+            "requested": "400000",
+            "filled": "400000",
+            "locked": "2000000000000",
+            "payment": "1200000000000",
+            "refund": "800000000000"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "4000000",
+            "requested": "300000",
+            "filled": "300000",
+            "locked": "1200000000000",
+            "payment": "900000000000",
+            "refund": "300000000000"
+          },
+          {
+            "bidId": "C",
+            "bidder": "c.near",
+            "limitPrice": "3000000",
+            "requested": "300000",
+            "filled": "300000",
+            "locked": "900000000000",
+            "payment": "900000000000",
+            "refund": "0"
+          },
+          {
+            "bidId": "D",
+            "bidder": "d.near",
+            "limitPrice": "2000000",
+            "requested": "200000",
+            "filled": "0",
+            "locked": "400000000000",
+            "payment": "0",
+            "refund": "400000000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "demand below supply clears at the reserve",
+      "input": {
+        "version": "1",
+        "auctionId": "undersubscribed",
+        "supply": "1000000",
+        "reservePrice": "1000000",
+        "tokenDecimals": 0,
+        "bids": [
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "5000000",
+            "quantity": "200000"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "3000000",
+            "quantity": "100000"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "undersubscribed",
+        "tokenDecimals": 0,
+        "clearingPrice": "1000000",
+        "supply": "1000000",
+        "sold": "300000",
+        "unsold": "700000",
+        "totalRaised": "300000000000",
+        "totalLocked": "1300000000000",
+        "totalRefunded": "1000000000000",
+        "fills": [
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "5000000",
+            "requested": "200000",
+            "filled": "200000",
+            "locked": "1000000000000",
+            "payment": "200000000000",
+            "refund": "800000000000"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "3000000",
+            "requested": "100000",
+            "filled": "100000",
+            "locked": "300000000000",
+            "payment": "100000000000",
+            "refund": "200000000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "no bids at all",
+      "input": {
+        "version": "1",
+        "auctionId": "no-bids",
+        "supply": "1000000",
+        "reservePrice": "1000000",
+        "tokenDecimals": 0,
+        "bids": []
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "no-bids",
+        "tokenDecimals": 0,
+        "clearingPrice": "1000000",
+        "supply": "1000000",
+        "sold": "0",
+        "unsold": "1000000",
+        "totalRaised": "0",
+        "totalLocked": "0",
+        "totalRefunded": "0",
+        "fills": []
+      }
+    },
+    {
+      "name": "every bid below the reserve",
+      "input": {
+        "version": "1",
+        "auctionId": "all-below-reserve",
+        "supply": "1000000",
+        "reservePrice": "9000000",
+        "tokenDecimals": 0,
+        "bids": [
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "5000000",
+            "quantity": "400000"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "4000000",
+            "quantity": "300000"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "all-below-reserve",
+        "tokenDecimals": 0,
+        "clearingPrice": "9000000",
+        "supply": "1000000",
+        "sold": "0",
+        "unsold": "1000000",
+        "totalRaised": "0",
+        "totalLocked": "3200000000000",
+        "totalRefunded": "3200000000000",
+        "fills": [
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "5000000",
+            "requested": "400000",
+            "filled": "0",
+            "locked": "2000000000000",
+            "payment": "0",
+            "refund": "2000000000000"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "4000000",
+            "requested": "300000",
+            "filled": "0",
+            "locked": "1200000000000",
+            "payment": "0",
+            "refund": "1200000000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "one bid larger than the supply",
+      "input": {
+        "version": "1",
+        "auctionId": "whale",
+        "supply": "100",
+        "reservePrice": "1000000",
+        "tokenDecimals": 0,
+        "bids": [
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "7000000",
+            "quantity": "5000"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "2000000",
+            "quantity": "10"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "whale",
+        "tokenDecimals": 0,
+        "clearingPrice": "7000000",
+        "supply": "100",
+        "sold": "100",
+        "unsold": "0",
+        "totalRaised": "700000000",
+        "totalLocked": "35020000000",
+        "totalRefunded": "34320000000",
+        "fills": [
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "7000000",
+            "requested": "5000",
+            "filled": "100",
+            "locked": "35000000000",
+            "payment": "700000000",
+            "refund": "34300000000"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "2000000",
+            "requested": "10",
+            "filled": "0",
+            "locked": "20000000",
+            "payment": "0",
+            "refund": "20000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "three equal bids split 10 tokens, crumb goes by id",
+      "input": {
+        "version": "1",
+        "auctionId": "marginal-tie",
+        "supply": "10",
+        "reservePrice": "1000000",
+        "tokenDecimals": 0,
+        "bids": [
+          {
+            "id": "C",
+            "bidder": "c.near",
+            "limitPrice": "3000000",
+            "quantity": "5"
+          },
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "3000000",
+            "quantity": "5"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "3000000",
+            "quantity": "5"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "marginal-tie",
+        "tokenDecimals": 0,
+        "clearingPrice": "3000000",
+        "supply": "10",
+        "sold": "10",
+        "unsold": "0",
+        "totalRaised": "30000000",
+        "totalLocked": "45000000",
+        "totalRefunded": "15000000",
+        "fills": [
+          {
+            "bidId": "C",
+            "bidder": "c.near",
+            "limitPrice": "3000000",
+            "requested": "5",
+            "filled": "3",
+            "locked": "15000000",
+            "payment": "9000000",
+            "refund": "6000000"
+          },
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "3000000",
+            "requested": "5",
+            "filled": "4",
+            "locked": "15000000",
+            "payment": "12000000",
+            "refund": "3000000"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "3000000",
+            "requested": "5",
+            "filled": "3",
+            "locked": "15000000",
+            "payment": "9000000",
+            "refund": "6000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unequal marginal bids, crumbs by largest remainder",
+      "input": {
+        "version": "1",
+        "auctionId": "marginal-remainders",
+        "supply": "100",
+        "reservePrice": "1000000",
+        "tokenDecimals": 0,
+        "bids": [
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "9000000",
+            "quantity": "30"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "4000000",
+            "quantity": "40"
+          },
+          {
+            "id": "C",
+            "bidder": "c.near",
+            "limitPrice": "4000000",
+            "quantity": "33"
+          },
+          {
+            "id": "D",
+            "bidder": "d.near",
+            "limitPrice": "4000000",
+            "quantity": "27"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "marginal-remainders",
+        "tokenDecimals": 0,
+        "clearingPrice": "4000000",
+        "supply": "100",
+        "sold": "100",
+        "unsold": "0",
+        "totalRaised": "400000000",
+        "totalLocked": "670000000",
+        "totalRefunded": "270000000",
+        "fills": [
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "9000000",
+            "requested": "30",
+            "filled": "30",
+            "locked": "270000000",
+            "payment": "120000000",
+            "refund": "150000000"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "4000000",
+            "requested": "40",
+            "filled": "28",
+            "locked": "160000000",
+            "payment": "112000000",
+            "refund": "48000000"
+          },
+          {
+            "bidId": "C",
+            "bidder": "c.near",
+            "limitPrice": "4000000",
+            "requested": "33",
+            "filled": "23",
+            "locked": "132000000",
+            "payment": "92000000",
+            "refund": "40000000"
+          },
+          {
+            "bidId": "D",
+            "bidder": "d.near",
+            "limitPrice": "4000000",
+            "requested": "27",
+            "filled": "19",
+            "locked": "108000000",
+            "payment": "76000000",
+            "refund": "32000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "supply exactly matches demand",
+      "input": {
+        "version": "1",
+        "auctionId": "exact-fit",
+        "supply": "500",
+        "reservePrice": "1000000",
+        "tokenDecimals": 0,
+        "bids": [
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "6000000",
+            "quantity": "200"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "5000000",
+            "quantity": "300"
+          },
+          {
+            "id": "C",
+            "bidder": "c.near",
+            "limitPrice": "4000000",
+            "quantity": "50"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "exact-fit",
+        "tokenDecimals": 0,
+        "clearingPrice": "5000000",
+        "supply": "500",
+        "sold": "500",
+        "unsold": "0",
+        "totalRaised": "2500000000",
+        "totalLocked": "2900000000",
+        "totalRefunded": "400000000",
+        "fills": [
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "6000000",
+            "requested": "200",
+            "filled": "200",
+            "locked": "1200000000",
+            "payment": "1000000000",
+            "refund": "200000000"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "5000000",
+            "requested": "300",
+            "filled": "300",
+            "locked": "1500000000",
+            "payment": "1500000000",
+            "refund": "0"
+          },
+          {
+            "bidId": "C",
+            "bidder": "c.near",
+            "limitPrice": "4000000",
+            "requested": "50",
+            "filled": "0",
+            "locked": "200000000",
+            "payment": "0",
+            "refund": "200000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "token with 6 decimals, payments round up",
+      "input": {
+        "version": "1",
+        "auctionId": "decimals-6",
+        "supply": "5000000",
+        "reservePrice": "1500000",
+        "tokenDecimals": 6,
+        "bids": [
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "2750001",
+            "quantity": "2500003"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "2750001",
+            "quantity": "2500003"
+          },
+          {
+            "id": "C",
+            "bidder": "c.near",
+            "limitPrice": "1500001",
+            "quantity": "999999"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "decimals-6",
+        "tokenDecimals": 6,
+        "clearingPrice": "2750001",
+        "supply": "5000000",
+        "sold": "5000000",
+        "unsold": "0",
+        "totalRaised": "13750006",
+        "totalLocked": "15250022",
+        "totalRefunded": "1500016",
+        "fills": [
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "2750001",
+            "requested": "2500003",
+            "filled": "2500000",
+            "locked": "6875011",
+            "payment": "6875003",
+            "refund": "8"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "2750001",
+            "requested": "2500003",
+            "filled": "2500000",
+            "locked": "6875011",
+            "payment": "6875003",
+            "refund": "8"
+          },
+          {
+            "bidId": "C",
+            "bidder": "c.near",
+            "limitPrice": "1500001",
+            "requested": "999999",
+            "filled": "0",
+            "locked": "1500000",
+            "payment": "0",
+            "refund": "1500000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "token with 24 decimals",
+      "input": {
+        "version": "1",
+        "auctionId": "decimals-24",
+        "supply": "1000000000000000000000000",
+        "reservePrice": "1000",
+        "tokenDecimals": 24,
+        "bids": [
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "5000",
+            "quantity": "600000000000000000000000"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "3000",
+            "quantity": "700000000000000000000000"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "decimals-24",
+        "tokenDecimals": 24,
+        "clearingPrice": "3000",
+        "supply": "1000000000000000000000000",
+        "sold": "1000000000000000000000000",
+        "unsold": "0",
+        "totalRaised": "3000",
+        "totalLocked": "5100",
+        "totalRefunded": "2100",
+        "fills": [
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "5000",
+            "requested": "600000000000000000000000",
+            "filled": "600000000000000000000000",
+            "locked": "3000",
+            "payment": "1800",
+            "refund": "1200"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "3000",
+            "requested": "700000000000000000000000",
+            "filled": "400000000000000000000000",
+            "locked": "2100",
+            "payment": "1200",
+            "refund": "900"
+          }
+        ]
+      }
+    },
+    {
+      "name": "bid exactly at the reserve",
+      "input": {
+        "version": "1",
+        "auctionId": "at-reserve",
+        "supply": "100",
+        "reservePrice": "2000000",
+        "tokenDecimals": 0,
+        "bids": [
+          {
+            "id": "A",
+            "bidder": "a.near",
+            "limitPrice": "2000000",
+            "quantity": "60"
+          },
+          {
+            "id": "B",
+            "bidder": "b.near",
+            "limitPrice": "2000000",
+            "quantity": "60"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "at-reserve",
+        "tokenDecimals": 0,
+        "clearingPrice": "2000000",
+        "supply": "100",
+        "sold": "100",
+        "unsold": "0",
+        "totalRaised": "200000000",
+        "totalLocked": "240000000",
+        "totalRefunded": "40000000",
+        "fills": [
+          {
+            "bidId": "A",
+            "bidder": "a.near",
+            "limitPrice": "2000000",
+            "requested": "60",
+            "filled": "50",
+            "locked": "120000000",
+            "payment": "100000000",
+            "refund": "20000000"
+          },
+          {
+            "bidId": "B",
+            "bidder": "b.near",
+            "limitPrice": "2000000",
+            "requested": "60",
+            "filled": "50",
+            "locked": "120000000",
+            "payment": "100000000",
+            "refund": "20000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "many bids at distinct prices",
+      "input": {
+        "version": "1",
+        "auctionId": "ladder",
+        "supply": "1000",
+        "reservePrice": "1000000",
+        "tokenDecimals": 0,
+        "bids": [
+          {
+            "id": "B00",
+            "bidder": "b00.near",
+            "limitPrice": "1000000",
+            "quantity": "20"
+          },
+          {
+            "id": "B01",
+            "bidder": "b01.near",
+            "limitPrice": "1250000",
+            "quantity": "25"
+          },
+          {
+            "id": "B02",
+            "bidder": "b02.near",
+            "limitPrice": "1500000",
+            "quantity": "30"
+          },
+          {
+            "id": "B03",
+            "bidder": "b03.near",
+            "limitPrice": "1750000",
+            "quantity": "35"
+          },
+          {
+            "id": "B04",
+            "bidder": "b04.near",
+            "limitPrice": "2000000",
+            "quantity": "40"
+          },
+          {
+            "id": "B05",
+            "bidder": "b05.near",
+            "limitPrice": "2250000",
+            "quantity": "45"
+          },
+          {
+            "id": "B06",
+            "bidder": "b06.near",
+            "limitPrice": "2500000",
+            "quantity": "50"
+          },
+          {
+            "id": "B07",
+            "bidder": "b07.near",
+            "limitPrice": "2750000",
+            "quantity": "20"
+          },
+          {
+            "id": "B08",
+            "bidder": "b08.near",
+            "limitPrice": "3000000",
+            "quantity": "25"
+          },
+          {
+            "id": "B09",
+            "bidder": "b09.near",
+            "limitPrice": "3250000",
+            "quantity": "30"
+          },
+          {
+            "id": "B10",
+            "bidder": "b10.near",
+            "limitPrice": "3500000",
+            "quantity": "35"
+          },
+          {
+            "id": "B11",
+            "bidder": "b11.near",
+            "limitPrice": "3750000",
+            "quantity": "40"
+          },
+          {
+            "id": "B12",
+            "bidder": "b12.near",
+            "limitPrice": "4000000",
+            "quantity": "45"
+          },
+          {
+            "id": "B13",
+            "bidder": "b13.near",
+            "limitPrice": "4250000",
+            "quantity": "50"
+          },
+          {
+            "id": "B14",
+            "bidder": "b14.near",
+            "limitPrice": "4500000",
+            "quantity": "20"
+          },
+          {
+            "id": "B15",
+            "bidder": "b15.near",
+            "limitPrice": "4750000",
+            "quantity": "25"
+          },
+          {
+            "id": "B16",
+            "bidder": "b16.near",
+            "limitPrice": "5000000",
+            "quantity": "30"
+          },
+          {
+            "id": "B17",
+            "bidder": "b17.near",
+            "limitPrice": "5250000",
+            "quantity": "35"
+          },
+          {
+            "id": "B18",
+            "bidder": "b18.near",
+            "limitPrice": "5500000",
+            "quantity": "40"
+          },
+          {
+            "id": "B19",
+            "bidder": "b19.near",
+            "limitPrice": "5750000",
+            "quantity": "45"
+          },
+          {
+            "id": "B20",
+            "bidder": "b20.near",
+            "limitPrice": "6000000",
+            "quantity": "50"
+          },
+          {
+            "id": "B21",
+            "bidder": "b21.near",
+            "limitPrice": "6250000",
+            "quantity": "20"
+          },
+          {
+            "id": "B22",
+            "bidder": "b22.near",
+            "limitPrice": "6500000",
+            "quantity": "25"
+          },
+          {
+            "id": "B23",
+            "bidder": "b23.near",
+            "limitPrice": "6750000",
+            "quantity": "30"
+          },
+          {
+            "id": "B24",
+            "bidder": "b24.near",
+            "limitPrice": "7000000",
+            "quantity": "35"
+          }
+        ]
+      },
+      "expected": {
+        "version": "1",
+        "auctionId": "ladder",
+        "tokenDecimals": 0,
+        "clearingPrice": "1000000",
+        "supply": "1000",
+        "sold": "845",
+        "unsold": "155",
+        "totalRaised": "845000000",
+        "totalLocked": "3412500000",
+        "totalRefunded": "2567500000",
+        "fills": [
+          {
+            "bidId": "B00",
+            "bidder": "b00.near",
+            "limitPrice": "1000000",
+            "requested": "20",
+            "filled": "20",
+            "locked": "20000000",
+            "payment": "20000000",
+            "refund": "0"
+          },
+          {
+            "bidId": "B01",
+            "bidder": "b01.near",
+            "limitPrice": "1250000",
+            "requested": "25",
+            "filled": "25",
+            "locked": "31250000",
+            "payment": "25000000",
+            "refund": "6250000"
+          },
+          {
+            "bidId": "B02",
+            "bidder": "b02.near",
+            "limitPrice": "1500000",
+            "requested": "30",
+            "filled": "30",
+            "locked": "45000000",
+            "payment": "30000000",
+            "refund": "15000000"
+          },
+          {
+            "bidId": "B03",
+            "bidder": "b03.near",
+            "limitPrice": "1750000",
+            "requested": "35",
+            "filled": "35",
+            "locked": "61250000",
+            "payment": "35000000",
+            "refund": "26250000"
+          },
+          {
+            "bidId": "B04",
+            "bidder": "b04.near",
+            "limitPrice": "2000000",
+            "requested": "40",
+            "filled": "40",
+            "locked": "80000000",
+            "payment": "40000000",
+            "refund": "40000000"
+          },
+          {
+            "bidId": "B05",
+            "bidder": "b05.near",
+            "limitPrice": "2250000",
+            "requested": "45",
+            "filled": "45",
+            "locked": "101250000",
+            "payment": "45000000",
+            "refund": "56250000"
+          },
+          {
+            "bidId": "B06",
+            "bidder": "b06.near",
+            "limitPrice": "2500000",
+            "requested": "50",
+            "filled": "50",
+            "locked": "125000000",
+            "payment": "50000000",
+            "refund": "75000000"
+          },
+          {
+            "bidId": "B07",
+            "bidder": "b07.near",
+            "limitPrice": "2750000",
+            "requested": "20",
+            "filled": "20",
+            "locked": "55000000",
+            "payment": "20000000",
+            "refund": "35000000"
+          },
+          {
+            "bidId": "B08",
+            "bidder": "b08.near",
+            "limitPrice": "3000000",
+            "requested": "25",
+            "filled": "25",
+            "locked": "75000000",
+            "payment": "25000000",
+            "refund": "50000000"
+          },
+          {
+            "bidId": "B09",
+            "bidder": "b09.near",
+            "limitPrice": "3250000",
+            "requested": "30",
+            "filled": "30",
+            "locked": "97500000",
+            "payment": "30000000",
+            "refund": "67500000"
+          },
+          {
+            "bidId": "B10",
+            "bidder": "b10.near",
+            "limitPrice": "3500000",
+            "requested": "35",
+            "filled": "35",
+            "locked": "122500000",
+            "payment": "35000000",
+            "refund": "87500000"
+          },
+          {
+            "bidId": "B11",
+            "bidder": "b11.near",
+            "limitPrice": "3750000",
+            "requested": "40",
+            "filled": "40",
+            "locked": "150000000",
+            "payment": "40000000",
+            "refund": "110000000"
+          },
+          {
+            "bidId": "B12",
+            "bidder": "b12.near",
+            "limitPrice": "4000000",
+            "requested": "45",
+            "filled": "45",
+            "locked": "180000000",
+            "payment": "45000000",
+            "refund": "135000000"
+          },
+          {
+            "bidId": "B13",
+            "bidder": "b13.near",
+            "limitPrice": "4250000",
+            "requested": "50",
+            "filled": "50",
+            "locked": "212500000",
+            "payment": "50000000",
+            "refund": "162500000"
+          },
+          {
+            "bidId": "B14",
+            "bidder": "b14.near",
+            "limitPrice": "4500000",
+            "requested": "20",
+            "filled": "20",
+            "locked": "90000000",
+            "payment": "20000000",
+            "refund": "70000000"
+          },
+          {
+            "bidId": "B15",
+            "bidder": "b15.near",
+            "limitPrice": "4750000",
+            "requested": "25",
+            "filled": "25",
+            "locked": "118750000",
+            "payment": "25000000",
+            "refund": "93750000"
+          },
+          {
+            "bidId": "B16",
+            "bidder": "b16.near",
+            "limitPrice": "5000000",
+            "requested": "30",
+            "filled": "30",
+            "locked": "150000000",
+            "payment": "30000000",
+            "refund": "120000000"
+          },
+          {
+            "bidId": "B17",
+            "bidder": "b17.near",
+            "limitPrice": "5250000",
+            "requested": "35",
+            "filled": "35",
+            "locked": "183750000",
+            "payment": "35000000",
+            "refund": "148750000"
+          },
+          {
+            "bidId": "B18",
+            "bidder": "b18.near",
+            "limitPrice": "5500000",
+            "requested": "40",
+            "filled": "40",
+            "locked": "220000000",
+            "payment": "40000000",
+            "refund": "180000000"
+          },
+          {
+            "bidId": "B19",
+            "bidder": "b19.near",
+            "limitPrice": "5750000",
+            "requested": "45",
+            "filled": "45",
+            "locked": "258750000",
+            "payment": "45000000",
+            "refund": "213750000"
+          },
+          {
+            "bidId": "B20",
+            "bidder": "b20.near",
+            "limitPrice": "6000000",
+            "requested": "50",
+            "filled": "50",
+            "locked": "300000000",
+            "payment": "50000000",
+            "refund": "250000000"
+          },
+          {
+            "bidId": "B21",
+            "bidder": "b21.near",
+            "limitPrice": "6250000",
+            "requested": "20",
+            "filled": "20",
+            "locked": "125000000",
+            "payment": "20000000",
+            "refund": "105000000"
+          },
+          {
+            "bidId": "B22",
+            "bidder": "b22.near",
+            "limitPrice": "6500000",
+            "requested": "25",
+            "filled": "25",
+            "locked": "162500000",
+            "payment": "25000000",
+            "refund": "137500000"
+          },
+          {
+            "bidId": "B23",
+            "bidder": "b23.near",
+            "limitPrice": "6750000",
+            "requested": "30",
+            "filled": "30",
+            "locked": "202500000",
+            "payment": "30000000",
+            "refund": "172500000"
+          },
+          {
+            "bidId": "B24",
+            "bidder": "b24.near",
+            "limitPrice": "7000000",
+            "requested": "35",
+            "filled": "35",
+            "locked": "245000000",
+            "payment": "35000000",
+            "refund": "210000000"
+          }
+        ]
+      }
+    }
+  ]
+}
