@@ -31,6 +31,7 @@ model Launch {
   updatedAt       DateTime       @updatedAt
   bids            Bid[]
   paymentChecks   PaymentCheck[]
+  settlement      Settlement?
 
   @@index([state, closesAt])
 }
@@ -110,4 +111,22 @@ model AuthSession {
 
   @@index([accountId, expiresAt])
   @@index([expiresAt])
+}
+
+/// The published result of a launch. In development `mode` is "dev" and `attestation` is null:
+/// a dev settlement is reproducible but NOT attested.
+model Settlement {
+  id            String   @id @default(cuid())
+  launchId      String   @unique
+  clearingPrice String
+  sold          String
+  totalRaised   String
+  outcome       Json
+  inputHash     String
+  codeHash      String
+  attestation   String?
+  mode          String   @default("dev")
+  skippedBids   Int      @default(0)
+  createdAt     DateTime @default(now())
+  launch        Launch   @relation(fields: [launchId], references: [id])
 }

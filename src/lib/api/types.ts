@@ -86,7 +86,8 @@ export type PaymentCheck = {
 };
 
 export type Attestation = {
-  kind: "tdx";
+  /** "dev" is the development enclave: reproducible, but NOT attested. */
+  kind: "tdx" | "dev";
   /** Opaque quote bytes, base64. */
   quote: string;
   codeHash: string;

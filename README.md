@@ -1,3 +1,5 @@
+<p align="center"><img src="public/logo.svg" alt="Unmask logo" width="96" height="96" /></p>
+
 <h1 align="center">Unmask</h1>
 
 <p align="center"><b>The token launch where bots lose their edge.</b><br/>
@@ -8,7 +10,7 @@ Sealed-bid token launches on NEAR: everyone pays one price, and anyone can verif
 
 | | |
 |---|---|
-| **Status** | Interface, auction rule, in-browser bid sealing, wallet sign-in and a local backend are built. The enclave, real payment checks and the token are not: **nothing here moves real funds.** |
+| **Status** | Interface, the auction rule (TypeScript and Rust), in-browser bid sealing, wallet sign-in, the backend and settlement are built. We are now making the enclave, payment checks and the token real: **nothing here moves real funds yet.** |
 | **Hackathon** | NEAR Hackathon, development 1–14 Nov 2026, submission by 14 Nov 23:59 UTC |
 | **Tracks** | 11 Memecoins With Mechanics · 3 Privacy & Private AI · 4 Autonomous Business · 1 Unstoppable DeFi |
 | **Stack** | Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Fastify + PostgreSQL (Prisma) · libsodium · Rust → WebAssembly (planned) |
@@ -58,26 +60,35 @@ Example: 1,000,000 tokens for sale, reserve $0.01.
 
 The clearing price is **$0.03**. A pays $12,000 (not $0.05), B pays $9,000, C pays $9,000, and the creator receives $30,000. The rule is implemented in [`src/lib/auction.ts`](src/lib/auction.ts) and this example is one of its tests.
 
-## What is real today
+## What is built, and what we are making real
+
+The work is split in two: what already runs, and what we are building next so that every part is real, end to end. Nothing here moves real funds yet.
+
+**Built and working**
 
 | Piece | State |
 |---|---|
 | The interface: every screen below, the animations and the drawings | Built |
-| The auction rule (uniform price, pro-rata at the price, whole-token rounding) | Built, tested. Exact integer version in [`docs/auction-core-v1.md`](docs/auction-core-v1.md) |
-| Bid sealing in the browser (libsodium sealed box) | Built |
-| NEAR wallet sign-in (challenge and signature, with a demo fallback) | Built |
-| Backend API (Fastify, PostgreSQL, Prisma): launches, bids, sessions, receipts | Built for local development only |
+| The auction rule, exact integers, in TypeScript and in Rust, matching on 12 shared cases | Built, tested ([`docs/auction-core-v1.md`](docs/auction-core-v1.md)) |
+| Bid sealing in the browser (libsodium sealed box) and the commitment check | Built |
+| NEAR wallet sign-in (signed challenge, sessions) | Built |
+| Backend API (Fastify, PostgreSQL, Prisma): launches, bids, sessions, receipts, enclave key, settle, result | Built |
+| Settlement: open bids, reject dishonest ones with a recorded reason, run the Rust engine, store and publish the result | Built, runs on one machine ([`docs/settlement-dev.md`](docs/settlement-dev.md)) |
 | Hashing and re-running the auction on the verify page | Built, runs in your browser |
-| Launches, bids and results on screen | **Demo data** |
-| The attestation check | **Demo stand-in** |
-| Payment checks | **Development stub**, locks nothing |
-| The enclave that runs the auction | Not built |
-| OutLayer payment checks and real funds | Not built |
-| The NEP-141 token and payouts | Not built |
+
+**Being made real next**
+
+| Piece | Today | Target |
+|---|---|---|
+| The enclave that runs the auction | Runs in the backend process, so it is not confidential | The same Rust engine inside an OutLayer TEE |
+| Attestation | Not produced; the result is labelled `dev` | A real attestation, verified on the verify page |
+| Payment checks and funds | Locks nothing | Real OutLayer payment checks, claims and refunds |
+| The token and payouts | Not deployed | A NEP-141 token with real payouts to winners |
+| Live data on the landing page and launch cards | Sample launches | Launches read from the backend |
 
 ## The interface
 
-Pure black, square boxes, pink for *masked*, green for *verified*, red for a bot or a failed check. Every screen runs on demo data and says so.
+Pure black, square boxes, pink for *masked*, green for *verified*, red for a bot or a failed check. Screens that show sample launches say so.
 
 | Route | What it is |
 |---|---|
@@ -94,20 +105,76 @@ Pure black, square boxes, pink for *masked*, green for *verified*, red for a bot
 
 ## Architecture
 
+Three trust zones. Only the enclave ever sees a bid in the clear, and everything it does can be checked by anyone.
+
+```mermaid
+flowchart LR
+  subgraph Browser["Browser (Next.js, untrusted)"]
+    UI["Create, bid, results, verify"]
+    SEAL["libsodium sealed box<br/>bid is encrypted here"]
+    VER["Verify page<br/>re-hashes and re-runs the auction"]
+  end
+
+  subgraph Backend["Backend API (Fastify, sees ciphertext only)"]
+    API["Launches, bids, sessions, receipts"]
+    DB[("PostgreSQL<br/>launches, encrypted bids, results")]
+    SET["Settlement<br/>close, call enclave, refund, pay out"]
+  end
+
+  subgraph Enclave["OutLayer enclave (Rust to WebAssembly, Intel TDX)"]
+    DEC["Decrypt bids"]
+    AUC["Uniform-price auction"]
+    SIG["Sign result + code hash + attestation"]
+  end
+
+  subgraph NEAR["NEAR"]
+    PC["OutLayer payment checks<br/>lock each bid"]
+    TOK["NEP-141 token"]
+    INT["intents.near"]
+  end
+
+  UI --> SEAL --> API
+  API <--> DB
+  API --> PC
+  SET --> DEC --> AUC --> SIG --> SET
+  SET --> PC
+  SET --> TOK
+  PC --- INT
+  SIG -. published .-> VER
+  TOK -. on-chain transfers .-> VER
 ```
- Browser (Next.js)
-   create / bid (sealed in the browser) / results / verify
-        |
-        v
- Backend API (Fastify)  ---->  PostgreSQL (launches, encrypted bids, results)
-        |
-        v
- OutLayer enclave (Rust -> WebAssembly, Intel TDX)
-   decrypts bids, claims payment checks, runs the auction, signs the result
-        |
-        v
- NEAR: NEP-141 token | OutLayer payment checks | intents.near
+
+**A launch, step by step**
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant B as Bidder (browser)
+  participant A as Backend API
+  participant P as Payment checks
+  participant E as Enclave
+  participant N as NEAR
+
+  B->>P: lock the most this bid could owe
+  B->>B: seal the bid to the enclave public key
+  B->>A: submit ciphertext + commitment + check id
+  A-->>B: receipt (count goes up, amounts stay hidden)
+  Note over A: window closes, input hash published
+  A->>E: all ciphertexts + launch rules
+  E->>E: decrypt, find the one clearing price
+  E-->>A: result + code hash + input hash + attestation
+  A->>P: claim what winners owe, reclaim the rest
+  A->>N: send tokens to winners, proceeds to the creator
+  B->>A: verify page fetches the published result
+  B->>B: re-hash, re-run the auction, compare
 ```
+
+| Zone | Sees | Can it cheat? |
+|---|---|---|
+| Browser | Its own bid | Only against itself |
+| Backend | Ciphertexts, counts, results | It cannot read a bid, and it cannot change the result without breaking the hashes |
+| Enclave | Every bid, only while settling | Limited by its public code hash and attestation |
+| NEAR | Transfers | Public by design |
 
 ## NEAR protocols
 
@@ -130,6 +197,13 @@ npm test             # the auction rule, the race and the verify checks
 npm run typecheck
 npm run lint
 npm run build
+```
+
+Rust engine and shared vectors:
+
+```sh
+cd enclave/auction-engine && cargo test     # must match shared/test-vectors on every case
+npx tsx scripts/gen-test-vectors.ts          # regenerate the cases from the TypeScript rule
 ```
 
 The backend lives in `backend/` and needs PostgreSQL:
@@ -174,6 +248,7 @@ docs/               Project documentation (below)
 | [`docs/protocols-integrated.md`](docs/protocols-integrated.md) | Each NEAR protocol and its status |
 | [`docs/decisions-and-open-questions.md`](docs/decisions-and-open-questions.md) | Decisions to settle and open questions |
 | [`docs/auction-core-v1.md`](docs/auction-core-v1.md) | The exact integer auction rule and its shared test vector |
+| [`docs/settlement-dev.md`](docs/settlement-dev.md) | How a launch settles on one machine, and what is and is not real |
 | [`docs/backend-phase2.md`](docs/backend-phase2.md) | The backend: invariants, trust boundary and next work |
 | [`docs/api-contract.md`](docs/api-contract.md) | The HTTP API the interface talks to |
 | [`docs/demo-script.md`](docs/demo-script.md) | The demo, step by step |
@@ -188,7 +263,10 @@ docs/               Project documentation (below)
 
 ## Team
 
-To be added.
+| | Role | GitHub |
+|---|---|---|
+| **Ayush Singh** | Co-founder · CTO | [@ayushsingh82](https://github.com/ayushsingh82) |
+| **Kaushal** | Co-founder · Engineering Lead | [@kaushal0398](https://github.com/kaushal0398) |
 
 ## License
 

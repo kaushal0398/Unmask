@@ -2,7 +2,10 @@
 import {
   ApiError,
   CreateStepError,
+  type Allocation,
   type CreateLaunchInput,
+  type EnclaveKey,
+  type Result,
   type CreateStep,
   type Launch,
   type LaunchApi,
@@ -41,6 +44,22 @@ type BackendLaunch = {
   bidCount: number;
   tokenContract: string | null;
   codeHash: string | null;
+};
+
+type BackendResult = {
+  launchId: string;
+  clearingPrice: string;
+  sold: string;
+  totalRaised: string;
+  outcome: {
+    unsold: string;
+    fills: Array<{ bidder: string; limitPrice: string; requested: string; filled: string; payment: string; refund: string }>;
+  };
+  inputHash: string;
+  codeHash: string;
+  attestation: string | null;
+  skippedBids: number;
+  settledAt: string;
 };
 
 type BackendPaymentCheck = {
@@ -323,12 +342,47 @@ export class HttpLaunchApi implements LaunchApi {
     }
   }
 
-  getResult(id: string) {
-    return this.demo.getResult(id);
+  async getResult(id: string): Promise<Result | null> {
+    let response: { result: BackendResult };
+    try {
+      response = await request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/result`);
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "not_found") return null;
+      throw error;
+    }
+    const r = response.result;
+    const unit = (value: string, decimals: number) => Number(value) / 10 ** decimals;
+    const allocations: Allocation[] = r.outcome.fills.map((f) => ({
+      bidder: f.bidder,
+      limit: unit(f.limitPrice, PAYMENT_DECIMALS),
+      qty: unit(f.requested, TOKEN_DECIMALS),
+      filled: unit(f.filled, TOKEN_DECIMALS),
+      paid: unit(f.payment, PAYMENT_DECIMALS),
+      refund: unit(f.refund, PAYMENT_DECIMALS),
+    }));
+    const resultHash = Array.from(
+      new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(r.outcome)))),
+      (b) => b.toString(16).padStart(2, "0"),
+    ).join("");
+    return {
+      launchId: r.launchId,
+      clearingPrice: unit(r.clearingPrice, PAYMENT_DECIMALS),
+      sold: unit(r.sold, TOKEN_DECIMALS),
+      unsold: unit(r.outcome.unsold, TOKEN_DECIMALS),
+      raised: unit(r.totalRaised, PAYMENT_DECIMALS),
+      allocations,
+      totalBids: allocations.length + r.skippedBids,
+      codeHash: r.codeHash,
+      inputHash: r.inputHash,
+      attestation: { kind: r.attestation ? "tdx" : "dev", quote: r.attestation ?? "", codeHash: r.codeHash, inputHash: r.inputHash, resultHash, signer: "dev-enclave" },
+      settledAt: r.settledAt,
+    };
   }
 
-  getEnclaveKey(id: string) {
-    return this.demo.getEnclaveKey(id);
+  /** The key a bid is sealed to. Never falls back to a demo key: a bid sealed to it could not be opened. */
+  async getEnclaveKey(id: string): Promise<EnclaveKey> {
+    const response = await request<{ key: EnclaveKey }>(`/v1/launches/${encodeURIComponent(id)}/enclave-key`);
+    return response.key;
   }
 
   async createPaymentCheck(input: {
