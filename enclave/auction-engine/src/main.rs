@@ -1,5 +1,6 @@
-//! Reads one auction input as JSON on stdin, writes the outcome as JSON on stdout.
-//! Exit code 1 with the reason on stderr if the input is invalid.
+//! Reads one request as JSON on stdin, writes one response as JSON on stdout.
+//! On a bad request: nothing on stdout, the reason on stderr, exit code 1.
+//! The same file builds natively and to `wasm32-wasip2` for OutLayer.
 use std::io::{Read, Write};
 
 fn main() {
@@ -8,16 +9,8 @@ fn main() {
         eprintln!("could not read stdin: {e}");
         std::process::exit(1);
     }
-    let input: auction_engine::Input = match serde_json::from_str(&raw) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("invalid input: {e}");
-            std::process::exit(1);
-        }
-    };
-    match auction_engine::clear_auction(&input) {
-        Ok(outcome) => {
-            let out = serde_json::to_string(&outcome).expect("outcome serializes");
+    match auction_engine::handle(&raw) {
+        Ok(out) => {
             std::io::stdout().write_all(out.as_bytes()).ok();
         }
         Err(e) => {

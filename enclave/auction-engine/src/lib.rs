@@ -296,3 +296,34 @@ pub fn clear_auction(input: &Input) -> Result<Outcome, String> {
         fills,
     })
 }
+
+/// One request in, one JSON response out. This is the whole surface the WASM workload exposes.
+///
+/// * `{"action":"health"}` returns a small status object.
+/// * `{"action":"clear_auction", ...}` or a bare auction input runs the auction.
+///
+/// Anything else is an error. Diagnostics never go to the response body.
+pub fn handle(request: &str) -> Result<String, String> {
+    let mut value: serde_json::Value = serde_json::from_str(request).map_err(|e| format!("invalid input: {e}"))?;
+    let action = value.get("action").and_then(|a| a.as_str()).map(str::to_owned);
+    match action.as_deref() {
+        Some("health") => Ok(serde_json::json!({
+            "status": "success",
+            "action": "health",
+            "engine": "unmask-auction-engine",
+            "engine_version": env!("CARGO_PKG_VERSION"),
+            "core_version": VERSION,
+            "message": "Unmask auction engine is running",
+        })
+        .to_string()),
+        Some("clear_auction") | None => {
+            if let Some(obj) = value.as_object_mut() {
+                obj.remove("action");
+            }
+            let input: Input = serde_json::from_value(value).map_err(|e| format!("invalid input: {e}"))?;
+            let outcome = clear_auction(&input)?;
+            serde_json::to_string(&outcome).map_err(|e| e.to_string())
+        }
+        Some(other) => Err(format!("unknown action: {other}")),
+    }
+}

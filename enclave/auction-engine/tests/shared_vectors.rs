@@ -48,3 +48,20 @@ fn handles_products_larger_than_u128() {
     assert_eq!(out.fills[0].locked, "340282366920938463463374607431768211455");
     assert_eq!(out.fills[0].filled, "1000000000000000000000000");
 }
+
+#[test]
+fn health_and_action_envelope() {
+    let health: Value = serde_json::from_str(&auction_engine::handle(r#"{"action":"health"}"#).unwrap()).unwrap();
+    assert_eq!(health["status"], "success");
+    assert_eq!(health["action"], "health");
+
+    // A `clear_auction` envelope gives the same answer as a bare input.
+    let doc: Value = serde_json::from_str(FIRST).unwrap();
+    let bare = auction_engine::handle(&doc["input"].to_string()).unwrap();
+    let mut wrapped = doc["input"].clone();
+    wrapped["action"] = Value::String("clear_auction".into());
+    assert_eq!(auction_engine::handle(&wrapped.to_string()).unwrap(), bare);
+
+    assert!(auction_engine::handle(r#"{"action":"mint_tokens"}"#).unwrap_err().contains("unknown action"));
+    assert!(auction_engine::handle("not json").is_err());
+}
