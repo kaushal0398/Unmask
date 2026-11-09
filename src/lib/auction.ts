@@ -6,7 +6,7 @@
  */
 import { clearAuctionExact, decimalToAtomic } from "@/lib/auction-core";
 
-export type Bid = { id: string; label: string; limit: number; qty: number; isBot?: boolean };
+export type Bid = { id: string; label: string; limit: number; qty: number; isBot?: boolean; /** Placed by an agent inside rules its owner signed. */ isAgent?: boolean };
 export type Fill = { bid: Bid; filled: number; pays: number; locked: number; refund: number };
 export type Outcome = {
   price: number;

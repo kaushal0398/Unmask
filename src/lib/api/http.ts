@@ -3,6 +3,7 @@ import {
   ApiError,
   CreateStepError,
   type Allocation,
+  type PlannedTransfer,
   type CreateLaunchInput,
   type EnclaveKey,
   type Result,
@@ -47,13 +48,18 @@ type BackendLaunch = {
 };
 
 type BackendResult = {
+  mode: "dev" | "tee";
   launchId: string;
   clearingPrice: string;
   sold: string;
   totalRaised: string;
   outcome: {
     unsold: string;
-    fills: Array<{ bidder: string; limitPrice: string; requested: string; filled: string; payment: string; refund: string }>;
+    fills: Array<{ bidId?: string; bidder: string; limitPrice: string; requested: string; filled: string; payment: string; refund: string }>;
+    skipped?: Array<{ bidId: string; reason: string }>;
+    payouts?: PlannedTransfer[];
+    payoutsExecuted?: boolean;
+    agents?: Array<{ bidId: string; bidder: string; rulesHash: string; signed: boolean }>;
   };
   inputHash: string;
   codeHash: string;
@@ -219,6 +225,45 @@ async function request<T>(
   return data as T;
 }
 
+async function toResult(r: BackendResult): Promise<Result> {
+  const unit = (value: string, decimals: number) => Number(value) / 10 ** decimals;
+  const agentByBidder = new Map((r.outcome.agents ?? []).map((a) => [a.bidder, a]));
+  const allocations: Allocation[] = r.outcome.fills.map((f) => {
+    const agent = agentByBidder.get(f.bidder);
+    return {
+      bidder: f.bidder,
+      limit: unit(f.limitPrice, PAYMENT_DECIMALS),
+      qty: unit(f.requested, TOKEN_DECIMALS),
+      filled: unit(f.filled, TOKEN_DECIMALS),
+      paid: unit(f.payment, PAYMENT_DECIMALS),
+      refund: unit(f.refund, PAYMENT_DECIMALS),
+      ...(agent ? { agent: { signed: agent.signed } } : {}),
+    };
+  });
+  const resultHash = Array.from(
+    new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(r.outcome)))),
+    (b) => b.toString(16).padStart(2, "0"),
+  ).join("");
+  const skipped = r.outcome.skipped ?? [];
+  return {
+    launchId: r.launchId,
+    clearingPrice: unit(r.clearingPrice, PAYMENT_DECIMALS),
+    sold: unit(r.sold, TOKEN_DECIMALS),
+    unsold: unit(r.outcome.unsold, TOKEN_DECIMALS),
+    raised: unit(r.totalRaised, PAYMENT_DECIMALS),
+    allocations,
+    totalBids: allocations.length + r.skippedBids,
+    codeHash: r.codeHash,
+    inputHash: r.inputHash,
+    attestation: { kind: r.attestation ? "tdx" : "dev", quote: r.attestation ?? "", codeHash: r.codeHash, inputHash: r.inputHash, resultHash, signer: "dev-enclave" },
+    settledAt: r.settledAt,
+    mode: r.mode,
+    payouts: r.outcome.payouts ?? [],
+    payoutsExecuted: r.outcome.payoutsExecuted ?? false,
+    skipped,
+  };
+}
+
 export class HttpLaunchApi implements LaunchApi {
   private readonly demo = new MockLaunchApi();
 
@@ -264,9 +309,12 @@ export class HttpLaunchApi implements LaunchApi {
     } catch (error) {
       if (
         error instanceof ApiError &&
-        error.code === "not_found"
+        (error.code === "not_found" || error.code === "network")
       ) {
-        return this.demo.getLaunch(id);
+        // A sample launch still works when the backend is off or does not know it. A launch the backend should
+        // know (not a sample) still reports the real error, so a down backend is never hidden behind fake data.
+        const sample = await this.demo.getLaunch(id);
+        if (sample || error.code === "not_found") return sample;
       }
 
       throw error;
@@ -343,40 +391,19 @@ export class HttpLaunchApi implements LaunchApi {
   }
 
   async getResult(id: string): Promise<Result | null> {
-    let response: { result: BackendResult };
     try {
-      response = await request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/result`);
+      const response = await request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/result`);
+      return await toResult(response.result);
     } catch (error) {
       if (error instanceof ApiError && error.code === "not_found") return null;
       throw error;
     }
-    const r = response.result;
-    const unit = (value: string, decimals: number) => Number(value) / 10 ** decimals;
-    const allocations: Allocation[] = r.outcome.fills.map((f) => ({
-      bidder: f.bidder,
-      limit: unit(f.limitPrice, PAYMENT_DECIMALS),
-      qty: unit(f.requested, TOKEN_DECIMALS),
-      filled: unit(f.filled, TOKEN_DECIMALS),
-      paid: unit(f.payment, PAYMENT_DECIMALS),
-      refund: unit(f.refund, PAYMENT_DECIMALS),
-    }));
-    const resultHash = Array.from(
-      new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(r.outcome)))),
-      (b) => b.toString(16).padStart(2, "0"),
-    ).join("");
-    return {
-      launchId: r.launchId,
-      clearingPrice: unit(r.clearingPrice, PAYMENT_DECIMALS),
-      sold: unit(r.sold, TOKEN_DECIMALS),
-      unsold: unit(r.outcome.unsold, TOKEN_DECIMALS),
-      raised: unit(r.totalRaised, PAYMENT_DECIMALS),
-      allocations,
-      totalBids: allocations.length + r.skippedBids,
-      codeHash: r.codeHash,
-      inputHash: r.inputHash,
-      attestation: { kind: r.attestation ? "tdx" : "dev", quote: r.attestation ?? "", codeHash: r.codeHash, inputHash: r.inputHash, resultHash, signer: "dev-enclave" },
-      settledAt: r.settledAt,
-    };
+  }
+
+  async settleLaunch(id: string): Promise<Result> {
+    const token = this.requireSession();
+    const response = await request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/settle`, { method: "POST", body: "{}" }, token);
+    return toResult(response.result);
   }
 
   /** The key a bid is sealed to. Never falls back to a demo key: a bid sealed to it could not be opened. */

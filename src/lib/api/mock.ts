@@ -177,6 +177,10 @@ export class MockLaunchApi implements LaunchApi {
 
   // ---- bids -------------------------------------------------------------------------------------
 
+  async settleLaunch(): Promise<Result> {
+    throw new ApiError("closed", "Demo launches settle on their own clock.");
+  }
+
   async submitBid(bid: SealedBid) {
     await this.wait();
     const l = this.all().find((x) => x.id === bid.launchId);

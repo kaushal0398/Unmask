@@ -1,3 +1,6 @@
+import type { AgentClaim } from "@/lib/agent";
+import type { Destination } from "@/lib/intents/addresses";
+
 /**
  * The contract between this interface and the core (the enclave, the payment checks and the token). Every screen
  * reads and writes through `LaunchApi`; today a mock implements it (`mock.ts`), and the real one replaces the mock
@@ -53,6 +56,10 @@ export type BidPlaintext = {
   paymentCheck: { id: string; key: string };
   /** Random bytes that make the commitment unguessable. */
   salt: string;
+  /** Set when an agent placed this bid for its owner: the rules it must stay inside. */
+  agent?: AgentClaim;
+  /** Where refunds and tokens should go. Default: the bidder's own NEAR account. */
+  payout?: { refundTo?: Destination; tokensTo?: Destination };
 };
 
 /** What the browser sends to the core. The amounts are inside `ciphertext`. */
@@ -97,7 +104,30 @@ export type Attestation = {
   signer: string;
 };
 
-export type Allocation = { bidder: string; limit: number; qty: number; filled: number; paid: number; refund: number; isBot?: boolean };
+export type Allocation = {
+  bidder: string;
+  limit: number;
+  qty: number;
+  filled: number;
+  paid: number;
+  refund: number;
+  isBot?: boolean;
+  /** Set when an agent placed this bid. `signed` is true only if the owner's wallet signature was verified. */
+  agent?: { signed: boolean };
+};
+
+/** Money the settlement WOULD send, per bidder. A plan: nothing moves until real payment checks and a token exist. */
+export type PlannedTransfer = {
+  bidId: string;
+  bidder: string;
+  kind: "refund" | "tokens";
+  amountAtomic: string;
+  to: { chain: string; address: string };
+  /** True when the destination is not NEAR, so the transfer would go through NEAR Intents. */
+  viaIntents: boolean;
+};
+
+export type SkippedBid = { bidId: string; reason: string };
 
 /** The published result of a settled launch. */
 export type Result = {
@@ -114,6 +144,12 @@ export type Result = {
   inputHash: string;
   attestation: Attestation;
   settledAt: string;
+  /** "dev" means the development enclave: reproducible, not confidential, not attested. */
+  mode?: "dev" | "tee";
+  payouts?: PlannedTransfer[];
+  payoutsExecuted?: boolean;
+  /** Bids that were left out of the auction, each with the reason. */
+  skipped?: SkippedBid[];
 };
 
 export type CreateLaunchInput = {
@@ -244,6 +280,8 @@ export interface LaunchApi {
   /** `null` until the launch has settled. */
   getResult(id: string): Promise<Result | null>;
   getEnclaveKey(launchId: string): Promise<EnclaveKey>;
+  /** Ask the backend to settle a launch whose window has closed. Only its creator may. */
+  settleLaunch(id: string): Promise<Result>;
 
   /** Lock funds for a bid. Resolves once the check is `locked`; rejects with `ApiError("payment_failed")`. */
   createPaymentCheck(input: {

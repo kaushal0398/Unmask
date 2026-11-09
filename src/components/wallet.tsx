@@ -11,10 +11,12 @@ import {
 } from "react";
 
 import { useToast } from "@/components/toast";
+import type { AgentRules } from "@/lib/agent";
 
 import {
   WalletError,
   networkFromEnv,
+  signAgentRules,
   signInWithWallet,
   type ConnectorLike,
   type SignedIn,
@@ -30,6 +32,8 @@ type Wallet = {
   connect: () => Promise<void>;
   connectDemo: () => void;
   disconnect: () => Promise<void>;
+  /** Sign agent rules with the connected wallet. Null in demo mode, where nothing can be signed. */
+  signRules: (rules: AgentRules) => Promise<{ signature: string; publicKey: string } | null>;
 };
 
 const Ctx = createContext<Wallet>({
@@ -40,6 +44,7 @@ const Ctx = createContext<Wallet>({
   connect: async () => {},
   connectDemo: () => {},
   disconnect: async () => {},
+  signRules: async () => null,
 });
 
 export const DEMO_ACCOUNT = "you.near";
@@ -133,6 +138,14 @@ export function WalletProvider({
     setAuth(null);
   }, [connector, mode]);
 
+  const signRules = useCallback(
+    async (rules: AgentRules) => {
+      if (mode !== "real" || !connector) return null;
+      return signAgentRules(connector, rules);
+    },
+    [connector, mode],
+  );
+
   const value = useMemo(
     () => ({
       account,
@@ -142,8 +155,9 @@ export function WalletProvider({
       connect,
       connectDemo,
       disconnect,
+      signRules,
     }),
-    [account, mode, busy, auth, connect, connectDemo, disconnect],
+    [account, mode, busy, auth, connect, connectDemo, disconnect, signRules],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

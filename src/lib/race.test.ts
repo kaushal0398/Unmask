@@ -27,6 +27,15 @@ describe("the landing page's race", () => {
     assert.ok(Math.abs(sb.slices.reduce((a, s) => a + s.share, 0) - 1) < 1e-9);
   });
 
+  it("an agent bidding inside signed rules is served at the one price, not its own limit, while first-come shuts it out", () => {
+    const agent = RACE_BIDS.find((b) => b.isAgent)!;
+    const slice = sb.slices.find((s) => s.kind === "agent")!;
+    assert.ok(slice && slice.share > 0, "the agent gets tokens in the sealed launch");
+    assert.equal(slice.avgPrice, sb.finalPrice);
+    assert.ok(sb.finalPrice < agent.limit, "it pays less than the limit it bid");
+    assert.ok((fc.slices.find((s) => s.kind === "agent")?.share ?? 0) < slice.share, "first-come serves it less");
+  });
+
   it("the humans pay less in the sealed launch than the humans who got in did in the first-come launch", () => {
     const fcHuman = fc.slices.find((s) => s.kind === "human")!.avgPrice!;
     assert.ok(sb.finalPrice < fcHuman);
