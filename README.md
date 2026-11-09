@@ -248,6 +248,10 @@ docs/               Project documentation (below)
 | [`docs/protocols-integrated.md`](docs/protocols-integrated.md) | Each NEAR protocol and its status |
 | [`docs/decisions-and-open-questions.md`](docs/decisions-and-open-questions.md) | Decisions to settle and open questions |
 | [`docs/auction-core-v1.md`](docs/auction-core-v1.md) | The exact integer auction rule and its shared test vector |
+| [`docs/improvements-and-additions.md`](docs/improvements-and-additions.md) | Ideas from nearly.trade and NEAR Intents: what to add and in what order |
+| [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md) | The day-by-day plan to 14 Nov: what is left, what we add, owners, cut lines |
+| [`docs/PROJECT_PROGRESS.md`](docs/PROJECT_PROGRESS.md) | Teammate handoff: the OutLayer project, the FastFS upload blocker and the next steps |
+| [`docs/PROJECT_ROADMAP.md`](docs/PROJECT_ROADMAP.md) | Teammate roadmap from prototype to MVP to production, with completion gates and a master checklist |
 | [`docs/settlement-dev.md`](docs/settlement-dev.md) | How a launch settles on one machine, and what is and is not real |
 | [`docs/backend-phase2.md`](docs/backend-phase2.md) | The backend: invariants, trust boundary and next work |
 | [`docs/api-contract.md`](docs/api-contract.md) | The HTTP API the interface talks to |
