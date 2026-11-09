@@ -11,11 +11,13 @@ import {
 } from "./schemas.js";
 import { MockPaymentProvider } from "./payment-provider.js";
 import { devEnclaveKey, engineCodeHash, openBid, runEngine } from "./dev-enclave.js";
-import { buildInput, inputHash } from "./settlement-core.js";
+import { buildInput, inputHash, planPayouts } from "./settlement-core.js";
+import { ProxyError, createOneClickProxy } from "./oneclick.js";
 import {
   createChallenge,
   verifyChallenge,
   getSessionAccount,
+  provider as nearProvider,
 } from "./auth.js";
 
 const app = Fastify({
@@ -942,11 +944,14 @@ app.post<{ Params: { id: string } }>("/v1/launches/:id/settle", async (req, repl
       paymentCheckId: b.paymentCheckId,
       checkAmountAtomic: b.paymentCheck.amountAtomic,
       checkLocked: b.paymentCheck.state === "LOCKED",
+      submittedAt: b.createdAt,
     },
     plain: openBid(b.ciphertext),
   }));
-  const { input, skipped } = buildInput(launch, rows);
-  const outcome = (await runEngine(input)) as { clearingPrice: string; sold: string; totalRaised: string };
+  const { input, skipped, meta } = await buildInput(launch, rows, { provider: nearProvider });
+  const outcome = (await runEngine(input)) as { clearingPrice: string; sold: string; totalRaised: string; fills: Array<{ bidId: string; bidder: string; filled: string; refund: string }> };
+  const payouts = planPayouts(outcome.fills, meta);
+  const agents = meta.filter((m) => m.agent).map((m) => ({ bidId: m.bidId, bidder: m.bidder, rulesHash: m.agent!.rulesHash, signed: m.agent!.signed }));
   const codeHash = engineCodeHash();
 
   try {
@@ -957,7 +962,7 @@ app.post<{ Params: { id: string } }>("/v1/launches/:id/settle", async (req, repl
           clearingPrice: outcome.clearingPrice,
           sold: outcome.sold,
           totalRaised: outcome.totalRaised,
-          outcome: { ...outcome, skipped } as object,
+          outcome: { ...outcome, skipped, payouts, agents, payoutsExecuted: false } as object,
           inputHash: inputHash(input),
           codeHash,
           attestation: null,
@@ -983,6 +988,27 @@ app.get<{ Params: { id: string } }>("/v1/launches/:id/result", async (req, reply
   if (!settlement) return reply.code(404).send({ error: { code: "not_settled", message: "This launch has not been settled yet." } });
   return { result: publicResult(settlement) };
 });
+
+// --------------------------------------------------
+// FUNDING FROM ANOTHER CHAIN (NEAR Intents 1Click, quotes only unless live is switched on)
+// --------------------------------------------------
+
+const oneClick = createOneClickProxy({
+  base: process.env.ONECLICK_API_BASE,
+  jwt: process.env.ONECLICK_JWT,
+  allowLive: process.env.ONECLICK_ALLOW_LIVE === "1",
+});
+
+function intentsFailure(error: unknown): never {
+  if (error instanceof ProxyError) throw fail(error.status, error.code, error.message);
+  throw error;
+}
+
+app.get("/v1/intents/tokens", async () => oneClick.tokens().catch(intentsFailure));
+app.post("/v1/intents/quote", async (req) => oneClick.quote(req.body).catch(intentsFailure));
+app.get<{ Querystring: { depositAddress?: string; depositMemo?: string } }>("/v1/intents/status", async (req) =>
+  oneClick.status(req.query.depositAddress, req.query.depositMemo).catch(intentsFailure),
+);
 
 // --------------------------------------------------
 

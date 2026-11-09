@@ -1,0 +1,18 @@
+{
+  "description": "Address shape checks. problem: null means valid. Used by the frontend and the backend tests.",
+  "cases": [
+    { "chain": "near", "address": "you.near", "problem": null },
+    { "chain": "near", "address": "sub.account.testnet", "problem": null },
+    { "chain": "near", "address": "0000000000000000000000000000000000000000000000000000000000000000", "problem": null },
+    { "chain": "near", "address": "Bad Name", "problem": "not a NEAR account id" },
+    { "chain": "near", "address": "a", "problem": "not a NEAR account id" },
+    { "chain": "eth", "address": "0x2527D02599Ba641c19FEa793cD0F167589a0f10D", "problem": null },
+    { "chain": "arb", "address": "0x2527D02599Ba641c19FEa793cD0F167589a0f10D", "problem": null },
+    { "chain": "base", "address": "0x2527D02599Ba641c19FEa793cD0F167589a0f10", "problem": "not a 0x address with 40 hex characters" },
+    { "chain": "eth", "address": "2527D02599Ba641c19FEa793cD0F167589a0f10D", "problem": "not a 0x address with 40 hex characters" },
+    { "chain": "sol", "address": "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK", "problem": null },
+    { "chain": "sol", "address": "0OIl", "problem": "not a Solana address" },
+    { "chain": "near", "address": "   ", "problem": "enter an address" },
+    { "chain": "doge", "address": "D8vFz4p7", "problem": "doge is not a supported chain" }
+  ]
+}

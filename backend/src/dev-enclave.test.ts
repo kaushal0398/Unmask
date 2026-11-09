@@ -10,7 +10,7 @@ const launch = { id: "L1", supplyAtomic: "1000000", reserveAtomic: "10000", toke
 /** Seal exactly as the browser does (src/lib/seal.ts). */
 const seal = (plain: PlainBid) => sodium.to_base64(sodium.crypto_box_seal(sodium.from_string(JSON.stringify(plain)), Uint8Array.from(Buffer.from(devEnclaveKey().publicKey, "hex"))), sodium.base64_variants.ORIGINAL);
 const bid = (n: string, limit: number, qty: number): PlainBid => ({ launchId: "L1", bidder: `${n}.near`, limit, qty, paymentCheck: { id: `pc-${n}`, key: "k" }, salt: `salt-${n}` });
-const rowOf = (p: PlainBid, id: string) => ({ id, bidder: p.bidder, commitment: sha256Hex(commitmentInput(p)), paymentCheckId: p.paymentCheck.id, checkAmountAtomic: "999999999999", checkLocked: true });
+const rowOf = (p: PlainBid, id: string) => ({ id, bidder: p.bidder, commitment: sha256Hex(commitmentInput(p)), paymentCheckId: p.paymentCheck.id, checkAmountAtomic: "999999999999", checkLocked: true, submittedAt: new Date() });
 
 describe("dev enclave end to end (browser seal -> open -> Rust engine)", () => {
   it("round-trips a sealed bid and rejects garbage", () => {
@@ -23,7 +23,7 @@ describe("dev enclave end to end (browser seal -> open -> Rust engine)", () => {
   it("clears the README example through the real engine binary", async () => {
     const plains = [bid("a", 0.05, 400000), bid("b", 0.04, 300000), bid("c", 0.03, 300000), bid("d", 0.02, 200000)];
     const rows = plains.map((p, i) => ({ row: rowOf(p, `bid${i}`), plain: openBid(seal(p)) }));
-    const { input, skipped } = buildInput({ ...launch, reserveAtomic: "10000" }, rows);
+    const { input, skipped } = await buildInput({ ...launch, reserveAtomic: "10000" }, rows);
     assert.deepEqual(skipped, []);
     const out = (await runEngine(input)) as { clearingPrice: string; sold: string; totalRaised: string; fills: Array<{ bidId: string; filled: string; payment: string; refund: string }> };
     assert.equal(out.clearingPrice, "30000");                       // $0.03 at 6 decimals
@@ -36,8 +36,8 @@ describe("dev enclave end to end (browser seal -> open -> Rust engine)", () => {
 
   it("is reproducible: same bids, any order, same input hash and same result", async () => {
     const plains = [bid("a", 0.05, 600000), bid("b", 0.05, 600000), bid("c", 0.02, 100000)];
-    const mk = (order: number[]) => buildInput(launch, order.map((i) => ({ row: rowOf(plains[i]!, `bid${i}`), plain: openBid(seal(plains[i]!)) }))).input;
-    const one = mk([0, 1, 2]), two = mk([2, 1, 0]);
+    const mk = async (order: number[]) => (await buildInput(launch, order.map((i) => ({ row: rowOf(plains[i]!, `bid${i}`), plain: openBid(seal(plains[i]!)) })))).input;
+    const one = await mk([0, 1, 2]), two = await mk([2, 1, 0]);
     assert.equal(inputHash(one), inputHash(two));
     assert.deepEqual(await runEngine(one), await runEngine(two));
   });

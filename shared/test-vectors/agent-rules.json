@@ -1,0 +1,18 @@
+{
+  "description": "Agent rule checks. expected lists every violation. Used by the frontend and the backend tests.",
+  "rules": { "version": 1, "owner": "ayush.near", "launchId": "L1", "maxLimitPrice": 0.05, "maxQty": 400000, "maxSpend": 20000, "expiresAt": "2026-11-10T12:00:00.000Z", "nonce": "n1" },
+  "at": "2026-11-10T10:00:00.000Z",
+  "cases": [
+    { "name": "exactly at every limit", "bid": { "launchId": "L1", "bidder": "ayush.near", "limit": 0.05, "qty": 400000 }, "expected": [] },
+    { "name": "well inside the limits", "bid": { "launchId": "L1", "bidder": "ayush.near", "limit": 0.02, "qty": 1000 }, "expected": [] },
+    { "name": "price one tick above the maximum", "bid": { "launchId": "L1", "bidder": "ayush.near", "limit": 0.05000001, "qty": 1000 }, "expected": ["price_above_max"] },
+    { "name": "too many tokens", "bid": { "launchId": "L1", "bidder": "ayush.near", "limit": 0.01, "qty": 400001 }, "expected": ["quantity_above_max"] },
+    { "name": "price and quantity fine but spend too high", "bid": { "launchId": "L1", "bidder": "ayush.near", "limit": 0.05, "qty": 400000.5 }, "expected": ["quantity_above_max", "spend_above_max"] },
+    { "name": "another launch", "bid": { "launchId": "L2", "bidder": "ayush.near", "limit": 0.02, "qty": 1000 }, "expected": ["wrong_launch"] },
+    { "name": "another account", "bid": { "launchId": "L1", "bidder": "someone.near", "limit": 0.02, "qty": 1000 }, "expected": ["wrong_owner"] },
+    { "name": "zero quantity", "bid": { "launchId": "L1", "bidder": "ayush.near", "limit": 0.02, "qty": 0 }, "expected": ["not_positive"] },
+    { "name": "breaks several rules at once", "bid": { "launchId": "L2", "bidder": "x.near", "limit": 1, "qty": 9999999 }, "expected": ["wrong_launch", "wrong_owner", "price_above_max", "quantity_above_max", "spend_above_max"] },
+    { "name": "float trap: 0.1 x 3 against a 0.3 cap", "rulesOverride": { "maxLimitPrice": 0.1, "maxQty": 3, "maxSpend": 0.3 }, "bid": { "launchId": "L1", "bidder": "ayush.near", "limit": 0.1, "qty": 3 }, "expected": [] },
+    { "name": "expired rules", "atOverride": "2026-11-10T12:00:00.000Z", "bid": { "launchId": "L1", "bidder": "ayush.near", "limit": 0.02, "qty": 1000 }, "expected": ["expired"] }
+  ]
+}

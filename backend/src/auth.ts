@@ -24,7 +24,7 @@ if (!RPC_URL) {
   throw new Error("NEAR_RPC_URL is required");
 }
 
-const provider = new JsonRpcProvider({
+export const provider = new JsonRpcProvider({
   url: RPC_URL,
 });
 
