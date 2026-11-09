@@ -35,13 +35,13 @@ Ideas to make Unmask stronger, based on a look at nearly.trade and NEAR Intents.
 
 | # | Feature | Why | Needs the team? | Status |
 |---|---|---|---|---|
-| 1 | Fund a bid from any chain (1Click deposit address into the payment check) | Real NEAR Intents use, a strong demo, matches the story | A mainnet key and a few dollars for the final test. The typed client and UI can be built without them | Not started |
-| 2 | Choose where refunds and tokens go (cross-chain payout) | Winners and losers are not stuck on NEAR. Reuses #1 | Same as #1 | Not started |
-| 3 | Agent bidder with signed rules (max price, max quantity, expiry) | Shows the Autonomous Business track and makes the race demo more convincing | No, can be built locally | Not started |
-| 4 | Public per-bidder result and PnL card | Keys-style transparency on top of the settlement result we already store | No | Not started |
-| 5 | Explorer links for every on-chain step | Makes "check everything" literal | Only after real transfers exist | Not started |
+| 1 | Fund a bid from any chain (1Click deposit address into the payment check) | Real NEAR Intents use, a strong demo, matches the story | A mainnet key and a few dollars for the final test. The typed client and UI can be built without them | **Built as a preview** (9 Nov): typed client, backend proxy, bid-form panel. A real dry quote went through our backend to the live service. Live deposits are off by default and the payment checks that would receive funds are not real yet |
+| 2 | Choose where refunds and tokens go (cross-chain payout) | Winners and losers are not stuck on NEAR. Reuses #1 | Same as #1 | **Built as a plan** (9 Nov): destinations sealed in the bid, validated, planned in the public result. Nothing is sent. Tokens can only go to a NEAR account |
+| 3 | Agent bidder with signed rules (max price, max quantity, expiry) | Shows the Autonomous Business track and makes the race demo more convincing | No, can be built locally | **Built** (9 Nov): rules, wallet signing, enforcement at settlement, race bar. Live-wallet signing untried |
+| 4 | Public per-bidder result and PnL card | Keys-style transparency on top of the settlement result we already store | No | **Built** (9 Nov): result card with image and summary, plus a full backend result view |
+| 5 | Explorer links for every on-chain step | Makes "check everything" literal | Only after real transfers exist | Not started. Needs real transfers first |
 
-Recommended order: **#1 and #3 first**, then #4 if time remains.
+Recommended order was #1 and #3 first, then #4. All four are now in; what remains is making the money real (see [`MASTER_PLAN.md`](MASTER_PLAN.md)).
 
 ## Further polish that makes the product feel better
 

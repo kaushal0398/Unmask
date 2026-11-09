@@ -7,9 +7,9 @@ How a launch settles on one machine today, and exactly what is and is not real.
 1. The browser asks `GET /v1/launches/:id/enclave-key` and seals each bid to that key (libsodium sealed box).
 2. When the window has closed, the creator calls `POST /v1/launches/:id/settle` (signed-in session, creator only).
 3. The **development enclave** (`backend/src/dev-enclave.ts`) opens every ciphertext.
-4. `buildInput` (`backend/src/settlement-core.ts`) keeps only honest bids and records a reason for every bid it skips: cannot decrypt, wrong launch, wrong bidder, commitment mismatch, payment check not locked or too small, bad amount.
+4. `buildInput` (`backend/src/settlement-core.ts`) keeps only honest bids and records a reason for every bid it skips: cannot decrypt, wrong launch, wrong bidder, commitment mismatch, payment check not locked or too small, bad amount, an invalid payout destination, or an agent bid that breaks its rules (wrong hash, forged or invalid signature, over its limits, expired).
 5. The input is hashed (`inputHash`) and passed to the **Rust engine** (`enclave/auction-engine`), which runs the exact integer rule.
-6. The outcome, `inputHash`, `codeHash` (SHA-256 of the engine binary) and the skipped list are stored in `Settlement`, and the launch becomes `SETTLED`. Settling twice returns the stored result.
+6. A payout plan is built from the result (refund and tokens per bidder, to the destination sealed in their bid, defaulting to their NEAR account). The outcome, the plan, the agent flags, `inputHash`, `codeHash` (SHA-256 of the engine binary) and the skipped list are stored in `Settlement`, and the launch becomes `SETTLED`. Settling twice returns the stored result.
 7. `GET /v1/launches/:id/result` publishes it. The verify page re-hashes and re-runs the auction in the browser.
 
 ## What is real
@@ -41,3 +41,33 @@ npx prisma migrate dev && npm run dev
 ```
 
 Tests that need no database: `cd backend && npm test`, and `cd enclave/auction-engine && cargo test`.
+
+## Verified end to end (9 Nov)
+
+`backend/scripts/e2e-settle.ts` seeds a closed launch with four honest sealed bids (the README example), one bid with a wrong commitment and one backed by a payment check that is not locked, then calls the real routes over HTTP against PostgreSQL. It checks:
+
+- settle without a session returns 401, and with someone else's session returns 403
+- no result exists before settling (404), and an open launch cannot be settled (409)
+- the launch clears at `30000` ($0.03), sells `1000000` tokens and raises `30000000000` ($30,000)
+- the dishonest bid and the unfunded bid are skipped with their reasons recorded
+- settling twice returns the stored result and exactly one `Settlement` row exists
+- the launch becomes `SETTLED`, `attestation` is `null` and `mode` is `dev`
+
+Run it against a throwaway database:
+
+```sh
+cd backend && cp .env.example .env            # set DATABASE_URL and DEV_ENCLAVE_SEED
+npx prisma migrate deploy && npm run dev       # in one terminal
+DATABASE_URL=... API_URL=http://127.0.0.1:4001 npm run e2e:settle
+```
+
+WASM: `sh snipe-proof-auction/build.sh && python3 scripts/check-wasm-vectors.py` runs the exact artifact OutLayer would receive under Wasmtime against the same 12 shared cases.
+
+## Agents, payouts and funding (9 Nov)
+
+- **Agent bids.** A sealed bid may carry `agent: { rules, rulesHash, signature?, publicKey? }`. At settlement the rules are re-checked against the bid and its submission time, and the owner's NEP-413 signature (recipient `unmask.agent`, nonce = SHA-256 of the rules message) is verified against a full-access key on the account via the NEAR RPC. A bid without a signature is accepted but marked `signed: false`.
+- **Payouts.** A bid may carry `payout: { refundTo?, tokensTo? }`. Destinations are shape-checked (NEAR, Ethereum, Base, Arbitrum, Solana). Tokens may only go to a NEAR account. The result carries `payouts` and `payoutsExecuted: false`.
+- **Funding quotes.** `GET /v1/intents/tokens`, `POST /v1/intents/quote`, `GET /v1/intents/status` proxy NEAR Intents 1Click. The proxy only ever asks for USDC on NEAR, refuses live quotes unless `ONECLICK_ALLOW_LIVE=1`, and keeps `ONECLICK_JWT` on the server.
+- **WASM.** Set `AUCTION_ENGINE_WASM=../snipe-proof-auction/out/auction-engine.wasm` to settle with the artifact under `wasmtime`. The code hash is then the SHA-256 of that file.
+
+`backend/scripts/e2e-settle.ts` covers all of this against a live database: a rule-breaking agent and a bad address are skipped, a cross-chain refund is planned via NEAR Intents and nothing is executed.

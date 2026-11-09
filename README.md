@@ -17,7 +17,7 @@ Sealed-bid token launches on NEAR: everyone pays one price, and anyone can verif
 
 ## Contents
 
-[The problem](#the-problem) · [Why the name](#why-the-name) · [The idea](#the-idea) · [How a launch runs](#how-a-launch-runs) · [The auction rule](#the-auction-rule) · [What is real today](#what-is-real-today) · [The interface](#the-interface) · [Architecture](#architecture) · [NEAR protocols](#near-protocols) · [Getting started](#getting-started) · [Project structure](#project-structure) · [Documentation](#documentation) · [Limitations](#limitations)
+[The problem](#the-problem) · [Why the name](#why-the-name) · [The idea](#the-idea) · [How a launch runs](#how-a-launch-runs) · [The auction rule](#the-auction-rule) · [What is built](#what-is-built-and-what-we-are-making-real) · [Features](#features) · [The interface](#the-interface) · [Architecture](#architecture) · [NEAR protocols](#near-protocols) · [Getting started](#getting-started) · [Project structure](#project-structure) · [Documentation](#documentation) · [Limitations](#limitations)
 
 ## The problem
 
@@ -75,6 +75,11 @@ The work is split in two: what already runs, and what we are building next so th
 | Backend API (Fastify, PostgreSQL, Prisma): launches, bids, sessions, receipts, enclave key, settle, result | Built |
 | Settlement: open bids, reject dishonest ones with a recorded reason, run the Rust engine, store and publish the result | Built, runs on one machine ([`docs/settlement-dev.md`](docs/settlement-dev.md)) |
 | Hashing and re-running the auction on the verify page | Built, runs in your browser |
+| The WASM build of the engine (`wasm32-wasip2`) runs under Wasmtime and matches TypeScript on all 12 shared cases; the backend can settle with it | Built, tested (`python3 scripts/check-wasm-vectors.py`) |
+| Agent bidding inside signed rules, enforced again at settlement | Built, tested ([below](#features)) |
+| Your result card: paid, got, refunded, effective price, shareable image | Built |
+| Fund-a-bid price quotes from other chains through NEAR Intents 1Click | Built as a dry-run preview; one real quote has been fetched through our backend |
+| Choose where refunds and tokens go, with a transfer plan in the public result | Built as a plan; nothing is sent |
 
 **Being made real next**
 
@@ -82,9 +87,20 @@ The work is split in two: what already runs, and what we are building next so th
 |---|---|---|
 | The enclave that runs the auction | Runs in the backend process, so it is not confidential | The same Rust engine inside an OutLayer TEE |
 | Attestation | Not produced; the result is labelled `dev` | A real attestation, verified on the verify page |
-| Payment checks and funds | Locks nothing | Real OutLayer payment checks, claims and refunds |
+| Payment checks and funds | Locks nothing | Real OutLayer payment checks, claims and refunds. This also makes funding from another chain and cross-chain refunds real |
 | The token and payouts | Not deployed | A NEP-141 token with real payouts to winners |
 | Live data on the landing page and launch cards | Sample launches | Launches read from the backend |
+
+## Features
+
+Four additions, inspired by what [nearly.trade](https://nearly.trade) is building on NEAR Intents (see [`docs/improvements-and-additions.md`](docs/improvements-and-additions.md)). Each says exactly how real it is.
+
+| Feature | What it does | How real it is |
+|---|---|---|
+| **Agent bidding inside signed rules** | You set a maximum price, a maximum quantity, a maximum amount to lock and an expiry, and sign them with your wallet (NEP-413). An agent places the sealed bid inside those limits. The **same limits are checked again when the launch settles**, so a bid that breaks them, or a claim whose hash or signature does not check out, is left out with a recorded reason. In the landing-page race the agent is the cyan bar beside the red bots. | The rules, the enforcement and the signature check are tested, including a forged key, a restricted key and swapped rules. Signing with a live wallet has not been tried. The demo wallet cannot sign, so its rules are marked unsigned. |
+| **Your result card** | After settlement, your paid, got, refunded and effective price, and what you saved against your own limit, with *Save as image* and *Copy summary*. Only public facts go in it. | Built. It reads the real result from the backend. |
+| **Fund a bid from another chain** | In the bid form, pick a token on Ethereum, Base, Arbitrum or Solana and see the real NEAR Intents price to deliver the USDC the bid needs: you pay, minimum, cost, time. | A price **preview** (dry run, no deposit address). It went through our own backend to the live service. Taking a real deposit is off unless the operator sets `ONECLICK_ALLOW_LIVE=1`, and the payment checks that would receive the money are not real yet. NEAR Intents is mainnet only. |
+| **Choose where refunds and tokens go** | Send your USDC refund to any supported chain and your tokens to any NEAR account. Sealed inside the bid. The public result shows a plan: who gets what, where, and which transfers would go through NEAR Intents. | A plan only: `payoutsExecuted` stays `false`. A bad address skips the bid, so funds come back through the payment check. Tokens cannot go to other chains: a new launch token is not carried by NEAR Intents. |
 
 ## The interface
 
@@ -204,6 +220,8 @@ Rust engine and shared vectors:
 ```sh
 cd enclave/auction-engine && cargo test     # must match shared/test-vectors on every case
 npx tsx scripts/gen-test-vectors.ts          # regenerate the cases from the TypeScript rule
+sh snipe-proof-auction/build.sh              # build the WASM artifact for OutLayer
+python3 scripts/check-wasm-vectors.py        # run it under Wasmtime on every shared case
 ```
 
 The backend lives in `backend/` and needs PostgreSQL:
@@ -214,6 +232,8 @@ npm install
 npx prisma migrate dev
 npm run dev
 ```
+
+Copy `backend/.env.example` to `.env` first: the backend will not start without `NEAR_RPC_URL`. `npm run e2e:settle` (in `backend/`) settles a seeded launch end to end against a live database, and `AUCTION_ENGINE_WASM` makes settlement run the WASM artifact.
 
 Its write endpoints are for local development only: see [`docs/backend-phase2.md`](docs/backend-phase2.md).
 
@@ -228,9 +248,12 @@ src/
 └── lib/
     ├── auction.ts       The uniform-price sealed-bid rule
     ├── race.ts          The same bids as a first-come launch and a sealed one
+    ├── agent.ts         Agent rules: the check, the proposal, the signed message
+    ├── intents/         NEAR Intents 1Click client and address checks
+    ├── result-card.ts   Your result card and its image
     ├── verify-demo.ts   The checks the verify page runs
     └── demo.ts          Made-up launches and bids
-backend/            Fastify + Prisma API: auth, launches, bids, receipts
+backend/            Fastify + Prisma API: auth, launches, bids, receipts, settlement, agent rules, NEAR Intents proxy
 enclave/            Rust auction engine (compiled to WebAssembly, in progress)
 shared/             Test vectors shared by TypeScript and Rust
 e2e/                Playwright smoke tests
