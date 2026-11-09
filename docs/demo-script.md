@@ -5,7 +5,7 @@ Press `d` (or open any page with `?demo=1`) to show the demo controls. Use the d
 | Time | On screen | Say |
 |---|---|---|
 | 0:00 | Home: the bots-versus-sealed race | "On most launches the first buyers win. Bots watch, buy in the first blocks, sell into everyone else." |
-| 0:15 | Press play on the race | "Same bids, two launches. First-come: bots take most of it. Sealed: they win nothing." |
+| 0:15 | Press play on the race | "Same bids, two launches. First-come: bots take most of it. Unmask: they win nothing." |
 | 0:30 | `/launches/moonbean`, countdown | "Here everyone bids in secret. All anyone sees is a count." |
 | 0:40 | Connect, enter 0.05 and 10,000, Seal | "The bid is encrypted in my browser to the enclave's key. Funds sit in a payment check I control." |
 | 1:00 | Withdraw, then bid again (shows the confirm dialogs) | "I can take it back any time before the close." |
@@ -18,6 +18,6 @@ Say clearly: this build runs on demo data and a stand-in for the enclave; no fun
 
 ## X post draft
 
-> Built at the NEAR Hackathon: Sealed, a token launch where everyone bids in secret and everyone pays the same price, so bots can't snipe it by being first. A hardware enclave finds the one fair price, and anyone can check afterwards that it ran honestly. Demo: <video link> · Code: <repo link> #NEARHackathon
+> Built at the NEAR Hackathon: Unmask, a token launch where everyone bids in secret and everyone pays the same price, so bots can't snipe it by being first. A hardware enclave finds the one fair price, and anyone can check afterwards that it ran honestly. Demo: <video link> · Code: <repo link> #NEARHackathon
 
 (Replace the links, and add the handles the organizers ask for. Posting is yours to do.)
