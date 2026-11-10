@@ -14,7 +14,8 @@
     "engine:build": "cargo build --release --manifest-path ../enclave/auction-engine/Cargo.toml",
     "e2e:settle": "tsx scripts/e2e-settle.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
-    "settle:demo": "tsx scripts/settle-demo.ts"
+    "settle:demo": "tsx scripts/settle-demo.ts",
+    "pretest": "node scripts/ensure-engine.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^11.4.0",

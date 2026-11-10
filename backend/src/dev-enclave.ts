@@ -42,7 +42,7 @@ export function openBid(ciphertextBase64: string): PlainBid | null {
  */
 // Read per call, so a test or an operator can switch engines without restarting the module.
 const wasmPath = () => (process.env.AUCTION_ENGINE_WASM ? resolve(process.env.AUCTION_ENGINE_WASM) : null);
-const nativePath = () => resolve(process.env.AUCTION_ENGINE_BIN ?? "../enclave/auction-engine/target/release/auction-engine");
+const nativePath = () => resolve(process.env.AUCTION_ENGINE_BIN ?? `../enclave/auction-engine/target/release/auction-engine${process.platform === "win32" ? ".exe" : ""}`);
 export const engineKind = (): "wasm" | "native" => (wasmPath() ? "wasm" : "native");
 
 /** SHA-256 of the artifact that actually runs: the .wasm when set, otherwise the native binary. */
@@ -50,8 +50,12 @@ export function engineCodeHash(): string {
   return sha256Hex(readFileSync(wasmPath() ?? nativePath()));
 }
 
-/** Run the Rust engine on one input. Rejects with the engine's own message if the input is invalid. */
-export function runEngine(input: ExactInput): Promise<unknown> {
+/**
+ * Run the Rust engine on one input and return its stdout EXACTLY as written. Hash these bytes for the output hash: an
+ * OutLayer attestation covers the hash of the input it was given and of the output it produced, so ours must be the
+ * hash of the engine's own bytes, not of an object we rebuilt. Rejects with the engine's own message on invalid input.
+ */
+export function runEngineRaw(input: ExactInput): Promise<string> {
   const wasm = wasmPath();
   const [cmd, args] = wasm ? (["wasmtime", ["run", wasm]] as const) : ([nativePath(), []] as const);
   return new Promise((ok, fail) => {
@@ -60,7 +64,12 @@ export function runEngine(input: ExactInput): Promise<unknown> {
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (err += d));
     child.on("error", (e) => fail(new Error(`could not start the auction engine (${cmd}): ${e.message}`)));
-    child.on("close", (code) => (code === 0 ? ok(JSON.parse(out)) : fail(new Error(err.trim() || `auction engine exited with ${code}`))));
+    child.on("close", (code) => (code === 0 ? ok(out) : fail(new Error(err.trim() || `auction engine exited with ${code}`))));
     child.stdin.end(JSON.stringify(input));
   });
+}
+
+/** Same as `runEngineRaw`, parsed. */
+export async function runEngine(input: ExactInput): Promise<unknown> {
+  return JSON.parse(await runEngineRaw(input));
 }

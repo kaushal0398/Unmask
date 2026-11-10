@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import sodium from "libsodium-wrappers";
-import { devEnclaveKey, engineCodeHash, openBid, runEngine } from "./dev-enclave.js";
+import { devEnclaveKey, engineCodeHash, openBid, runEngine, runEngineRaw } from "./dev-enclave.js";
 import { buildInput, commitmentInput, inputHash, sha256Hex, type PlainBid } from "./settlement-core.js";
 
 await sodium.ready;
@@ -44,6 +44,15 @@ describe("dev enclave end to end (browser seal -> open -> Rust engine)", () => {
 
   it("surfaces the engine's own error for an invalid input", async () => {
     await assert.rejects(runEngine({ version: "1", auctionId: "x", supply: "0", reservePrice: "1", tokenDecimals: 0, bids: [] }), /supply must be greater than zero/);
+  });
+
+  it("returns the engine's exact output bytes, so the output hash is the hash of what the engine wrote", async () => {
+    const input = (await buildInput(launch, [{ row: rowOf(bid("a", 0.05, 100), "bid0"), plain: openBid(seal(bid("a", 0.05, 100))) }])).input;
+    const raw = await runEngineRaw(input);
+    assert.equal(typeof raw, "string");
+    assert.equal(raw, JSON.stringify(JSON.parse(raw)), "compact JSON, nothing reformatted");
+    assert.equal(sha256Hex(raw), sha256Hex(await runEngineRaw(input)), "the same input always gives the same output hash");
+    assert.deepEqual(await runEngine(input), JSON.parse(raw));
   });
 
   it("publishes a stable code hash for the engine binary", () => assert.match(engineCodeHash(), /^[0-9a-f]{64}$/));
