@@ -233,7 +233,7 @@ npx prisma migrate dev
 npm run dev
 ```
 
-Copy `backend/.env.example` to `.env` first: the backend will not start without `NEAR_RPC_URL`. `npm run e2e:settle` (in `backend/`) settles a seeded launch end to end against a live database, and `AUCTION_ENGINE_WASM` makes settlement run the WASM artifact.
+Copy `backend/.env.example` to `.env` first: the backend will not start without `NEAR_RPC_URL`. `npm run e2e:settle` (in `backend/`) settles a seeded launch end to end against a live database, `npm run seed:demo` and `npm run settle:demo` set up and settle a launch for the demo ([`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md)), and `AUCTION_ENGINE_WASM` makes settlement run the WASM artifact.
 
 Its write endpoints are for local development only: see [`docs/backend-phase2.md`](docs/backend-phase2.md).
 
@@ -272,6 +272,9 @@ docs/               Project documentation (below)
 | [`docs/decisions-and-open-questions.md`](docs/decisions-and-open-questions.md) | Decisions to settle and open questions |
 | [`docs/auction-core-v1.md`](docs/auction-core-v1.md) | The exact integer auction rule and its shared test vector |
 | [`docs/improvements-and-additions.md`](docs/improvements-and-additions.md) | Ideas from nearly.trade and NEAR Intents: what to add and in what order |
+| [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) | How to run and show the demo: setup, seeding, three plans, a three-minute run sheet, what to say and not say, troubleshooting |
+| [`docs/DEMO_CHECKLIST.md`](docs/DEMO_CHECKLIST.md) | The pre-flight and just-before-you-start checklists, with expected results |
+| [`docs/NEARLY_FEATURES_AND_CHECKS.md`](docs/NEARLY_FEATURES_AND_CHECKS.md) | The features inspired by nearly.trade, how real each is, and exactly how to check each one |
 | [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md) | The day-by-day plan to 14 Nov: what is left, what we add, owners, cut lines |
 | [`docs/OUTLAYER_BLOCKER_REVIEW.md`](docs/OUTLAYER_BLOCKER_REVIEW.md) | The FastFS and OutLayer blocker, checked against the chain: the upload worked, what to retry, what to fix |
 | [`docs/PROJECT_PROGRESS.md`](docs/PROJECT_PROGRESS.md) | Teammate handoff: the OutLayer project, the FastFS upload blocker and the next steps |
