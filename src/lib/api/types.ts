@@ -1,4 +1,5 @@
 import type { AgentClaim } from "@/lib/agent";
+import type { RawLaunch, RawResult } from "@/lib/verify-result";
 import type { Destination } from "@/lib/intents/addresses";
 
 /**
@@ -288,6 +289,8 @@ export interface LaunchApi {
   getEnclaveKey(launchId: string): Promise<EnclaveKey>;
   /** Ask the backend to settle a launch whose window has closed. Only its creator may. */
   settleLaunch(id: string): Promise<Result>;
+  /** The raw public result of a settled launch, for the verify page to recompute. `null` for a sample or an unsettled launch. */
+  getVerification(id: string): Promise<{ launch: RawLaunch; result: RawResult } | null>;
 
   /** Lock funds for a bid. Resolves once the check is `locked`; rejects with `ApiError("payment_failed")`. */
   createPaymentCheck(input: {

@@ -15,6 +15,7 @@ import {
   type ReceiptVerification,
 } from "@/lib/api/types";
 import { MockLaunchApi } from "@/lib/api/mock";
+import type { RawResult } from "@/lib/verify-result";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4001";
@@ -407,6 +408,22 @@ export class HttpLaunchApi implements LaunchApi {
     try {
       const response = await request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/result`);
       return await toResult(response.result);
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "not_found") return null;
+      throw error;
+    }
+  }
+
+  async getVerification(id: string) {
+    try {
+      const [launch, result] = await Promise.all([
+        request<{ launch: BackendLaunch }>(`/v1/launches/${encodeURIComponent(id)}`),
+        request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/result`),
+      ]);
+      return {
+        launch: { id: launch.launch.id, supplyAtomic: launch.launch.supplyAtomic, reserveAtomic: launch.launch.reserveAtomic, tokenDecimals: launch.launch.tokenDecimals },
+        result: result.result as unknown as RawResult,
+      };
     } catch (error) {
       if (error instanceof ApiError && error.code === "not_found") return null;
       throw error;

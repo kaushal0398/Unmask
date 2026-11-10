@@ -177,6 +177,10 @@ export class MockLaunchApi implements LaunchApi {
 
   // ---- bids -------------------------------------------------------------------------------------
 
+  async getVerification() {
+    return null;
+  }
+
   async settleLaunch(): Promise<Result> {
     throw new ApiError("closed", "Demo launches settle on their own clock.");
   }

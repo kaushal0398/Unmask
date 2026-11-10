@@ -174,3 +174,49 @@ test("a run on OutLayer is shown as unverified, never as attested", async ({ pag
   await expect(main).toContainText("Output hash");
   expect((await main.innerText()).toLowerCase()).not.toContain("attested result");
 });
+
+// ---- Verifying a real settled launch. The fixture is REAL output from the real backend and the real Rust engine. ----
+const REAL = JSON.parse(readFileSync("e2e/fixtures/settled-real.json", "utf8"));
+
+async function runVerification(page: Page, result: unknown) {
+  await stubBackend(page, { launch: REAL.launch, result });
+  await page.goto(`/verify?launch=${REAL.launch.id}`);
+  await page.getByTestId("verify-launch").waitFor({ timeout: 20_000 });
+  await page.getByRole("button", { name: /run the checks/i }).click();
+  await expect(page.getByTestId("verify-check")).toHaveCount(6, { timeout: 20_000 });
+  const rows = await page.getByTestId("verify-check").evaluateAll((els) => Object.fromEntries(els.map((e) => [e.getAttribute("data-id"), e.getAttribute("data-status")])));
+  return { rows, verdict: page.getByTestId("verify-verdict") };
+}
+
+test("verify: a real launch is verified from its own numbers, and what cannot be checked is not a pass", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  const { rows, verdict } = await runVerification(page, REAL.result);
+  expect(rows).toEqual({ code: "unchecked", attestation: "unchecked", input: "pass", result: "pass", money: "pass", output: "pass" });
+  await expect(verdict).toHaveAttribute("data-kind", "partial");
+  await expect(verdict).toContainText("Everything we can check from here passed");
+  await expect(verdict).toContainText("NOT passes");
+  await expect(page.locator("main")).not.toContainText("This launch was run fairly");
+  await expect(page.locator("main")).not.toContainText("PixelPup");
+  await expect(page.getByText("A real launch from the development backend")).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("verify: a result edited after settlement is caught and the page says not to trust it", async ({ page }) => {
+  const tampered = JSON.parse(JSON.stringify(REAL.result));
+  const winner = tampered.outcome.fills.find((f: { filled: string }) => f.filled !== "0");
+  const loser = tampered.outcome.fills.find((f: { filled: string }) => f.filled === "0");
+  winner.filled = String(BigInt(winner.filled) - 50_000n);
+  loser.filled = String(BigInt(loser.filled) + 50_000n);
+  const { rows, verdict } = await runVerification(page, tampered);
+  expect(rows.result).toBe("fail");
+  expect(rows.output).toBe("fail");
+  await expect(verdict).toHaveAttribute("data-kind", "fail");
+  await expect(verdict).toContainText("Do not trust this result");
+});
+
+test("verify: a launch with no result yet says there is nothing to verify", async ({ page }) => {
+  await stubBackend(page, { launch: REAL.launch });
+  await page.goto("/verify?launch=" + REAL.launch.id);
+  await expect(page.getByText(/no published result yet/i)).toBeVisible({ timeout: 20_000 });
+});
