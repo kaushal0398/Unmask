@@ -220,3 +220,21 @@ test("verify: a launch with no result yet says there is nothing to verify", asyn
   await page.goto("/verify?launch=" + REAL.launch.id);
   await expect(page.getByText(/no published result yet/i)).toBeVisible({ timeout: 20_000 });
 });
+
+test("a real launch shows its stored bid count and never invents bids; a sample ticks up", async ({ page }) => {
+  // The sample counter adds a bid every 6 seconds. A real launch must stay at the number the backend stored.
+  await stubBackend(page, { launch: { ...BACKEND_LAUNCH, id: "e2e-count", bidCount: 3, closesAt: "2099-01-01T00:00:00.000Z" } });
+  await page.goto("/launches/e2e-count");
+  await expect(page.getByText(/bidding closes in/i).first()).toBeVisible({ timeout: 20_000 });
+  const count = page.locator("main").getByText("sealed bids").locator("xpath=following-sibling::p[1]");
+  await expect(count).toHaveText("3");
+  await page.waitForTimeout(8_000);
+  await expect(count).toHaveText("3");
+
+  // The sample launch (MoonBean) still ticks, so the landing page looks alive.
+  await page.goto("/launches/moonbean");
+  const sampleCount = page.locator("main").getByText("sealed bids").locator("xpath=following-sibling::p[1]");
+  await expect(sampleCount).toHaveText(/^\d+$/, { timeout: 20_000 });
+  const first = (await sampleCount.innerText()).trim();
+  await expect(sampleCount).not.toHaveText(first, { timeout: 15_000 });
+});

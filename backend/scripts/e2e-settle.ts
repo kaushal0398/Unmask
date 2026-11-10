@@ -19,7 +19,8 @@ const creator = `creator-${run}.testnet`;
 
 const call = async (path: string, init: RequestInit = {}, token?: string) => {
   const res = await fetch(API + path, { ...(init.method === "POST" ? { body: "{}" } : {}), ...init, headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
-  return { status: res.status, body: (await res.json().catch(() => null)) as any };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return { status: res.status, body: (await res.json().catch(() => null)) as Record<string, any> | null };
 };
 
 // 1. the key bids are sealed to

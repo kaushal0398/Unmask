@@ -62,7 +62,8 @@ function Header({ l, status, sample }: { l: Launch; status: LaunchStatus; sample
   );
 }
 
-function OpenView({ l }: { l: Launch }) {
+/** `sample` launches tick their bid count up on a timer to look alive. A real launch never invents bids: it shows the stored count. */
+function OpenView({ l, sample }: { l: Launch; sample: boolean }) {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.15fr_1fr] [&>*]:min-w-0">
       <div className="space-y-8">
@@ -71,7 +72,7 @@ function OpenView({ l }: { l: Launch }) {
           <div className="relative">
             <p className="text-xs uppercase tracking-[0.2em] text-seal-fg">Bidding closes in</p>
             <Countdown closesInMs={l.closesInMs ?? 0} className="mt-4" />
-            <SealedStack base={l.bidCount} className="mt-6" />
+            <SealedStack base={l.bidCount} className="mt-6" live={sample} />
           </div>
         </Card>
         <Card className="p-6 sm:p-8">
@@ -313,7 +314,7 @@ export function LiveLaunch({ id }: { id: string }) {
 
       <div className="mt-10">
         {kind === "open" ? (
-          <OpenView l={liveLaunch} />
+          <OpenView l={liveLaunch} sample={isDemoLaunch} />
         ) : kind === "settling" ? (
           <SettlingView
             l={liveLaunch}

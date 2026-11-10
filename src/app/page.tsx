@@ -78,7 +78,7 @@ export default function Home() {
       {/* The race */}
       <section id="race" className="scroll-mt-20 py-20 sm:py-28">
         <Container>
-          <SectionHeading tone="hot" eyebrow="The problem, in one picture" title={<>Same ten bids. Two launches. <Emph>Only one</Emph> lets the bots win.</>}>
+          <SectionHeading tone="hot" eyebrow="The problem, in one picture" title={<>Same eleven bids. Two launches. <Emph>Only one</Emph> lets the bots win.</>}>
             On most launchpads whoever is fastest gets the cheap tokens, then sells into everyone who arrives later. Take away the speed advantage and the sniper has nothing left to sell.
           </SectionHeading>
           <div className="mt-12"><RaceDemo /></div>

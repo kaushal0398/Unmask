@@ -37,7 +37,7 @@ Nothing here talks to a chain, an enclave or a wallet yet. Every launch, bid and
 |---|---|---|
 | Black theme and design system | Pure black; amber means sealed, green means verified, red means a sniper or a failed check; Geist, Geist Mono and an italic serif for emphasis | `src/app/globals.css`, `src/components/ui.tsx` |
 | **Landing page** | Hero with the sealed-envelope stack, a scrolling ticker, the race, live meme cards, how it works, a clearing demo, hidden-versus-public, honest limits | `src/app/page.tsx` |
-| **The race** | The same ten bids in a first-come launch and a sealed one. The sealed side is computed by the real auction rule | `src/components/race-demo.tsx`, `src/lib/race.ts` |
+| **The race** | The same eleven bids in a first-come launch and a sealed one. The sealed side is computed by the real auction rule | `src/components/race-demo.tsx`, `src/lib/race.ts` |
 | **Meme cards** | Each token has a colour, a bobbing mascot and a status sticker, and tilts on hover | `src/components/launch-card.tsx` |
 | **Launches** | Filterable grid | `src/app/launches/page.tsx` |
 | **Launch page, three states** | Bidding open (countdown, sealed stack, bid form), settling (progress steps), settled (clearing price, opened bids, proof hashes) | `src/app/launches/[id]/page.tsx` |

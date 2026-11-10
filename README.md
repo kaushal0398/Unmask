@@ -19,6 +19,23 @@ Sealed-bid token launches on NEAR: everyone pays one price, and anyone can verif
 
 [The problem](#the-problem) · [Why the name](#why-the-name) · [The idea](#the-idea) · [How a launch runs](#how-a-launch-runs) · [The auction rule](#the-auction-rule) · [What is built](#what-is-built-and-what-we-are-making-real) · [Features](#features) · [The interface](#the-interface) · [Architecture](#architecture) · [NEAR protocols](#near-protocols) · [Getting started](#getting-started) · [Project structure](#project-structure) · [Documentation](#documentation) · [Limitations](#limitations)
 
+## Screenshots
+
+Production build, real backend (development enclave, so the result is labelled not attested).
+
+![Home](docs/images/01-home.jpg)
+
+![The race](docs/images/02-race.jpg)
+
+![Bid form: agent mode and funding](docs/images/03-bid-agent-and-funding.jpg)
+
+![Result](docs/images/04-result.jpg)
+
+![Payout plan](docs/images/05-payout-plan.jpg)
+
+![Verify](docs/images/06-verify.jpg)
+
+
 ## The problem
 
 On most launchpads the first buyers win. Bots watch for a launch, buy in the first blocks, bundle wallets and sell into the people who arrive later. The advantage comes from **timing and visibility**: the price moves as people buy, so being first, or seeing other people's orders, pays.

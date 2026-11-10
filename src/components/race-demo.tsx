@@ -101,7 +101,7 @@ const Step = ({ delay, children }: { delay: number; children: React.ReactNode })
   </motion.li>
 );
 
-/** Ten bids, two launches. The point of the product, in one picture. */
+/** Eleven bids, two launches. The point of the product, in one picture. */
 export function RaceDemo() {
   const [run, setRun] = useState(0);
   const { fc, sb } = useMemo(() => ({ fc: firstCome(RACE_BIDS, RACE_SUPPLY, RACE_RESERVE, 0.06), sb: sealed(RACE_BIDS, RACE_SUPPLY, RACE_RESERVE) }), []);
@@ -117,14 +117,14 @@ export function RaceDemo() {
           </Step>
         </Panel>
         <Panel title="A sealed-bid launch" tone="seal" line="order does not matter" side={sb} base={1.2}>
-          <Step delay={1.2}>The same ten bids go in sealed. Nobody, the creator included, sees an amount.</Step>
+          <Step delay={1.2}>The same eleven bids go in sealed. Nobody, the creator included, sees an amount.</Step>
           <Step delay={2.0}>At the close the enclave finds one price that sells the supply: <Mono className="text-text">{usd(sb.finalPrice)}</Mono>.</Step>
           <Step delay={2.8}>The bots had bid low, hoping for a cheap start. They win nothing and are refunded. {sb.humansServed} people are served at the same price, including your agent (cyan), which bid inside rules you signed.</Step>
         </Panel>
       </div>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-2xl text-xs leading-relaxed text-faint">
-          Illustration, same ten bids on both sides. The first-come side uses a simple rising price curve with the fastest buyers served first. The sealed side is the real auction rule, run on those bids.
+          Illustration, same eleven bids on both sides. The first-come side uses a simple rising price curve with the fastest buyers served first. The sealed side is the real auction rule, run on those bids.
         </p>
         <Button tone="ghost" onClick={() => setRun((r) => r + 1)}>
           <RotateCcw className="size-4" /> Replay
