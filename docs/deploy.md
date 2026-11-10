@@ -15,7 +15,7 @@ The backend refuses to settle when `NODE_ENV=production` (the development enclav
 ## Before anything else
 
 1. Push to a **public** repository (required for submission, and it is your step). Run `sh scripts/scan-secrets.sh` first.
-2. **`vercel.json` is probably wrong.** It routes `/api/backend` to a backend "service", but the web app calls the address in `NEXT_PUBLIC_API_URL` (default `http://127.0.0.1:4001`), not `/api/backend`. On Vercel that default would point at the visitor's own machine. Delete `vercel.json` (or replace it with `{}`) and let Vercel detect Next.js, then set `NEXT_PUBLIC_API_URL` as below.
+2. **`vercel.json` has been removed** (10 Nov). It routed `/api/backend` to a backend "service", but the web app calls the address in `NEXT_PUBLIC_API_URL` (default `http://127.0.0.1:4001`), which on Vercel would point at the visitor's own machine. Vercel detects Next.js without it. Set `NEXT_PUBLIC_API_URL` as below.
 
 ## 1. The backend
 
@@ -39,7 +39,7 @@ Apply migrations with `npx prisma migrate deploy` before the first start (the Do
 
 ## 2. The web app
 
-1. Import the repository in Vercel (or any Node host). Build command `npm run build`. Do not use the `services` block in `vercel.json` (see above).
+1. Import the repository in Vercel (or any Node host). Build command `npm run build`. There is no `vercel.json`: Vercel detects Next.js.
 2. Environment variables:
 
 | Variable | Default | Meaning |
