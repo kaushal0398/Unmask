@@ -1,5 +1,6 @@
-# UNTESTED: written on 10 Nov but never built. Docker could not run on the machine it was written on (the disk was full),
-# so nothing here has been verified beyond `docker compose config` accepting the compose file. Build it once and fix what breaks.
+# TESTED 10 Nov 2026: `docker compose build` and `docker compose up -d` worked, the backend ran its migrations and the Rust engine inside the image,
+# a seeded launch settled (price $0.03, 1,000,000 sold, $30,000 raised, 2 bids left out) and `npm run demo:preflight` passed 12 of 12.
+# Not tested: a real hosting provider, HTTPS, or anything but the development enclave.
 # The Unmask web app (Next.js). NEXT_PUBLIC_API_URL is baked in at build time and is the address the BROWSER uses
 # to reach the backend, so it must be reachable from the visitor's machine, not just from other containers.
 #   docker build --build-arg NEXT_PUBLIC_API_URL=http://localhost:4001 -t unmask-web .

@@ -1,5 +1,6 @@
-# UNTESTED: written on 10 Nov but never built. Docker could not run on the machine it was written on (the disk was full),
-# so nothing here has been verified beyond `docker compose config` accepting the compose file. Build it once and fix what breaks.
+# TESTED 10 Nov 2026: `docker compose build` and `docker compose up -d` worked, the backend ran its migrations and the Rust engine inside the image,
+# a seeded launch settled (price $0.03, 1,000,000 sold, $30,000 raised, 2 bids left out) and `npm run demo:preflight` passed 12 of 12.
+# Not tested: a real hosting provider, HTTPS, or anything but the development enclave.
 # The Unmask backend with the Rust auction engine built inside. Build from the repository root:
 #   docker build -f backend/Dockerfile -t unmask-backend .
 # Development image: settlement uses the development enclave (not confidential, not attested). See docs/settlement-dev.md.

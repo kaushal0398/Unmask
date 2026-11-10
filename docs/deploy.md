@@ -19,7 +19,9 @@ The backend refuses to settle when `NODE_ENV=production` (the development enclav
 
 ## 1. The backend
 
-Container files are in the repository: `backend/Dockerfile` builds the engine and the backend, and `docker-compose.yml` runs the database, backend and web app together. **They are marked UNTESTED:** they could not be built where they were written. The first thing to do is `docker compose up --build` on a machine with disk space and fix what breaks.
+Container files are in the repository: `backend/Dockerfile` builds the engine and the backend, and `docker-compose.yml` runs the database, backend and web app together. **Tested on 10 Nov:** `docker compose up --build` builds both images, the stack starts, the backend migrates the database and runs the Rust engine, a seeded launch settles with the expected numbers, and `npm run demo:preflight` passes 12 of 12. Not tested: any hosting provider or HTTPS.
+
+To try it locally: `docker compose up -d`, then seed with `DATABASE_URL=postgresql://postgres:postgres@localhost:54330/unmask` (see `DEMO_GUIDE.md`) and `docker compose down -v` to clear it.
 
 Environment (see `backend/.env.example` for the full list):
 
@@ -63,3 +65,9 @@ It is a **development deployment**: settlement uses the development enclave (not
 ## Before recording
 
 `npm run build && npm start` for the web app, and the three-terminal setup in [`DEMO_GUIDE.md`](DEMO_GUIDE.md) for the backend. `npx playwright test` runs the browser checks against the dev server on port 3000 (it stubs the backend, so it needs no database).
+
+## For whoever deploys (quick path)
+
+1. Backend on a container host with a managed PostgreSQL: build `backend/Dockerfile` (build context is the repo root), set `DATABASE_URL`, `NEAR_RPC_URL`, `DEV_ENCLAVE_SEED` (once, keep it), `CORS_ORIGINS=<web origin>`, and leave `NODE_ENV` unset. Check `GET /health`.
+2. Web app: build `Dockerfile` with `--build-arg NEXT_PUBLIC_API_URL=<backend public URL>` (it is baked in at build time), or import the repo in Vercel and set `NEXT_PUBLIC_API_URL`.
+3. Seed demo launches against the hosted database, then run `npm run demo:preflight -- --api <backend URL> --web <web URL>`. It must show no FAIL.

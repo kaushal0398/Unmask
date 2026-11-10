@@ -1,5 +1,6 @@
-# UNTESTED: written on 10 Nov but never built. Docker could not run on the machine it was written on (the disk was full),
-# so nothing here has been verified beyond `docker compose config` accepting the compose file. Build it once and fix what breaks.
+# TESTED 10 Nov 2026: `docker compose build` and `docker compose up -d` worked, the backend ran its migrations and the Rust engine inside the image,
+# a seeded launch settled (price $0.03, 1,000,000 sold, $30,000 raised, 2 bids left out) and `npm run demo:preflight` passed 12 of 12.
+# Not tested: a real hosting provider, HTTPS, or anything but the development enclave.
 # The whole stack with one command:  docker compose up --build
 #   web      http://localhost:3000
 #   backend  http://localhost:4001   (settlement uses the DEVELOPMENT enclave: not confidential, not attested)
