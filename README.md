@@ -74,7 +74,7 @@ The work is split in two: what already runs, and what we are building next so th
 | NEAR wallet sign-in (signed challenge, sessions) | Built |
 | Backend API (Fastify, PostgreSQL, Prisma): launches, bids, sessions, receipts, enclave key, settle, result | Built |
 | Settlement: open bids, reject dishonest ones with a recorded reason, run the Rust engine, store and publish the result | Built, runs on one machine ([`docs/settlement-dev.md`](docs/settlement-dev.md)) |
-| Hashing and re-running the auction on the verify page | Built, runs in your browser |
+| Verify a real settled launch in your browser: rebuilds the input and the engine output from the public numbers, re-runs the rule, checks the money. The code and attestation checks say **not checked** | Built, tested against real engine output and tampering ([`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md)) |
 | The WASM build of the engine (`wasm32-wasip2`) runs under Wasmtime and matches TypeScript on all 12 shared cases; the backend can settle with it | Built, tested (`python3 scripts/check-wasm-vectors.py`) |
 | Agent bidding inside signed rules, enforced again at settlement | Built, tested ([below](#features)) |
 | Your result card: paid, got, refunded, effective price, shareable image | Built |
@@ -274,6 +274,7 @@ docs/               Project documentation (below)
 | [`docs/decisions-and-open-questions.md`](docs/decisions-and-open-questions.md) | Decisions to settle and open questions |
 | [`docs/auction-core-v1.md`](docs/auction-core-v1.md) | The exact integer auction rule and its shared test vector |
 | [`docs/improvements-and-additions.md`](docs/improvements-and-additions.md) | Ideas from nearly.trade and NEAR Intents: what to add and in what order |
+| [`docs/PRIVACY_THREAT_MODEL.md`](docs/PRIVACY_THREAT_MODEL.md) | Who can read a sealed bid and when: what is tested, what the backend operator can still do, the leaks that survive a perfect enclave, and the options to close the gap |
 | [`docs/OUTLAYER_ATTESTATION.md`](docs/OUTLAYER_ATTESTATION.md) | What an OutLayer attestation covers, how to verify one with `outlayer-verify`, how our hashes line up, and the privacy gap it does not close |
 | [`docs/AUCTION_SPEC.md`](docs/AUCTION_SPEC.md) | The full auction rule: units, the algorithm, the policy decisions, 14 guarantees, worked examples and how each is tested |
 | [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) | How to run and show the demo: setup, seeding, three plans, a three-minute run sheet, what to say and not say, troubleshooting |

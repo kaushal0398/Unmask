@@ -1,4 +1,4 @@
-# Demo script (about 3 minutes)
+# Demo script (about 3 and a half minutes)
 
 The short version. Setup, the three plans, troubleshooting and the full pre-flight list are in [`DEMO_GUIDE.md`](DEMO_GUIDE.md) and [`DEMO_CHECKLIST.md`](DEMO_CHECKLIST.md).
 
@@ -15,7 +15,8 @@ The short version. Setup, the three plans, troubleshooting and the full pre-flig
 | 1:55 | The closed launch, then Settle | "The window has closed. The engine opens the bids and finds one price." |
 | 2:15 | The result | "$0.03 for everyone. The snipers were priced out. This refund goes to Arbitrum: a plan, nothing is sent yet." |
 | 2:35 | Bids left out, then the evidence | "Two bids were left out with reasons. This was settled by the development enclave: reproducible, not attested." |
-| 2:55 | Close | "Fairness comes from the rule and the proof, not from trusting us." |
+| 3:00 | Verify this launch, Run the checks | "It rebuilds the input from the public numbers, runs the rule again in my browser and checks the money. Four checks pass. Two say not checked: the code and the attestation. I can't check those from here, so they don't count as passes." |
+| 3:20 | Close | "Fairness comes from the rule and the proof, not from trusting us, and where we can't prove something yet, it says so." |
 
 Say this clearly: **the enclave and the payment checks are development stand-ins, and no funds move.** Update this line when the real parts are connected.
 

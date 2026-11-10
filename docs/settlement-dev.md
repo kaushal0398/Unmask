@@ -72,6 +72,10 @@ WASM: `sh snipe-proof-auction/build.sh && python3 scripts/check-wasm-vectors.py`
 
 `backend/scripts/e2e-settle.ts` covers all of this against a live database: a rule-breaking agent and a bad address are skipped, a cross-chain refund is planned via NEAR Intents and nothing is executed.
 
+## Checking a settlement in the browser (10 Nov)
+
+The verify page, opened from a settled launch (`/verify?launch=<id>`), recomputes what it can from the public result (`src/lib/verify-result.ts`): it rebuilds the input from the counted bids and compares its SHA-256 with the published input hash, re-runs the rule and compares every allocation and payment, checks that locked = paid + refunded and that the plan adds up, and rebuilds the engine's exact output text (in the engine's own key order, because the database does not keep key order) and compares its hash with the recorded output hash. The code hash and the attestation cannot be checked in the browser, so they show **not checked** and the verdict is never "run fairly" while any check is unchecked. Run against a real settlement it reproduced the real engine's input and output hashes exactly.
+
 ## Which engine settles (10 Nov)
 
 | `AUCTION_ENGINE` | What runs | Recorded as |

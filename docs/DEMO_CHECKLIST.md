@@ -11,10 +11,13 @@ Tick these before showing or recording the demo. The full walkthrough is in [`DE
 | 3 | Backend tests | `cd backend && npm test` | All pass | [ ] |
 | 4 | WASM matches TypeScript | `sh snipe-proof-auction/build.sh && python3 scripts/check-wasm-vectors.py` | `12/12 match the TypeScript rule` | [ ] |
 | 5 | Production build | `npx next build` | `Compiled successfully` and all pages generated | [ ] |
+| 5b | Browser suite | `npx playwright test` | `25 passed` | [ ] |
 | 6 | Backend env is set | `backend/.env` has `DATABASE_URL`, `NEAR_RPC_URL`, a fixed `DEV_ENCLAVE_SEED` | Backend starts | [ ] |
 | 7 | Real settlement end to end | `cd backend && npm run e2e:settle` (backend and database running) | `e2e settle: all checks passed` and a real `intents:` line | [ ] |
+| 7b | API privacy | `cd backend && npm run e2e:privacy` (backend and database running) | `e2e privacy: 31 checks passed` | [ ] |
 | 8 | **Wallet sign-in works** (Plan A only) | Connect a real testnet wallet on the site | Your account shows in the nav, **not** "(demo)" | [ ] |
 | 9 | Plan B rehearsed | Seed, open, run `settle:demo`, refresh | The result page appears | [ ] |
+| 9b | Verify page | On the result page press **Verify this launch**, then **Run the checks** | Six checks: 4 green, 2 amber "not checked". Verdict amber: "4 of 6 checks passed". **Not** a green "run fairly" | [ ] |
 | 10 | Internet works for the funding quote | Press **Get a price** on the open launch | A quote with a cost and a time | [ ] |
 
 Item 8 has never been done. If it fails, use Plan B and say the demo wallet is a stand-in.
@@ -29,6 +32,7 @@ Item 8 has never been done. If it fails, use Plan B and say the demo wallet is a
 | 4 | Seed a **fresh open** launch: `npm run seed:demo -- --creator YOU.testnet --open-minutes 60` | [ ] |
 | 5 | Both URLs are open in separate tabs, and the closed one shows "No more bids are accepted" | [ ] |
 | 6 | The `settle:demo` command is typed in a terminal, ready, with the closed launch's id | [ ] |
+| 6b | The web app is the **production build** (`npx next start -p 3000`), not `npm run dev` | [ ] |
 | 7 | Browser is clean: no extensions, notifications off, zoom set | [ ] |
 | 8 | Do not restart the backend now (a new `DEV_ENCLAVE_SEED` would break the seeded bids) | [ ] |
 
@@ -41,10 +45,12 @@ Item 8 has never been done. If it fails, use Plan B and say the demo wallet is a
 | Funding panel | A quote and `none: a preview, nothing to pay` | "price preview, nothing is paid" |
 | Result | One price, allocations, **Bids left out**, the payout plan | "a plan, nothing is sent" |
 | Evidence | `none (development enclave)` | "reproducible, not attested" |
+| Verify page | 4 green, 2 amber "not checked", an amber verdict | "I can check the arithmetic and the hashes, not who ran the code" |
 
 ## D. Never claim
 
 - That the result is **attested**, **TEE-backed** or **private** from the backend.
+- That the launch is **fully verified** or **provably fair**: the code and attestation checks are not done.
 - That a bid was **funded** from another chain, or any deposit taken.
 - That a refund or token was **sent**.
 - That anything runs on **OutLayer** until the remote run has actually succeeded.
