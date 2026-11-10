@@ -145,11 +145,12 @@ export function BidForm({
     );
   }
 
-  problems.push(...payoutProblems(payout));
+  // The payout box shows its own errors next to the field; they still block sealing.
+  const payoutIssues = payoutProblems(payout);
   if (agentOn && !agent) problems.push("Set and sign the agent's rules first, or turn agent mode off.");
 
   const ready =
-    limit !== "" && qty !== "" && problems.length === 0;
+    limit !== "" && qty !== "" && problems.length === 0 && payoutIssues.length === 0;
 
   const locked = ready ? l * q : 0;
 

@@ -223,36 +223,24 @@ function SettledView({ l }: { l: Launch }) {
 
 export function LiveLaunch({ id }: { id: string }) {
   
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [l, setL] = useState<LiveLaunchData | null>(null);
+  // What was loaded, and for which id. A different id means "still loading", so nothing is reset inside the effect.
+  const [load, setLoad] = useState<{ id: string; launch: LiveLaunchData | null; error: string } | null>(null);
+  const loading = load?.id !== id;
+  const error = load?.id === id ? load.error : "";
+  const l = load?.id === id ? load.launch : null;
   const now = useNow();
   const opened = useOpenedAt();
 
   useEffect(() => {
     let active = true;
 
-    setLoading(true);
-    setError("");
-
     getApi()
       .getLaunch(id)
       .then((launch) => {
-        if (active) {
-          setL(launch);
-        }
+        if (active) setLoad({ id, launch, error: "" });
       })
       .catch((err) => {
-        if (active) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Could not load this launch.",
-          );
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        if (active) setLoad({ id, launch: null, error: err instanceof Error ? err.message : "Could not load this launch." });
       });
 
     return () => {

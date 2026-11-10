@@ -107,7 +107,7 @@ export default function MyBidsPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl px-5 py-12">
+    <div className="mx-auto min-h-screen max-w-6xl px-5 py-12">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-seal-fg">
@@ -335,6 +335,6 @@ export default function MyBidsPage() {
         No real funds are transferred or locked. Bid amounts
         and decrypted bid contents are not displayed here.
       </p>
-    </main>
+    </div>
   );
 }

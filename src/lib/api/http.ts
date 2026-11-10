@@ -281,10 +281,15 @@ export class HttpLaunchApi implements LaunchApi {
   }
 
   async listLaunches(): Promise<Launch[]> {
-    const [demoLaunches, response] = await Promise.all([
-      this.demo.listLaunches(),
-      request<{ launches: BackendLaunch[] }>("/v1/launches"),
-    ]);
+    const demoLaunches = await this.demo.listLaunches();
+    let response: { launches: BackendLaunch[] };
+    try {
+      response = await request<{ launches: BackendLaunch[] }>("/v1/launches");
+    } catch (error) {
+      // With the backend off the sample launches still list, so the page is never blank. Any other failure is real.
+      if (error instanceof ApiError && error.code === "network") return demoLaunches;
+      throw error;
+    }
 
     const backendLaunches = response.launches.map(mapLaunch);
     const existingIds = new Set(
@@ -566,7 +571,7 @@ export class HttpLaunchApi implements LaunchApi {
     return this.demo.withdrawBid(launchId, bidder);
   }
 
-  positions(account: string) {
+  positions() {
     return this.demo.positions();
   }
 }

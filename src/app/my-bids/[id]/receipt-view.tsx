@@ -15,7 +15,6 @@ import {
 import { useWallet } from "@/components/wallet";
 import { getApi } from "@/lib/api";
 import type { MyBid } from "@/lib/api/types";
-import { shortHash } from "@/lib/format";
 
 function statusStyle(state: string) {
   switch (state) {
@@ -97,18 +96,18 @@ export function BidReceiptView() {
 
   if (loading) {
     return (
-      <main className="mx-auto flex min-h-[70vh] max-w-4xl items-center justify-center px-5">
+      <div className="mx-auto flex min-h-[70vh] max-w-4xl items-center justify-center px-5">
         <div className="flex items-center gap-3 text-sm text-muted">
           <Loader2 className="size-5 animate-spin" />
           Loading bid receipt...
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!sessionToken) {
     return (
-      <main className="mx-auto max-w-4xl px-5 py-16">
+      <div className="mx-auto max-w-4xl px-5 py-16">
         <div className="border border-line bg-bg/40 p-8 text-center">
           <Lock className="mx-auto size-8 text-seal-fg" />
 
@@ -128,13 +127,13 @@ export function BidReceiptView() {
             Back to My Bids
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (error || !bid) {
     return (
-      <main className="mx-auto max-w-4xl px-5 py-16">
+      <div className="mx-auto max-w-4xl px-5 py-16">
         <div className="border border-danger/30 bg-danger/5 p-8 text-center">
           <h1 className="text-xl font-semibold">
             Receipt unavailable
@@ -152,12 +151,12 @@ export function BidReceiptView() {
             Back to My Bids
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-4xl px-5 py-12">
+    <div className="mx-auto min-h-screen max-w-4xl px-5 py-12">
       <Link
         href="/my-bids"
         className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-text"
@@ -350,6 +349,6 @@ export function BidReceiptView() {
         and enclave are mocks. It does not constitute an on-chain
         settlement proof or TEE attestation.
       </p>
-    </main>
+    </div>
   );
 }

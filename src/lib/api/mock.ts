@@ -241,9 +241,7 @@ export class MockLaunchApi implements LaunchApi {
     return [];
   }
 
-  async verifyReceipt(
-    _receiptId: string,
-  ): Promise<ReceiptVerification> {
+  async verifyReceipt(): Promise<ReceiptVerification> {
     throw new ApiError(
       "not_found",
       "Receipt verification is only available with the backend API.",
