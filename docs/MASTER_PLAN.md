@@ -11,7 +11,7 @@ Owners are **proposed** from who has been doing what. Change them freely.
 
 ## Status on Tue 10 Nov
 
-**28 tasks: 12 done, 4 partly done, 12 open.** Legend used in every table below: **Done**, **Partly** (works, but not finished or not tried live), **Open**.
+**28 tasks: 12 done, 5 partly done, 11 open.** Everything described here is pushed (latest commit `ebbabf8`, 10 Nov). Legend used in every table below: **Done**, **Partly** (works, but not finished or not tried live), **Open**.
 
 | | Done | Partly | Open |
 |---|---|---|---|
@@ -27,10 +27,21 @@ Owners are **proposed** from who has been doing what. Change them freely.
 | # | What is left | Why it matters | Who |
 |---|---|---|---|
 | 1 | Retry the OutLayer run once (A1), then deploy the canonical engine (A3) | The engine has never run remotely; the registered version has no `health` | Kaushal, needs the CLI |
-| 2 | Real payments, the token and refunds (C1 to C4) | Nothing moves real funds yet; E1, E2 and the payout plan depend on it | Ayush and Kaushal |
-| 3 | Attestation: find out what OutLayer returns and how to verify it (A4) | The fairness claim rests on it | Kaushal |
-| 4 | Submission: organizer questions, public repo, Vercel, video, form (F1 to F5) | Nothing here has started, and it has a hard deadline | Both |
-| 5 | The OutLayer adapter behind the settlement interface (B2). The spec and property tests (A5) are done | The switch from local to remote | Kaushal |
+| 2 | **Rehearse Plan A: sign in with a real testnet wallet** | Wallet sign-in has never been tried live. The Settle button, "Your result", signed agent rules and sealing a bid all depend on it. Plan B (the settle shortcut) covers it only if it fails | Ayush |
+| 3 | Real payments, the token and refunds (C1 to C4) | Nothing moves real funds yet; E1, E2 and the payout plan depend on it. C1, the asset and token decision, comes first | Ayush and Kaushal |
+| 4 | Attestation: find out what OutLayer returns and how to verify it (A4) | The fairness claim rests on it | Kaushal |
+| 5 | **Send the organizer questions (F1)**, make the repo public (F2), deploy (F3), record the demo (F4), submit (F5) | Overdue, and a hard deadline. The draft answer text, the demo kit and the secret scan are ready | Both |
+| 6 | The OutLayer adapter behind the settlement interface (B2) | The switch from local to remote, after A3 | Kaushal |
+
+**Decisions waiting on you** (code can wait for these; none blocks a green test):
+
+| Decision | Options | My recommendation |
+|---|---|---|
+| Settlement asset and token (C1) | USDC-style payment token and a plain NEP-141 on testnet, or something else | The default, so C2 to C4 can start |
+| Licence (F2) | MIT, Apache-2.0, or none | A permissive licence, since the project is open for judging |
+| Rewrite git history to drop 74 MB of old `node_modules` (F2) | Rewrite and force-push, or leave it | Leave it unless clones are too slow: a rewrite breaks Kaushal's copies |
+| Every bid is public after settlement (decision D7) | Keep, or show only the aggregate | Keep for the demo (the verify page needs the bids), and say so |
+| What "real" means for the demo (section 6) | Stay on testnet with labelled stand-ins, or attempt a real mainnet flow | Labelled stand-ins: NEAR Intents is mainnet only and we have no funds plan |
 
 ## Progress log
 
@@ -141,21 +152,21 @@ Only E1, E3 and E4 were worth doing if time was short. Do not claim E1 or E2 bey
 
 | # | Task | By | Status |
 |---|---|---|---|
-| F1 | Answer the open organizer questions (eligibility, third-party TEE, real-funds limits) in `questions-for-organizers.md` and send them | Mon 9 | **Open.** Drafted, not sent. Overdue |
+| F1 | Answer the open organizer questions (eligibility, third-party TEE, real-funds limits) in `questions-for-organizers.md` and send them | Mon 9 | **Open.** The questions are drafted in `questions-for-organizers.md` and not sent. Overdue |
 | F2 | Make the repository public, add the license, check no secrets are committed (`R0`) | Thu 12 | **Partly.** The secret scan is **done and clean** (10 Nov, `sh scripts/scan-secrets.sh`: no keys, no `.env` files, no credentials in the files or in 53 commits of history). Still open: the repo is private, the license is undecided, and the history carries about 74 MB of `node_modules` and build output committed on 1 to 2 Nov and removed since. Removing it means rewriting history and force-pushing, which breaks Kaushal's clones, so do it together or leave it |
 | F3 | Deploy the frontend to Vercel and point it at a hosted backend | Fri 13 | **Open.** The production build passes |
 | F4 | Rehearse `demo-script.md` from a clean browser, record the video, write the X post | Fri 13 | **Partly.** The demo kit is written and Plan B was checked in a browser. Plan A (a live wallet) is untested, and nothing is recorded |
-| F5 | Fill in the submission form from `submission-checklist.md` and submit | Sat 14, before 18:00 UTC | **Open** |
+| F5 | Fill in the submission form from `submission-checklist.md` and submit | Sat 14, before 18:00 UTC | **Open.** The "What did you build?" text is rewritten to match the code (about 1,400 of 2,000 characters), and the form fields are filled in where known. The team details, the repo URL and the post link are still blank |
 
 ## 5. Day by day
 
 | Day | Focus | Done when | Status |
 |---|---|---|---|
 | **Mon 9** | Decisions 1 to 5. Support message (A1). Local database and a real settle (B1). Organizer questions (F1). Asset choice (C1) | One launch settles locally | **Mostly done.** B1 done. F1 and C1 slipped. A1 changed: the support message is no longer needed |
-| **Tue 10** | Canonical engine builds to WASM (A2). Settlement adapter (B2). Loading and error states (D1). Retry the OutLayer run (A1) | Wasmtime output equals TypeScript on every shared case | **In progress.** A2 done, B2 and D1 partly. A1 waits on Kaushal. Also done: the four additions, the build fix, the blocker review |
-| **Wed 11** | Deploy the canonical engine (A3). Spec and property tests (A5). Real payment check (C2). Decide asset and token (C1) | Remote run, or the fallback chosen on purpose | Not started |
-| **Thu 12** | Attestation note (A4). Live data in the UI (B5). Token and refunds (C3, C4). 1Click live call if possible (E1, E2). Repo public (F2) | Feature freeze at end of day | Not started |
-| **Fri 13** | No new features. Deploy (F3), end to end test, mobile pass (D4), rehearse and record (F4) | Demo runs from a clean browser | Not started |
+| **Tue 10** | Canonical engine to WASM (A2). Adapter (B2). Loading and error states (D1). Spec and property tests (A5). Browser tests (D4). Retry the OutLayer run (A1) | Wasmtime output equals TypeScript on every shared case | **Mostly done.** A2, A5, B5, D1, D4 done; B2 partly. Also done: the four additions, the demo kit, the blocker review, the secret scan, the decisions doc and the submission draft. **A1 waits on Kaushal** |
+| **Wed 11** | Rehearse Plan A with a real wallet. Retry the OutLayer run and deploy the canonical engine (A1, A3). Decide asset and token (C1), then a real payment check (C2). Send the organizer questions (F1) | Remote run, or the fallback chosen on purpose | Not started |
+| **Thu 12** | Attestation note (A4). Token and refunds (C3, C4). 1Click live call if possible (E1, E2). Repo public (F2) | Feature freeze at end of day | Not started |
+| **Fri 13** | No new features. Deploy (F3), end to end test, rehearse and record (F4) | Demo runs from a clean browser | Not started |
 | **Sat 14** | Fix only blockers. Submit (F5) | Submitted before 18:00 UTC | Not started |
 
 ## 6. Cut line and fallbacks
@@ -178,17 +189,26 @@ The rule from the roadmap applies throughout: **one complete, honest demo beats 
 | Decision on the settlement asset and token (C1) | Both | Tue 10 | Open |
 | Mainnet key and a few dollars of funds for a 1Click test | Team | Wed 11 | Open |
 | Testnet funds on `proofmeme.testnet` for the token and payment work | Team | Wed 11 | Open |
-| Organizer answers on eligibility and real funds | Organizers | Tue 10 | **Questions not sent yet** |
+| Organizer answers on eligibility and real funds | Organizers | Tue 10 | **Questions not sent yet** (drafted) |
+| A real testnet wallet holding the account you will sign in with, to rehearse Plan A | Ayush | Wed 11 | Open |
+| The licence, the history-rewrite and the public-bids decisions (see "Decisions waiting on you") | Both | Thu 12 | Open |
 
 ## 8. Done checklist
 
 - [ ] Canonical engine chosen and the other archived (chosen in practice; Kaushal has not confirmed and `outlayer-auction/` is still there)
-- [x] Wasmtime output equals TypeScript on every shared case
+- [x] Wasmtime output equals TypeScript on every shared case (212 of 212)
 - [x] A launch settles end to end against a live database
-- [ ] Remote OutLayer run succeeded, or the fallback is labelled everywhere (the fallback is labelled; the remote run is waiting on A1)
+- [x] The auction rule is specified (`AUCTION_SPEC.md`) and its guarantees are tested on random auctions
 - [x] Execution record stored and shown
-- [ ] Payments and token real, or labelled simulated everywhere (labelled simulated for now)
+- [x] Every page loads with the backend off, and the browser suite passes (21 of 21)
 - [x] README, `settlement-dev.md` and the UI agree on what is real
-- [ ] Repository public, no secrets committed
+- [x] A demo kit exists: guide, checklist, seed and settle scripts, and a rewritten script
+- [x] No secrets in the files or the history (`sh scripts/scan-secrets.sh`)
+- [x] The submission text matches what the code does
+- [ ] Wallet sign-in tried with a real testnet wallet
+- [ ] Remote OutLayer run succeeded, or the fallback is labelled everywhere (the fallback is labelled; the remote run is waiting on A1)
+- [ ] Payments and token real, or labelled simulated everywhere (labelled simulated for now)
+- [ ] Organizer questions sent
+- [ ] Repository public, with a licence
 - [ ] Deployed, demo rehearsed and recorded
 - [ ] Submitted before 14 Nov 18:00 UTC
