@@ -11,13 +11,15 @@ Tick these before showing or recording the demo. The full walkthrough is in [`DE
 | 3 | Backend tests | `cd backend && npm test` | All pass | [ ] |
 | 4 | WASM matches TypeScript | `sh snipe-proof-auction/build.sh && python3 scripts/check-wasm-vectors.py` | `12/12 match the TypeScript rule` | [ ] |
 | 5 | Production build | `npx next build` | `Compiled successfully` and all pages generated | [ ] |
-| 5b | Browser suite | `npx playwright test` | `25 passed` | [ ] |
+| 5b | Browser suite | `npx playwright test` | `26 passed` | [ ] |
 | 6 | Backend env is set | `backend/.env` has `DATABASE_URL`, `NEAR_RPC_URL`, a fixed `DEV_ENCLAVE_SEED` | Backend starts | [ ] |
 | 7 | Real settlement end to end | `cd backend && npm run e2e:settle` (backend and database running) | `e2e settle: all checks passed` and a real `intents:` line | [ ] |
 | 7b | API privacy | `cd backend && npm run e2e:privacy` (backend and database running) | `e2e privacy: 31 checks passed` | [ ] |
 | 8 | **Wallet sign-in works** (Plan A only) | Connect a real testnet wallet on the site | Your account shows in the nav, **not** "(demo)" | [ ] |
 | 9 | Plan B rehearsed | Seed, open, run `settle:demo`, refresh | The result page appears | [ ] |
 | 9b | Verify page | On the result page press **Verify this launch**, then **Run the checks** | Six checks: 4 green, 2 amber "not checked". Verdict amber: "4 of 6 checks passed". **Not** a green "run fairly" | [ ] |
+| 9c | One-command readiness check | `npm run demo:preflight` (use `-- --offline` to skip the live quote) | No FAIL lines. Checks backend, enclave key, web pages, CORS, live price preview, open and closed demo launches, free disk | [ ] |
+| 9d | API doc matches the code | `python3 scripts/check-api-doc.py` | `covers all 19 routes and 21 error codes` | [ ] |
 | 10 | Internet works for the funding quote | Press **Get a price** on the open launch | A quote with a cost and a time | [ ] |
 
 Item 8 has never been done. If it fails, use Plan B and say the demo wallet is a stand-in.

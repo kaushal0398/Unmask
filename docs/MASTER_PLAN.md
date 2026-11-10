@@ -47,6 +47,7 @@ Owners are **proposed** from who has been doing what. Change them freely.
 
 | Date | Done | Evidence |
 |---|---|---|
+| Tue 10 Nov | API reference rewritten from the code with a checker that fails on a missing route or error code; `npm run demo:preflight` readiness check; README screenshots; real launches no longer show a simulated bid count; browser suite 26 of 26 | `python3 scripts/check-api-doc.py`, `npm run demo:preflight`, `npx playwright test` |
 | Mon 9 Nov | **A2** The canonical engine builds to `wasm32-wasip2`, has a `health` action and an action envelope, and runs under Wasmtime | `python3 scripts/check-wasm-vectors.py` prints `12/12 match the TypeScript rule` |
 | Mon 9 Nov | **B1** A launch settles end to end against a real PostgreSQL, the live backend and the Rust engine | `cd backend && npm run e2e:settle` (needs a database and a running backend, see `settlement-dev.md`) |
 | Mon 9 Nov | Decision 1 acted on: `snipe-proof-auction/build.sh` now builds `enclave/auction-engine`, the Hello World scaffold is marked unused | `snipe-proof-auction/README.md` |
