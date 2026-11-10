@@ -71,3 +71,15 @@ WASM: `sh snipe-proof-auction/build.sh && python3 scripts/check-wasm-vectors.py`
 - **WASM.** Set `AUCTION_ENGINE_WASM=../snipe-proof-auction/out/auction-engine.wasm` to settle with the artifact under `wasmtime`. The code hash is then the SHA-256 of that file.
 
 `backend/scripts/e2e-settle.ts` covers all of this against a live database: a rule-breaking agent and a bad address are skipped, a cross-chain refund is planned via NEAR Intents and nothing is executed.
+
+## Which engine settles (10 Nov)
+
+| `AUCTION_ENGINE` | What runs | Recorded as |
+|---|---|---|
+| unset | The native Rust binary, or the `.wasm` under Wasmtime if `AUCTION_ENGINE_WASM` is set | `mode: "dev"` |
+| `outlayer` | The registered project on OutLayer, over its HTTPS API (`backend/src/outlayer.ts`). Needs `OUTLAYER_PROJECT`, `OUTLAYER_PAYMENT_KEY` and `OUTLAYER_CODE_HASH` | `mode: "outlayer"`, with the attestation URL OutLayer returns |
+
+- The result records `engineOutputHash`, the SHA-256 of the engine's exact output text, and `engineKind` (`native`, `wasm` or `outlayer`). These are the values an attestation covers, so they are what we compare it with ([`OUTLAYER_ATTESTATION.md`](OUTLAYER_ATTESTATION.md)).
+- A run on OutLayer is labelled **"returned by OutLayer, not verified by us"**. `mode: "tee"` is reserved for a verified attestation and nothing sets it yet.
+- The OutLayer adapter is built from the published API spec and tested against a stub. **It has not run against the real service** (it needs a payment key).
+- The backend still opens every sealed bid before the auction runs, so even a verified OutLayer run would not make the bids private from the backend. That is the gap section 7 of the attestation note describes, and it is why settlement still refuses to run in production.

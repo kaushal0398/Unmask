@@ -235,6 +235,8 @@ npm run dev
 
 Copy `backend/.env.example` to `.env` first: the backend will not start without `NEAR_RPC_URL`. `npm run e2e:settle` (in `backend/`) settles a seeded launch end to end against a live database, `npm run seed:demo` and `npm run settle:demo` set up and settle a launch for the demo ([`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md)), and `AUCTION_ENGINE_WASM` makes settlement run the WASM artifact.
 
+`npm test` in `backend/` builds the Rust engine first if it is missing, so it works on a fresh clone. Use `npm run typecheck` (not a bare `tsc`) in the frontend: it generates the Next.js route types first.
+
 Its write endpoints are for local development only: see [`docs/backend-phase2.md`](docs/backend-phase2.md).
 
 Node.js 24 was used during development. This project's `AGENTS.md` asks you to read the guide in `node_modules/next/dist/docs/` before writing code, because this Next.js version has breaking changes. Two matter here: with Cache Components on, anything that depends on the clock lives in a client component, and a dynamic route's `params` is read inside a `Suspense` boundary.
@@ -272,6 +274,7 @@ docs/               Project documentation (below)
 | [`docs/decisions-and-open-questions.md`](docs/decisions-and-open-questions.md) | Decisions to settle and open questions |
 | [`docs/auction-core-v1.md`](docs/auction-core-v1.md) | The exact integer auction rule and its shared test vector |
 | [`docs/improvements-and-additions.md`](docs/improvements-and-additions.md) | Ideas from nearly.trade and NEAR Intents: what to add and in what order |
+| [`docs/OUTLAYER_ATTESTATION.md`](docs/OUTLAYER_ATTESTATION.md) | What an OutLayer attestation covers, how to verify one with `outlayer-verify`, how our hashes line up, and the privacy gap it does not close |
 | [`docs/AUCTION_SPEC.md`](docs/AUCTION_SPEC.md) | The full auction rule: units, the algorithm, the policy decisions, 14 guarantees, worked examples and how each is tested |
 | [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) | How to run and show the demo: setup, seeding, three plans, a three-minute run sheet, what to say and not say, troubleshooting |
 | [`docs/DEMO_CHECKLIST.md`](docs/DEMO_CHECKLIST.md) | The pre-flight and just-before-you-start checklists, with expected results |

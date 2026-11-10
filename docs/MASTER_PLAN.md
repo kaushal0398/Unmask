@@ -11,11 +11,11 @@ Owners are **proposed** from who has been doing what. Change them freely.
 
 ## Status on Tue 10 Nov
 
-**28 tasks: 12 done, 5 partly done, 11 open.** Everything described here is pushed (latest commit `ebbabf8`, 10 Nov). Legend used in every table below: **Done**, **Partly** (works, but not finished or not tried live), **Open**.
+**28 tasks: 12 done, 6 partly done, 10 open.** Everything described here is pushed (latest commit `ebbabf8`, 10 Nov). Legend used in every table below: **Done**, **Partly** (works, but not finished or not tried live), **Open**.
 
 | | Done | Partly | Open |
 |---|---|---|---|
-| A. OutLayer and enclave | A2, A5 | | A1, A3, A4 |
+| A. OutLayer and enclave | A2, A5 | A4 | A1, A3 |
 | B. Backend | B1, B3, B4, B5 | B2 | |
 | C. Payments and token | | | C1, C2, C3, C4 |
 | D. Frontend | D1, D2, D3, D4 | | |
@@ -29,7 +29,7 @@ Owners are **proposed** from who has been doing what. Change them freely.
 | 1 | Retry the OutLayer run once (A1), then deploy the canonical engine (A3) | The engine has never run remotely; the registered version has no `health` | Kaushal, needs the CLI |
 | 2 | **Rehearse Plan A: sign in with a real testnet wallet** | Wallet sign-in has never been tried live. The Settle button, "Your result", signed agent rules and sealing a bid all depend on it. Plan B (the settle shortcut) covers it only if it fails | Ayush |
 | 3 | Real payments, the token and refunds (C1 to C4) | Nothing moves real funds yet; E1, E2 and the payout plan depend on it. C1, the asset and token decision, comes first | Ayush and Kaushal |
-| 4 | Attestation: find out what OutLayer returns and how to verify it (A4) | The fairness claim rests on it | Kaushal |
+| 4 | A payment key, then run the project on OutLayer and verify the attestation with `outlayer-verify` (steps in `OUTLAYER_ATTESTATION.md`). The note and the adapter are ready; **the privacy gap (opening bids inside the enclave) is a design task nobody has started** | The fairness claim rests on it | Kaushal |
 | 5 | **Send the organizer questions (F1)**, make the repo public (F2), deploy (F3), record the demo (F4), submit (F5) | Overdue, and a hard deadline. The draft answer text, the demo kit and the secret scan are ready | Both |
 | 6 | The OutLayer adapter behind the settlement interface (B2) | The switch from local to remote, after A3 | Kaushal |
 
@@ -61,6 +61,8 @@ Owners are **proposed** from who has been doing what. Change them freely.
 | Tue 10 Nov | **Demo kit.** `seed:demo` and `settle:demo` scripts, `DEMO_GUIDE.md`, `DEMO_CHECKLIST.md`, `NEARLY_FEATURES_AND_CHECKS.md`, and a rewritten `demo-script.md`. Checked in a real browser against the real backend and live NEAR Intents: open launch, agent panel, payout validation, a live funding quote, and the settled result page. Found and fixed three bugs doing it: a settled backend launch showed "COUNTING…" and "Demo data", and the funding panel used a made-up recipient that NEAR Intents rejects (now `intents.near`) | [`DEMO_GUIDE.md`](DEMO_GUIDE.md) |
 | Tue 10 Nov | **A5.** [`AUCTION_SPEC.md`](AUCTION_SPEC.md), randomized property tests (14 guarantees) in TypeScript and Rust, and 200 seeded random cases that TypeScript, Rust and the WASM all match (212 of 212). The tests were mutation-checked: they caught 4 of 4 real bugs, and the first version missed one (a crumb-order bug), so the fairness check was tightened | `npx tsx --test src/lib/auction-properties.test.ts`, `cd enclave/auction-engine && cargo test`, `python3 scripts/check-wasm-vectors.py` |
 | Tue 10 Nov | **UI and tests.** The four stale browser tests are replaced by five that stub the backend, so the browser suite is 17 of 17 with nothing skipped (D4). Both lint errors fixed, lint is clean. The launch list now falls back to samples when the backend is off (B5, D1). The decisions doc matches the code. Doing this found three real bugs: a bad refund address error shown twice, a `<main>` nested inside the layout `<main>` on two pages, and a wrong test example | `npx playwright test`, `npx eslint src` |
+| Tue 10 Nov | **A4 and B2.** [`OUTLAYER_ATTESTATION.md`](OUTLAYER_ATTESTATION.md) from OutLayer's own documents: attestation covers the WASM, input and output hashes and is verifiable by anyone with `outlayer-verify tx <hash> --network testnet`. Found that OutLayer has a public HTTPS API, built an adapter for it (`AUCTION_ENGINE=outlayer`, tested against a stub, never run against the real service), and the backend now records the hash of the engine's exact output. The UI labels an OutLayer run "not verified by us" and never "attested". Also found the main privacy gap: the backend opens the bids before the auction, so a verified TEE run would still not make bids private | `cd backend && npm test`, `npx playwright test` |
+| Tue 10 Nov | **Clean-clone check.** A fresh clone installs, tests, lints and builds; the WASM hash is the same in a different folder. It found that `npm test` in `backend/` failed on a fresh clone (the engine was not built) and that the engine path lacked `.exe` on Windows: both fixed | `git clone` then `npm ci && npm test` |
 
 ## 1. The goal: one honest demo
 
@@ -103,7 +105,7 @@ Tasks come from the roadmap phases (shown as `R0` to `R11`) and our additions (`
 | A1 | Retry the run once now that FastFS is back: `python3 scripts/check-artifact-url.py …` then `outlayer run … --input auction-input.json` (steps in [`OUTLAYER_BLOCKER_REVIEW.md`](OUTLAYER_BLOCKER_REVIEW.md)). Contact OutLayer only if it still fails | The run returns `success: true` with 60 / 25 / 15, or a new error to report | Tue 10 | **Open.** Needs the CLI and account |
 | A2 | Make the canonical crate build for `wasm32-wasip2` and run under Wasmtime with a `health` and a `clear_auction` request (`R2`) | Same output as the TypeScript rule on all shared cases | Tue 10 | **Done** (12 of 12) |
 | A3 | Replace the registered version with the canonical engine (it has `health`): build, upload, **GET and compare the hash**, deploy, run health then the fixture (`R1`, `R4`). The "failed" upload transaction is normal | Remote result equals the local result | Wed 11 | **Open** (after A1) |
-| A4 | Find out what attestation OutLayer returns and how to verify it (`R4`) | A written note, plus a verifier or a clear "not available" | Thu 12 | **Open** (after A1) |
+| A4 | Find out what attestation OutLayer returns and how to verify it (`R4`) | A written note, plus a verifier or a clear "not available" | Thu 12 | **Partly.** The note is written ([`OUTLAYER_ATTESTATION.md`](OUTLAYER_ATTESTATION.md)): what it covers, how to verify it with `outlayer-verify` (no account or key needed), how our hashes line up, and a checklist for the first run. Nothing has been verified against a real attestation, because no run has succeeded yet |
 | A5 | Write `AUCTION_SPEC.md` and property tests (`R3`) | Spec merged, tests pass | Wed 11 | **Done** (10 Nov). [`AUCTION_SPEC.md`](AUCTION_SPEC.md); 14 guarantees tested on thousands of random auctions in TypeScript and Rust; 212 shared cases match in TypeScript, Rust and the WASM; the property tests catch 4 of 4 deliberate bugs |
 
 ### B. Backend (Ayush)
@@ -111,7 +113,7 @@ Tasks come from the roadmap phases (shown as `R0` to `R11`) and our additions (`
 | # | Task | Gate | By | Status |
 |---|---|---|---|---|
 | B1 | Run PostgreSQL, apply migrations, exercise `/settle` and `/result` for real | One launch settles end to end locally | Mon 9 | **Done** |
-| B2 | Replace the dev enclave call with an adapter: local engine now, OutLayer when A3 passes (`R5`) | One interface, two backends, chosen by config | Tue 10 | **Partly.** Native binary or the WASM artifact under Wasmtime, chosen by `AUCTION_ENGINE_WASM`. The OutLayer backend is not written |
+| B2 | Replace the dev enclave call with an adapter: local engine now, OutLayer when A3 passes (`R5`) | One interface, two backends, chosen by config | Tue 10 | **Partly.** `AUCTION_ENGINE` chooses the native binary, the WASM under Wasmtime, or OutLayer over its HTTPS API (`backend/src/outlayer.ts`, tested against a stub that follows the published spec). **The OutLayer path has not run against the real service**: it needs a payment key. A run on OutLayer is labelled "not verified by us" |
 | B3 | Persist execution record: input hash, code hash, result hash, attestation reference (`R4`, `R5`) | Stored and shown on the verify page | Wed 11 | **Done** for what exists: stored in `Settlement` and shown on the launch result page. Attestation is `null` and labelled `dev`. The verify page has not been checked against a backend result |
 | B4 | Idempotent settle and retry, state checks, input size limits (`R5`, `R9`) | Tests for duplicate settle and bad state | Wed 11 | **Done.** Covered by `e2e:settle`: 401, 403, 404, 409, settling twice |
 | B5 | Make the UI read launches and bids from the backend (cards, landing page) | No sample data on live paths | Thu 12 | **Done** for the live paths (10 Nov): the launch list merges backend and sample launches and falls back to samples when the backend is off, the launch page, result and receipts use the backend. The landing page cards are deliberately sample launches and say so |
