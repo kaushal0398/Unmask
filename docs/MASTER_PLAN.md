@@ -11,16 +11,16 @@ Owners are **proposed** from who has been doing what. Change them freely.
 
 ## Status on Tue 10 Nov
 
-**28 tasks: 8 done, 7 partly done, 13 open.** Legend used in every table below: **Done**, **Partly** (works, but not finished or not tried live), **Open**.
+**28 tasks: 12 done, 4 partly done, 12 open.** Legend used in every table below: **Done**, **Partly** (works, but not finished or not tried live), **Open**.
 
 | | Done | Partly | Open |
 |---|---|---|---|
-| A. OutLayer and enclave | A2 | A5 | A1, A3, A4 |
-| B. Backend | B1, B3, B4 | B2, B5 | |
+| A. OutLayer and enclave | A2, A5 | | A1, A3, A4 |
+| B. Backend | B1, B3, B4, B5 | B2 | |
 | C. Payments and token | | | C1, C2, C3, C4 |
-| D. Frontend | D2, D3 | D1, D4 | |
+| D. Frontend | D1, D2, D3, D4 | | |
 | E. Additions | E3, E4 | E1, E2 | E5 |
-| F. Submission | | | F1, F2, F3, F4, F5 |
+| F. Submission | | F2, F4 | F1, F3, F5 |
 
 **What is left, in order of risk:**
 
@@ -30,8 +30,7 @@ Owners are **proposed** from who has been doing what. Change them freely.
 | 2 | Real payments, the token and refunds (C1 to C4) | Nothing moves real funds yet; E1, E2 and the payout plan depend on it | Ayush and Kaushal |
 | 3 | Attestation: find out what OutLayer returns and how to verify it (A4) | The fairness claim rests on it | Kaushal |
 | 4 | Submission: organizer questions, public repo, Vercel, video, form (F1 to F5) | Nothing here has started, and it has a hard deadline | Both |
-| 5 | Finish the UI: every call with loading and error states (D1), live data instead of sample cards (B5), the four skipped browser tests (D4) | Polish, but blank screens would hurt the demo | Ayush |
-| 6 | `AUCTION_SPEC.md` and property tests (A5), the OutLayer adapter behind the settlement interface (B2) | Quality, and the switch from local to remote | Kaushal |
+| 5 | The OutLayer adapter behind the settlement interface (B2). The spec and property tests (A5) are done | The switch from local to remote | Kaushal |
 
 ## Progress log
 
@@ -49,6 +48,8 @@ Owners are **proposed** from who has been doing what. Change them freely.
 | Mon 9 Nov | Wallet unit tests rewritten against a fake backend (they were failing without one). Four older browser tests that fail on the previous commit too are marked `test.fixme` with the reason | `e2e/smoke.spec.ts` |
 | Tue 10 Nov | **Reviewed the teammate's incident report against the chain.** The FastFS "failed upload" is by design (`gas=1`): both files were recovered from the chain with matching hashes, and FastFS serves them again (GET 200; HEAD returns 404 and must not be used). The registered version fails the `health` action. New read-only tools: `scripts/recover-fastfs-artifact.py`, `scripts/check-artifact-url.py` | [`OUTLAYER_BLOCKER_REVIEW.md`](OUTLAYER_BLOCKER_REVIEW.md) |
 | Tue 10 Nov | **Demo kit.** `seed:demo` and `settle:demo` scripts, `DEMO_GUIDE.md`, `DEMO_CHECKLIST.md`, `NEARLY_FEATURES_AND_CHECKS.md`, and a rewritten `demo-script.md`. Checked in a real browser against the real backend and live NEAR Intents: open launch, agent panel, payout validation, a live funding quote, and the settled result page. Found and fixed three bugs doing it: a settled backend launch showed "COUNTING…" and "Demo data", and the funding panel used a made-up recipient that NEAR Intents rejects (now `intents.near`) | [`DEMO_GUIDE.md`](DEMO_GUIDE.md) |
+| Tue 10 Nov | **A5.** [`AUCTION_SPEC.md`](AUCTION_SPEC.md), randomized property tests (14 guarantees) in TypeScript and Rust, and 200 seeded random cases that TypeScript, Rust and the WASM all match (212 of 212). The tests were mutation-checked: they caught 4 of 4 real bugs, and the first version missed one (a crumb-order bug), so the fairness check was tightened | `npx tsx --test src/lib/auction-properties.test.ts`, `cd enclave/auction-engine && cargo test`, `python3 scripts/check-wasm-vectors.py` |
+| Tue 10 Nov | **UI and tests.** The four stale browser tests are replaced by five that stub the backend, so the browser suite is 17 of 17 with nothing skipped (D4). Both lint errors fixed, lint is clean. The launch list now falls back to samples when the backend is off (B5, D1). The decisions doc matches the code. Doing this found three real bugs: a bad refund address error shown twice, a `<main>` nested inside the layout `<main>` on two pages, and a wrong test example | `npx playwright test`, `npx eslint src` |
 
 ## 1. The goal: one honest demo
 
@@ -67,7 +68,7 @@ We claim "TEE-backed", "attested" or "NEAR Intents" only after the evidence exis
 | Settled backend launches show the real result, the result card and the payout plan | Built |
 | OutLayer project registered (`proofmeme.testnet/snipe-proof-auction`) | Done |
 | FastFS upload and retrieval | **Not blocked any more** (checked 10 Nov): the uploads are on chain (the "prepaid gas" error is by design), and `test.fastfs.io` serves the file again. The OutLayer run has not been retried since the outage. The registered version has no `health` action ([review](OUTLAYER_BLOCKER_REVIEW.md)) |
-| Production build, 375px layout and accessibility checks on all 12 pages | Pass. Four older flow tests are skipped with a reason |
+| Production build, 375px layout and accessibility checks on 13 pages, and 5 flow tests with a stubbed backend | Pass: 17 of 17 browser tests, none skipped |
 | Real attestation, real payment checks, the token and payouts | Not started |
 
 ## 3. Decisions to settle
@@ -92,7 +93,7 @@ Tasks come from the roadmap phases (shown as `R0` to `R11`) and our additions (`
 | A2 | Make the canonical crate build for `wasm32-wasip2` and run under Wasmtime with a `health` and a `clear_auction` request (`R2`) | Same output as the TypeScript rule on all shared cases | Tue 10 | **Done** (12 of 12) |
 | A3 | Replace the registered version with the canonical engine (it has `health`): build, upload, **GET and compare the hash**, deploy, run health then the fixture (`R1`, `R4`). The "failed" upload transaction is normal | Remote result equals the local result | Wed 11 | **Open** (after A1) |
 | A4 | Find out what attestation OutLayer returns and how to verify it (`R4`) | A written note, plus a verifier or a clear "not available" | Thu 12 | **Open** (after A1) |
-| A5 | Write `AUCTION_SPEC.md` and property tests (`R3`) | Spec merged, tests pass | Wed 11 | **Partly.** 12 shared cases and a 256-bit overflow test exist. No spec file and no property tests yet |
+| A5 | Write `AUCTION_SPEC.md` and property tests (`R3`) | Spec merged, tests pass | Wed 11 | **Done** (10 Nov). [`AUCTION_SPEC.md`](AUCTION_SPEC.md); 14 guarantees tested on thousands of random auctions in TypeScript and Rust; 212 shared cases match in TypeScript, Rust and the WASM; the property tests catch 4 of 4 deliberate bugs |
 
 ### B. Backend (Ayush)
 
@@ -102,7 +103,7 @@ Tasks come from the roadmap phases (shown as `R0` to `R11`) and our additions (`
 | B2 | Replace the dev enclave call with an adapter: local engine now, OutLayer when A3 passes (`R5`) | One interface, two backends, chosen by config | Tue 10 | **Partly.** Native binary or the WASM artifact under Wasmtime, chosen by `AUCTION_ENGINE_WASM`. The OutLayer backend is not written |
 | B3 | Persist execution record: input hash, code hash, result hash, attestation reference (`R4`, `R5`) | Stored and shown on the verify page | Wed 11 | **Done** for what exists: stored in `Settlement` and shown on the launch result page. Attestation is `null` and labelled `dev`. The verify page has not been checked against a backend result |
 | B4 | Idempotent settle and retry, state checks, input size limits (`R5`, `R9`) | Tests for duplicate settle and bad state | Wed 11 | **Done.** Covered by `e2e:settle`: 401, 403, 404, 409, settling twice |
-| B5 | Make the UI read launches and bids from the backend (cards, landing page) | No sample data on live paths | Thu 12 | **Partly.** The launch page, result and receipts use the backend. The landing page and cards still show sample launches |
+| B5 | Make the UI read launches and bids from the backend (cards, landing page) | No sample data on live paths | Thu 12 | **Done** for the live paths (10 Nov): the launch list merges backend and sample launches and falls back to samples when the backend is off, the launch page, result and receipts use the backend. The landing page cards are deliberately sample launches and say so |
 
 ### C. Payments and token (Ayush, with Kaushal on OutLayer checks)
 
@@ -119,10 +120,10 @@ If C2 to C4 do not land by Thursday, the demo shows simulated payments, clearly 
 
 | # | Task | Gate | By | Status |
 |---|---|---|---|---|
-| D1 | Every network call has loading, empty and error states (`R8`) | No blank screens with the backend off | Tue 10 | **Partly.** Sample launches work with the backend off, and the new panels handle errors. Not every screen has been checked |
+| D1 | Every network call has loading, empty and error states (`R8`) | No blank screens with the backend off | Tue 10 | **Done** (10 Nov): all 13 routes load with the backend off, the launch list and launch page fall back to samples, a receipt without a wallet explains itself, and a stubbed backend is tested for the open, settled and unknown-launch cases |
 | D2 | Result page shows execution evidence in plain language, with `dev` shown honestly | Matches `settlement-dev.md` | Wed 11 | **Done** (`backend-result.tsx`) |
 | D3 | Creator flow: create, watch the window, settle (`R8`) | One click settles when the window is closed | Wed 11 | **Done** for settle. Create exists but has only been tried with the sample adapter |
-| D4 | Mobile pass and accessibility check, run the Playwright tests | Tests green | Fri 13 | **Partly.** All 12 pages pass at 375px with no serious accessibility problems. 4 flow tests are skipped because they predate the backend sign-in |
+| D4 | Mobile pass and accessibility check, run the Playwright tests | Tests green | Fri 13 | **Done** (10 Nov): 17 of 17 browser tests pass, with none skipped. 13 pages at 375px with no serious accessibility problems, plus tests of agent mode, the refund address check, the funding preview, the settled result and the launch list |
 
 ### E. Additions that make it feel stronger (from `improvements-and-additions.md`)
 
@@ -141,7 +142,7 @@ Only E1, E3 and E4 were worth doing if time was short. Do not claim E1 or E2 bey
 | # | Task | By | Status |
 |---|---|---|---|
 | F1 | Answer the open organizer questions (eligibility, third-party TEE, real-funds limits) in `questions-for-organizers.md` and send them | Mon 9 | **Open.** Drafted, not sent. Overdue |
-| F2 | Make the repository public, add the license, check no secrets are committed (`R0`) | Thu 12 | **Open.** Both repo URLs return 404 to anonymous visitors, so it is still private |
+| F2 | Make the repository public, add the license, check no secrets are committed (`R0`) | Thu 12 | **Partly.** The secret scan is **done and clean** (10 Nov, `sh scripts/scan-secrets.sh`: no keys, no `.env` files, no credentials in the files or in 53 commits of history). Still open: the repo is private, the license is undecided, and the history carries about 74 MB of `node_modules` and build output committed on 1 to 2 Nov and removed since. Removing it means rewriting history and force-pushing, which breaks Kaushal's clones, so do it together or leave it |
 | F3 | Deploy the frontend to Vercel and point it at a hosted backend | Fri 13 | **Open.** The production build passes |
 | F4 | Rehearse `demo-script.md` from a clean browser, record the video, write the X post | Fri 13 | **Partly.** The demo kit is written and Plan B was checked in a browser. Plan A (a live wallet) is untested, and nothing is recorded |
 | F5 | Fill in the submission form from `submission-checklist.md` and submit | Sat 14, before 18:00 UTC | **Open** |

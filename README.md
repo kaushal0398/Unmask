@@ -272,6 +272,7 @@ docs/               Project documentation (below)
 | [`docs/decisions-and-open-questions.md`](docs/decisions-and-open-questions.md) | Decisions to settle and open questions |
 | [`docs/auction-core-v1.md`](docs/auction-core-v1.md) | The exact integer auction rule and its shared test vector |
 | [`docs/improvements-and-additions.md`](docs/improvements-and-additions.md) | Ideas from nearly.trade and NEAR Intents: what to add and in what order |
+| [`docs/AUCTION_SPEC.md`](docs/AUCTION_SPEC.md) | The full auction rule: units, the algorithm, the policy decisions, 14 guarantees, worked examples and how each is tested |
 | [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) | How to run and show the demo: setup, seeding, three plans, a three-minute run sheet, what to say and not say, troubleshooting |
 | [`docs/DEMO_CHECKLIST.md`](docs/DEMO_CHECKLIST.md) | The pre-flight and just-before-you-start checklists, with expected results |
 | [`docs/NEARLY_FEATURES_AND_CHECKS.md`](docs/NEARLY_FEATURES_AND_CHECKS.md) | The features inspired by nearly.trade, how real each is, and exactly how to check each one |

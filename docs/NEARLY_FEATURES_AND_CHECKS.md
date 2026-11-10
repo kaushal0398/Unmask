@@ -21,7 +21,7 @@ Everything here runs on your machine. The first three need nothing running.
 
 | # | Command | Expect |
 |---|---|---|
-| 1 | `npm test` | all pass (116 on 10 Nov) |
+| 1 | `npm test` | all pass (121 on 10 Nov) |
 | 2 | `cd backend && npm test` | all pass (50 on 10 Nov) |
 | 3 | `python3 scripts/check-wasm-vectors.py` | `12/12 match the TypeScript rule` |
 | 4 | `cd backend && npm run e2e:settle` | `e2e settle: all checks passed` and a line `intents: real dry quote: pay … USDC on Arbitrum …`. Needs PostgreSQL and the backend running |
