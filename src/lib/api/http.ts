@@ -48,7 +48,7 @@ type BackendLaunch = {
 };
 
 type BackendResult = {
-  mode: "dev" | "tee";
+  mode: "dev" | "outlayer" | "tee";
   launchId: string;
   clearingPrice: string;
   sold: string;
@@ -59,6 +59,9 @@ type BackendResult = {
     skipped?: Array<{ bidId: string; reason: string }>;
     payouts?: PlannedTransfer[];
     payoutsExecuted?: boolean;
+    /** SHA-256 of the engine's exact output bytes: the output hash an attestation would cover. */
+    engineOutputHash?: string;
+    engineKind?: "wasm" | "native";
     agents?: Array<{ bidId: string; bidder: string; rulesHash: string; signed: boolean }>;
   };
   inputHash: string;
@@ -240,10 +243,13 @@ async function toResult(r: BackendResult): Promise<Result> {
       ...(agent ? { agent: { signed: agent.signed } } : {}),
     };
   });
-  const resultHash = Array.from(
-    new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(r.outcome)))),
-    (b) => b.toString(16).padStart(2, "0"),
-  ).join("");
+  // The hash of the engine's own output bytes when the backend recorded it; otherwise a hash of what we were sent.
+  const resultHash =
+    r.outcome.engineOutputHash ??
+    Array.from(
+      new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(r.outcome)))),
+      (b) => b.toString(16).padStart(2, "0"),
+    ).join("");
   const skipped = r.outcome.skipped ?? [];
   return {
     launchId: r.launchId,
@@ -255,9 +261,11 @@ async function toResult(r: BackendResult): Promise<Result> {
     totalBids: allocations.length + r.skippedBids,
     codeHash: r.codeHash,
     inputHash: r.inputHash,
-    attestation: { kind: r.attestation ? "tdx" : "dev", quote: r.attestation ?? "", codeHash: r.codeHash, inputHash: r.inputHash, resultHash, signer: "dev-enclave" },
+    // Only a verified attestation counts as "tdx". An OutLayer run keeps its URL, but is not called attested.
+    attestation: { kind: r.mode === "tee" ? "tdx" : "dev", quote: r.mode === "tee" ? (r.attestation ?? "") : "", codeHash: r.codeHash, inputHash: r.inputHash, resultHash, signer: "dev-enclave" },
     settledAt: r.settledAt,
     mode: r.mode,
+    ...(r.mode === "outlayer" && r.attestation ? { attestationUrl: r.attestation } : {}),
     payouts: r.outcome.payouts ?? [],
     payoutsExecuted: r.outcome.payoutsExecuted ?? false,
     skipped,

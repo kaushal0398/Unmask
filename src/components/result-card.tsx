@@ -92,7 +92,7 @@ export function ResultCard({ card }: { card: CardData }) {
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <Button type="button" tone="ghost" onClick={() => void save()} disabled={busy}><Download className="size-4" /> Save as image</Button>
         <Button type="button" tone="ghost" onClick={() => void copy()}><Copy className="size-4" /> Copy summary</Button>
-        <span className="text-xs text-faint">{card.mode === "tee" ? "Attested result." : "Development result: reproducible, not attested."}</span>
+        <span className="text-xs text-faint">{card.mode === "tee" ? "Attested result." : card.mode === "outlayer" ? "Run on OutLayer. Its attestation is not verified by us yet." : "Development result: reproducible, not attested."}</span>
       </div>
     </div>
   );

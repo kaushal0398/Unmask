@@ -61,6 +61,11 @@ describe("cardText and cardSvg", () => {
     assert.ok(!svg.includes('x"<&>.near'));
     assert.ok(svg.includes("x&quot;&lt;&amp;&gt;.near") && svg.includes("A&amp;B"));
   });
+  it("says an OutLayer run is not verified, and never calls it attested", () => {
+    const svg = cardSvg(cardFor(result({ mode: "outlayer" }), "BEAN", "a.near")!);
+    assert.match(svg, /run on OutLayer: attestation not verified by us/);
+    assert.doesNotMatch(svg, />attested result</);
+  });
   it("says attested only for a real attestation", () => {
     assert.match(cardSvg(cardFor(result({ mode: "tee" }), "BEAN", "a.near")!), /attested result/);
   });

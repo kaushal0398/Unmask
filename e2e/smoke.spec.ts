@@ -153,3 +153,24 @@ test("a bid receipt with no wallet connected explains what to do, not a blank pa
   expect((await main.innerText()).trim().length).toBeGreaterThan(20);
   await expect(main).not.toContainText("undefined");
 });
+
+test("a run on OutLayer is shown as unverified, never as attested", async ({ page }) => {
+  const fill = { bidId: "1", bidder: "ana.testnet", limitPrice: "50000", requested: "400000", filled: "400000", locked: "20000000000", payment: "12000000000", refund: "8000000000" };
+  await stubBackend(page, {
+    launch: { id: "e2e-outlayer", name: "OL Coin", symbol: "OLC", creator: "creator.testnet", supplyAtomic: "400000", reserveAtomic: "10000", tokenDecimals: 0, paymentToken: "usdc.test", paymentDecimals: 6, capBps: null, status: "settled", closesAt: "2026-01-01T00:00:00.000Z", bidCount: 1, tokenContract: null, codeHash: null },
+    result: {
+      mode: "outlayer", launchId: "e2e-outlayer", clearingPrice: "30000", sold: "400000", totalRaised: "12000000000", inputHash: "a".repeat(64), codeHash: "b".repeat(64),
+      attestation: "https://testnet-api.outlayer.ai/attestations/by-call/c1", skippedBids: 0, settledAt: "2026-01-01T00:05:00.000Z",
+      outcome: { unsold: "0", fills: [fill], skipped: [], payouts: [], payoutsExecuted: false, agents: [], engineOutputHash: "d".repeat(64), engineKind: "outlayer" },
+    },
+  });
+  await page.goto("/launches/e2e-outlayer");
+  await expect(page.getByText(/cleared at one price for everyone/i).first()).toBeVisible({ timeout: 20_000 });
+  const main = page.locator("main");
+  await expect(main).toContainText("returned by OutLayer, not verified by us");
+  await expect(main).toContainText("We have not verified it");
+  await expect(main).not.toContainText("none (development enclave)");
+  await expect(main.getByRole("link", { name: /returned by OutLayer/ })).toHaveAttribute("href", "https://testnet-api.outlayer.ai/attestations/by-call/c1");
+  await expect(main).toContainText("Output hash");
+  expect((await main.innerText()).toLowerCase()).not.toContain("attested result");
+});

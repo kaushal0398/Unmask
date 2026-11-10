@@ -165,11 +165,12 @@ export function BackendResult({ launch }: { launch: { id: string; symbol: string
         <div className="flex flex-wrap items-center justify-between gap-5">
           <div className="max-w-xl">
             <h3 className="flex items-center gap-2 text-lg font-semibold"><ShieldCheck className="size-5 text-verified" /> Check it yourself</h3>
-            <p className="mt-2 text-sm text-muted">The code hash and the hash of the exact input are public. {r.mode === "tee" ? "The attestation ties them to the enclave." : "This was settled by the development enclave: you can reproduce the result, but nothing here is attested and the backend could read the bids."}</p>
+            <p className="mt-2 text-sm text-muted">The code hash and the hash of the exact input are public. {r.mode === "tee" ? "The attestation ties them to the enclave." : r.mode === "outlayer" ? "This ran on OutLayer, which returned an attestation. We have not verified it, so do not read this as proof yet: check it with outlayer-verify. The backend could still read the bids before they reached OutLayer." : "This was settled by the development enclave: you can reproduce the result, but nothing here is attested and the backend could read the bids."}</p>
             <dl className="mt-4 space-y-1.5 text-xs">
               <div className="flex gap-3"><dt className="w-24 text-faint">Code hash</dt><dd><Mono>{shortHash(r.codeHash, 12, 8)}</Mono></dd></div>
               <div className="flex gap-3"><dt className="w-24 text-faint">Input hash</dt><dd><Mono>{shortHash(r.inputHash, 12, 8)}</Mono></dd></div>
-              <div className="flex gap-3"><dt className="w-24 text-faint">Attestation</dt><dd>{r.mode === "tee" ? <Mono>{shortHash(r.attestation.quote, 12, 8)}</Mono> : <span className="text-price">none (development enclave)</span>}</dd></div>
+              <div className="flex gap-3"><dt className="w-24 text-faint">Output hash</dt><dd><Mono>{shortHash(r.attestation.resultHash, 12, 8)}</Mono></dd></div>
+              <div className="flex gap-3"><dt className="w-24 text-faint">Attestation</dt><dd>{r.mode === "tee" ? <Mono>{shortHash(r.attestation.quote, 12, 8)}</Mono> : r.mode === "outlayer" && r.attestationUrl ? <a href={r.attestationUrl} className="text-price underline underline-offset-4" target="_blank" rel="noreferrer">returned by OutLayer, not verified by us</a> : <span className="text-price">none (development enclave)</span>}</dd></div>
               <div className="flex gap-3"><dt className="w-24 text-faint">Total</dt><dd className="text-muted">{compact(r.totalBids)} bids, {r.allocations.length} counted</dd></div>
             </dl>
           </div>

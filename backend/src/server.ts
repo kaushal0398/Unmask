@@ -10,8 +10,10 @@ import {
   sealedBidSchema,
 } from "./schemas.js";
 import { MockPaymentProvider } from "./payment-provider.js";
-import { devEnclaveKey, engineCodeHash, openBid, runEngine } from "./dev-enclave.js";
-import { buildInput, inputHash, planPayouts } from "./settlement-core.js";
+import { devEnclaveKey, openBid } from "./dev-enclave.js";
+import { runAuction } from "./engine.js";
+import { OutLayerError } from "./outlayer.js";
+import { buildInput, inputHash, planPayouts, sha256Hex } from "./settlement-core.js";
 import { ProxyError, createOneClickProxy } from "./oneclick.js";
 import {
   createChallenge,
@@ -949,10 +951,18 @@ app.post<{ Params: { id: string } }>("/v1/launches/:id/settle", async (req, repl
     plain: openBid(b.ciphertext),
   }));
   const { input, skipped, meta } = await buildInput(launch, rows, { provider: nearProvider });
-  const outcome = (await runEngine(input)) as { clearingPrice: string; sold: string; totalRaised: string; fills: Array<{ bidId: string; bidder: string; filled: string; refund: string }> };
+  let run;
+  try {
+    run = await runAuction(input);
+  } catch (error) {
+    if (error instanceof OutLayerError) throw fail(error.reason === "bad_config" ? 500 : 502, `outlayer_${error.reason}`, error.message);
+    throw error;
+  }
+  const engineOutput = run.raw;
+  const outcome = JSON.parse(engineOutput) as { clearingPrice: string; sold: string; totalRaised: string; fills: Array<{ bidId: string; bidder: string; filled: string; refund: string }> };
   const payouts = planPayouts(outcome.fills, meta);
   const agents = meta.filter((m) => m.agent).map((m) => ({ bidId: m.bidId, bidder: m.bidder, rulesHash: m.agent!.rulesHash, signed: m.agent!.signed }));
-  const codeHash = engineCodeHash();
+  const codeHash = run.codeHash;
 
   try {
     const saved = await prisma.$transaction(async (tx) => {
@@ -962,11 +972,11 @@ app.post<{ Params: { id: string } }>("/v1/launches/:id/settle", async (req, repl
           clearingPrice: outcome.clearingPrice,
           sold: outcome.sold,
           totalRaised: outcome.totalRaised,
-          outcome: { ...outcome, skipped, payouts, agents, payoutsExecuted: false } as object,
+          outcome: { ...outcome, skipped, payouts, agents, payoutsExecuted: false, engineOutputHash: sha256Hex(engineOutput), engineKind: run.kind, outlayerCallId: run.callId } as object,
           inputHash: inputHash(input),
           codeHash,
-          attestation: null,
-          mode: "dev",
+          attestation: run.attestationUrl,
+          mode: run.mode,
           skippedBids: skipped.length,
         },
       });

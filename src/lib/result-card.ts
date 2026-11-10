@@ -18,7 +18,7 @@ export type CardData = {
   /** What the bidder would have paid at their own limit minus what they paid. Null if they got none. */
   savedVsLimit: number | null;
   agent: { signed: boolean } | null;
-  mode: "dev" | "tee";
+  mode: "dev" | "outlayer" | "tee";
   resultHash: string;
 };
 
@@ -70,7 +70,7 @@ export function cardSvg(c: CardData): string {
     ["Clearing price", usd(c.clearingPrice)],
   ];
   const big = c.got > 0 ? `${tokens(c.got)} ${c.symbol}` : "Priced out";
-  const note = c.mode === "tee" ? "attested result" : "development result: not attested";
+  const note = c.mode === "tee" ? "attested result" : c.mode === "outlayer" ? "run on OutLayer: attestation not verified by us" : "development result: not attested";
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
 <rect width="1200" height="630" fill="#000"/>
 <rect x="24" y="24" width="1152" height="582" fill="none" stroke="#2a2a2a" stroke-width="2"/>

@@ -144,8 +144,14 @@ export type Result = {
   inputHash: string;
   attestation: Attestation;
   settledAt: string;
-  /** "dev" means the development enclave: reproducible, not confidential, not attested. */
-  mode?: "dev" | "tee";
+  /**
+   * "dev": the development enclave (reproducible, not confidential, not attested).
+   * "outlayer": the run happened on OutLayer and it returned an attestation URL, but WE HAVE NOT VERIFIED IT.
+   * "tee": the attestation has been verified. Nothing sets this yet.
+   */
+  mode?: "dev" | "outlayer" | "tee";
+  /** Where OutLayer published the execution's TEE quote, when mode is "outlayer". */
+  attestationUrl?: string;
   payouts?: PlannedTransfer[];
   payoutsExecuted?: boolean;
   /** Bids that were left out of the auction, each with the reason. */

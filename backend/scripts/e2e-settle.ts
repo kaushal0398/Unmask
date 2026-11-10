@@ -81,6 +81,8 @@ assert.equal(r.sold, "1000000");
 assert.equal(r.totalRaised, "30000000000", "$30,000");
 assert.equal(r.skippedBids, 4, "the liar, the unfunded bid, the rule-breaking agent and the bad address are skipped");
 assert.equal(r.mode, "dev");
+assert.match(r.outcome.engineOutputHash, /^[0-9a-f]{64}$/, "the output hash is recorded");
+assert.ok(["native", "wasm"].includes(r.outcome.engineKind));
 assert.equal(r.attestation, null, "dev results are never attested");
 assert.match(r.inputHash, /^[0-9a-f]{64}$/);
 assert.match(r.codeHash, /^[0-9a-f]{64}$/);
