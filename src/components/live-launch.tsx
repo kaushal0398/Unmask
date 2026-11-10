@@ -33,7 +33,7 @@ function Facts({ l }: { l: Launch }) {
   );
 }
 
-function Header({ l, status }: { l: Launch; status: LaunchStatus }) {
+function Header({ l, status, sample }: { l: Launch; status: LaunchStatus; sample: boolean }) {
   return (
     <div>
       <Link href="/launches" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text">
@@ -51,7 +51,13 @@ function Header({ l, status }: { l: Launch; status: LaunchStatus }) {
           </p>
         </div>
       </div>
-      <div className="mt-5"><DemoNote /></div>
+      <div className="mt-5">
+        {sample ? (
+          <DemoNote />
+        ) : (
+          <DemoNote>Development backend: bids are stored in a database, but the enclave and the payment checks are stand-ins. No funds move.</DemoNote>
+        )}
+      </div>
     </div>
   );
 }
@@ -291,10 +297,6 @@ export function LiveLaunch({ id }: { id: string }) {
         })
       : null;
 
-  const hasOutcome = Boolean(
-    outcomeOf(liveLaunch) ?? revealOf(liveLaunch)
-  );
-
   // Demo launches use the simulated clock.
   // Backend launches must never be marked settled without a result.
   const kind = isDemoLaunch
@@ -306,7 +308,7 @@ export function LiveLaunch({ id }: { id: string }) {
           : "settled")
     : liveLaunch.status === "open" && !deadlinePassed
       ? "open"
-      : liveLaunch.status === "settled" && hasOutcome
+      : liveLaunch.status === "settled"
         ? "settled"
         : "pending";
 
@@ -319,7 +321,7 @@ export function LiveLaunch({ id }: { id: string }) {
 
   return (
     <>
-      <Header l={liveLaunch} status={status} />
+      <Header l={liveLaunch} status={status} sample={isDemoLaunch} />
 
       <div className="mt-10">
         {kind === "open" ? (

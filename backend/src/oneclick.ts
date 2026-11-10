@@ -50,7 +50,11 @@ export function createOneClickProxy(opts: { base?: string; jwt?: string; allowLi
     }
     const body = (await res.json().catch(() => null)) as { message?: string } | unknown[] | null;
     if (!res.ok) {
-      const message = body && !Array.isArray(body) && typeof body.message === "string" ? body.message : `NEAR Intents answered ${res.status}.`;
+      let message = body && !Array.isArray(body) && typeof body.message === "string" ? body.message : `NEAR Intents answered ${res.status}.`;
+      // NEAR Intents answers "Internal server error" for a recipient account that does not exist on mainnet, among other things.
+      if (/^internal server error$/i.test(message.trim()) && init?.method === "POST") {
+        message = "NEAR Intents could not price this. Check that the recipient is a real mainnet account and the amount is not too small.";
+      }
       throw new ProxyError(res.status === 401 || res.status === 403 ? 502 : res.status === 404 ? 404 : 400, "upstream_rejected", message);
     }
     return body;

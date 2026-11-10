@@ -47,6 +47,10 @@ describe("1Click proxy", () => {
     const bad = createOneClickProxy({ now: () => NOW, fetchImpl: async () => new Response(JSON.stringify({ message: "Amount is too low" }), { status: 400 }) });
     await assert.rejects(bad.quote(good), (e) => e instanceof ProxyError && e.status === 400 && /too low/.test(e.message));
   });
+  it("turns the opaque upstream error into advice about the recipient", async () => {
+    const p = createOneClickProxy({ now: () => NOW, fetchImpl: async () => new Response(JSON.stringify({ message: "Internal server error" }), { status: 400 }) });
+    await assert.rejects(p.quote(good), (e) => e instanceof ProxyError && /real mainnet account/.test(e.message));
+  });
   it("caches the token list for five minutes", async () => {
     let calls = 0, t = NOW;
     const p = createOneClickProxy({ now: () => t, fetchImpl: async () => { calls++; return ok([{ symbol: "USDC" }]); } });

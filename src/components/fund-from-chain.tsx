@@ -8,8 +8,13 @@ import { addressProblem, isChain } from "@/lib/intents/addresses";
 import { IntentsClient, IntentsError, chainOf, fundingOrigins, fundingRequest, summarizeQuote, type OneClickToken, type QuoteSummary } from "@/lib/intents/oneclick";
 
 const API = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4001").replace(/\/+$/, "");
-/** Where the funds would land. NEAR Intents is mainnet only, so a testnet account cannot be used. */
-const RECIPIENT = process.env.NEXT_PUBLIC_FUNDING_RECIPIENT ?? "unmask-funding.near";
+/**
+ * Who the quote delivers to. It must be a REAL mainnet account: NEAR Intents rejects one that does not exist, and it is
+ * mainnet only, so a testnet account cannot be used. The default is the NEAR Intents contract itself, which always
+ * exists, so a preview works out of the box. Nothing is sent to it: this panel only asks for a price. Set
+ * NEXT_PUBLIC_FUNDING_RECIPIENT to your own mainnet account before taking a live deposit.
+ */
+const RECIPIENT = process.env.NEXT_PUBLIC_FUNDING_RECIPIENT ?? "intents.near";
 
 const field = "w-full border border-line-strong bg-bg px-3 py-2 font-mono text-sm outline-none placeholder:text-faint focus:bg-white/[0.03] disabled:opacity-50";
 
@@ -110,7 +115,7 @@ export function FundFromChain({ amountUsd, disabled }: { amountUsd: number; disa
             </dl>
           )}
           <p className="text-xs leading-relaxed text-faint">
-            This is a price preview from NEAR Intents (mainnet). Funds would land at <Mono>{RECIPIENT}</Mono>. The payment checks that would receive them are still a development stand-in, so nothing is paid here.
+            This is a price preview from NEAR Intents (mainnet), priced as a delivery to <Mono>{RECIPIENT}</Mono>. Nothing is sent: the payment checks that would receive a real deposit are still a development stand-in.
           </p>
         </div>
       )}

@@ -12,7 +12,9 @@
     "db:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "engine:build": "cargo build --release --manifest-path ../enclave/auction-engine/Cargo.toml",
-    "e2e:settle": "tsx scripts/e2e-settle.ts"
+    "e2e:settle": "tsx scripts/e2e-settle.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "settle:demo": "tsx scripts/settle-demo.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.4.0",
