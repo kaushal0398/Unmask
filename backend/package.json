@@ -15,7 +15,8 @@
     "e2e:settle": "tsx scripts/e2e-settle.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "settle:demo": "tsx scripts/settle-demo.ts",
-    "pretest": "node scripts/ensure-engine.mjs"
+    "pretest": "node scripts/ensure-engine.mjs",
+    "e2e:privacy": "tsx scripts/e2e-privacy.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.4.0",

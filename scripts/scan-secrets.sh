@@ -6,8 +6,8 @@
 cd "$(dirname "$0")/.." || exit 1
 PAT='(PRIVATE KEY|BEGIN (RSA|EC|OPENSSH)|wk_[A-Za-z0-9]{12,}|ed25519:[1-9A-HJ-NP-Za-km-z]{60,}|(secret|private)[_-]?key["'"'"' :=]+[A-Za-z0-9+/=_-]{20,}|api[_-]?key["'"'"' :=]+[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|DEV_ENCLAVE_SEED=[0-9a-f]{64}|postgres(ql)?://[^ ]*:[^ @]{3,}@)'
 EXCL=':!**/node_modules/** :!**/target/** :!package-lock.json :!**/package-lock.json'
-# Harmless, expected: the placeholder database URL in the env example, and the public signature in the saved real quote.
-ALLOW='backend/.env.example:|src/lib/intents/fixtures/quote-dry.json:|scripts/scan-secrets.sh:'
+# Harmless, expected: the placeholder database URL in the env example, the dev-only password in docker-compose.yml, and the public signature in the saved real quote.
+ALLOW='backend/.env.example:|src/lib/intents/fixtures/quote-dry.json:|scripts/scan-secrets.sh:|docker-compose.yml:'
 bad=0
 
 echo "1. credential-like files in the tree or in history"

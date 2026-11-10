@@ -15,6 +15,7 @@ import { runAuction } from "./engine.js";
 import { OutLayerError } from "./outlayer.js";
 import { buildInput, inputHash, planPayouts, sha256Hex } from "./settlement-core.js";
 import { ProxyError, createOneClickProxy } from "./oneclick.js";
+import { corsOrigins } from "./cors.js";
 import {
   createChallenge,
   verifyChallenge,
@@ -29,10 +30,7 @@ const app = Fastify({
 
 // Register CORS here
 await app.register(cors, {
-  origin: [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-  ],
+  origin: corsOrigins(process.env.CORS_ORIGINS),
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 });
