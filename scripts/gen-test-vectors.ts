@@ -29,3 +29,17 @@ const cases: Array<{ name: string; input: ExactAuctionInput }> = [
 const out = { version: "1", description: "Generated from src/lib/auction-core.ts by scripts/gen-test-vectors.ts. The Rust engine must match every expected outcome.", cases: cases.map((c) => ({ name: c.name, input: c.input, expected: clearAuctionExact(c.input) })) };
 writeFileSync(new URL("../shared/test-vectors/auction-v1-cases.json", import.meta.url), JSON.stringify(out, null, 2) + "\n");
 console.log(`wrote ${out.cases.length} cases`);
+
+// 200 seeded random auctions with small numbers, so ties, exact fits and rounding come up constantly.
+// Both the TypeScript and the Rust engines must reproduce every one exactly.
+let seed = 20261110 >>> 0;
+const r = (n: number) => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };
+const random = Array.from({ length: 200 }, (_, i) => {
+  const input: ExactAuctionInput = {
+    version: "1", auctionId: `random-${i}`, supply: String(1 + r(50)), reservePrice: String(1 + r(5)), tokenDecimals: r(4),
+    bids: Array.from({ length: r(13) }, (_, k) => bid(`b${k}`, String(1 + r(8)), String(1 + r(30)))),
+  };
+  return { name: `random ${i}`, input, expected: clearAuctionExact(input) };
+});
+writeFileSync(new URL("../shared/test-vectors/auction-v1-random.json", import.meta.url), JSON.stringify({ version: "1", description: "200 seeded random auctions (seed 20261110) from scripts/gen-test-vectors.ts. Both engines must match every expected outcome.", cases: random }) + "\n");
+console.log(`wrote ${random.length} random cases`);

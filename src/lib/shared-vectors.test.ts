@@ -5,6 +5,7 @@ import { clearAuctionExact } from "@/lib/auction-core";
 
 /** The same file the Rust engine is tested against (enclave/auction-engine/tests). */
 const doc = JSON.parse(readFileSync(new URL("../../shared/test-vectors/auction-v1-cases.json", import.meta.url), "utf8"));
+const random = JSON.parse(readFileSync(new URL("../../shared/test-vectors/auction-v1-random.json", import.meta.url), "utf8"));
 const first = JSON.parse(readFileSync(new URL("../../shared/test-vectors/auction-v1.json", import.meta.url), "utf8"));
 
 describe("shared auction test vectors", () => {
@@ -12,5 +13,9 @@ describe("shared auction test vectors", () => {
   for (const c of doc.cases) {
     it(`TypeScript reproduces: ${c.name}`, () => assert.deepEqual(clearAuctionExact(c.input), c.expected));
   }
+  it("TypeScript reproduces all 200 seeded random cases", () => {
+    assert.equal(random.cases.length, 200);
+    for (const c of random.cases) assert.deepEqual(clearAuctionExact(c.input), c.expected, c.name);
+  });
   it("TypeScript reproduces the original worked example", () => assert.deepEqual(clearAuctionExact(first.input), first.expected));
 });
