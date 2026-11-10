@@ -23,6 +23,7 @@ Owners are **proposed** from who has been doing what. Change them freely.
 | Mon 9 Nov | **D3 (part)** Creator can settle from the launch page | same |
 | Mon 9 Nov | Found and fixed a **production build failure** (`next build` failed on `/my-bids/[id]`, which would have broken the Vercel deploy) and a **text-contrast regression** from the new pink (small pink text now uses `#FF4FCF`; fills and borders keep `#E501A5`) | `next build` passes; browser accessibility tests pass on all 12 pages |
 | Mon 9 Nov | Wallet unit tests rewritten against a fake backend (they were failing without one). Four older browser tests that fail on the previous commit too are marked `test.fixme` with the reason | `e2e/smoke.spec.ts` |
+| Tue 10 Nov | **Reviewed the teammate's incident report against the chain.** The FastFS "failed upload" is by design (`gas=1`): both files were recovered from the chain with matching hashes, and FastFS serves them again (GET 200; HEAD returns 404 and must not be used). The registered version fails the `health` action. New read-only tools: `scripts/recover-fastfs-artifact.py`, `scripts/check-artifact-url.py` | [`OUTLAYER_BLOCKER_REVIEW.md`](OUTLAYER_BLOCKER_REVIEW.md) |
 
 ## 1. The goal: one honest demo
 
@@ -39,7 +40,7 @@ We claim "TEE-backed", "attested" or "NEAR Intents" only after the evidence exis
 | Backend: launches, bids, sessions, enclave key, settle, result | Built, **not run against a live database** |
 | Development enclave (not confidential, no attestation) | Built |
 | OutLayer project registered (`proofmeme.testnet/snipe-proof-auction`) | Done |
-| FastFS upload and retrieval | **Blocked** (uploads fail with "Exceeded the prepaid gas", gateway returns 502) |
+| FastFS upload and retrieval | **Not blocked any more** (checked 10 Nov): the uploads are on chain (the "prepaid gas" error is by design), and `test.fastfs.io` serves the file again. The OutLayer run has not been retried since the outage. The registered version has no `health` action ([review](OUTLAYER_BLOCKER_REVIEW.md)) |
 | Real attestation, real payment checks, token and payouts | Not started |
 
 ## 3. Decisions to settle today
@@ -60,9 +61,9 @@ Tasks come from the roadmap phases (shown as `R0` to `R11`) and our additions (`
 
 | # | Task | Gate | By |
 |---|---|---|---|
-| A1 | Send the support message (draft is in `PROJECT_PROGRESS.md`) and ask for a documented upload path (`R1`) | Message sent; reply or workaround | Mon 9 |
+| A1 | ~~Send the support message~~ Retry the run once now that FastFS is back: `python3 scripts/check-artifact-url.py …` then `outlayer run … --input auction-input.json` (steps in [`OUTLAYER_BLOCKER_REVIEW.md`](OUTLAYER_BLOCKER_REVIEW.md)). Contact OutLayer only if it still fails | The run returns `success: true` with 60 / 25 / 15, or a new error to report | Tue 10 |
 | A2 | Make the canonical crate build for `wasm32-wasip2` and run under Wasmtime with a `health` and a `clear_auction` request (`R2`) | Same output as the TypeScript rule on all shared cases | Tue 10 |
-| A3 | Once a retrievable artifact exists: upload, fetch, compare SHA-256, deploy, run health then the fixture (`R1`, `R4`) | Remote result equals the local result | Wed 11 |
+| A3 | Replace the registered version with the canonical engine (it has `health`): build, upload, **GET and compare the hash**, deploy, run health then the fixture (`R1`, `R4`). The "failed" upload transaction is normal | Remote result equals the local result | Wed 11 |
 | A4 | Find out what attestation OutLayer returns and how to verify it (`R4`) | A written note, plus a verifier or a clear "not available" | Thu 12 |
 | A5 | Write `AUCTION_SPEC.md` and property tests (`R3`) | Spec merged, tests pass | Wed 11 |
 
@@ -133,7 +134,7 @@ Only E1, E3 and E4 are worth doing if time is short. Do E1 only if a real 1Click
 
 | If | Then |
 |---|---|
-| OutLayer upload or fetch is still blocked on Wed 11 | Demo with the local Rust engine, labelled `dev`, no attestation. Keep the OutLayer project and the failed-upload record as an honest "in progress" slide |
+| The OutLayer run still fails on Wed 11 after the retry | Demo with the local Rust engine, labelled `dev`, no attestation. Keep the OutLayer project and the failed-upload record as an honest "in progress" slide |
 | Real payments are not working on Thu 12 | Demo simulated payments, labelled. Do not describe deposits as locked funds |
 | No NEP-141 token by Thu 12 | Show allocations only. Say payouts are next |
 | 1Click has no live call by Thu 12 | Leave E1 and E2 out of the claims. Mention them as planned in the README |
@@ -145,7 +146,7 @@ The rule from the roadmap applies throughout: **one complete, honest demo beats 
 
 | Need | From | Needed by |
 |---|---|---|
-| Working FastFS or another artifact path | OutLayer support | Wed 11 |
+| Someone with the OutLayer CLI to retry the run and deploy the canonical engine (FastFS itself works again) | Teammate | Tue 10 |
 | Mainnet key and a few dollars of funds for a 1Click test | Team | Wed 11 |
 | Testnet funds on `proofmeme.testnet` | Team | Mon 9 |
 | Organizer answers on eligibility and real funds | Organizers | Tue 10 |

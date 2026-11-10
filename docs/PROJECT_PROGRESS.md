@@ -1,3 +1,5 @@
+> **Correction, 10 Nov:** this document (and the 10 Nov incident report) say the FastFS uploads "failed". They did not. `outlayer upload` sends `gas=1` on purpose, so the transaction always shows "Exceeded the prepaid gas", and the data is recorded on chain. The file was recovered from the chain and its hash matches, and `test.fastfs.io` serves it again. See [`OUTLAYER_BLOCKER_REVIEW.md`](OUTLAYER_BLOCKER_REVIEW.md).
+
 > **Source:** written on 9 Nov 2026 by a teammate (with their agent) who is working on the OutLayer and auction-engine side. Saved here unchanged except that its tables were converted to standard Markdown tables. File paths such as `C:\Users\kaush\...` are on the teammate's machine. The forward plan is in [`PROJECT_ROADMAP.md`](PROJECT_ROADMAP.md).
 
 # Snipe-Proof Meme Launch --- Engineering Progress & Next Steps

@@ -273,6 +273,7 @@ docs/               Project documentation (below)
 | [`docs/auction-core-v1.md`](docs/auction-core-v1.md) | The exact integer auction rule and its shared test vector |
 | [`docs/improvements-and-additions.md`](docs/improvements-and-additions.md) | Ideas from nearly.trade and NEAR Intents: what to add and in what order |
 | [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md) | The day-by-day plan to 14 Nov: what is left, what we add, owners, cut lines |
+| [`docs/OUTLAYER_BLOCKER_REVIEW.md`](docs/OUTLAYER_BLOCKER_REVIEW.md) | The FastFS and OutLayer blocker, checked against the chain: the upload worked, what to retry, what to fix |
 | [`docs/PROJECT_PROGRESS.md`](docs/PROJECT_PROGRESS.md) | Teammate handoff: the OutLayer project, the FastFS upload blocker and the next steps |
 | [`docs/PROJECT_ROADMAP.md`](docs/PROJECT_ROADMAP.md) | Teammate roadmap from prototype to MVP to production, with completion gates and a master checklist |
 | [`docs/settlement-dev.md`](docs/settlement-dev.md) | How a launch settles on one machine, and what is and is not real |
