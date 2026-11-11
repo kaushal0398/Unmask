@@ -4,7 +4,7 @@ Hackathon: development 1–14 Nov 2026. Submissions open 1 Nov 00:00 UTC and clo
 
 ## Requirements
 - [ ] The repository is **public** (judges cannot open a private one). It is private today. Run `sh scripts/scan-secrets.sh` first: it was clean on 10 Nov
-- [ ] The project was built during the hackathon (check with the organizers what counts). The scaffold dates from 28 Oct, before 1 Nov. **The question is drafted in `questions-for-organizers.md` and not sent**
+- [ ] The project was built during the hackathon (there is no organizer contact to ask what counts). The scaffold dates from 28 Oct, before 1 Nov. **Say so in the README and the submission and credit it**
 - [ ] Demo post on X saying it was built at NEAR HACKATHON, with a video or screenshots
 - [ ] Submit the repository link **and** the demo post link; both are required
 

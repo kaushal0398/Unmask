@@ -26,12 +26,12 @@ Full detail: `plan.md`. Product description: `what-we-are-building.md`. Progress
 - How to verify an OutLayer attestation is not documented in what we read.
 - OutLayer fees and limits are unknown.
 - A bidder can reclaim their own check early; the enclave must drop that bid.
-- Organizer view on pre-existing work and on a TEE service.
+- No organizer contact: state the 28 Oct scaffold and the OutLayer enclave plainly instead.
 
 ## Where we are (30 Oct)
 | Phase | Status |
 |---|---|
-| 0 Prepare | Not started except: organizer questions drafted, not sent; repo still private |
+| 0 Prepare | Not started except: no organizer contact; repo still private |
 | 1 Reference auction | Auction in TypeScript and the comparison view are done with tests; `test-vectors/` JSON not written |
 | 2 Enclave | Not started (the browser seals bids to a fake key) |
 | 3 Money and token | Not started; screens exist against a stand-in API |

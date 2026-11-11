@@ -71,7 +71,6 @@ The product is now called **Unmask**; the theme is pure black with pink `#E501A5
 - [ ] Preview-image check: paste a link on X.
 
 ### Everyone
-- [ ] Send the organizer questions ([`questions-for-organizers.md`](questions-for-organizers.md)) and keep the answer in writing.
 - [ ] Make the repository public and deploy a hosted preview ([`deploy.md`](deploy.md)).
 - [ ] Record the demo ([`demo-script.md`](demo-script.md)), post on X, fill in the submission form ([`submission-checklist.md`](submission-checklist.md)).
 

@@ -23,9 +23,9 @@ Updated 10 Nov. "Decided" means the code already does it, so the decision is mad
 | What are OutLayer's fees and limits? | Cost per launch | Kaushal | Thu 12 | **Open.** One run cost about 0.002 NEAR and the unused part was refunded. The request showed a 10 second limit against 60 in `outlayer.toml` |
 | What happens when a bidder reclaims a check early? | Could disturb settlement | | | **Answered for the development flow:** a bid whose payment check is no longer locked is left out with a recorded reason. Open for the real checks |
 | Can the enclave take many encrypted bids in one call? | Shapes the settle call | | | **Open for OutLayer.** Our engine takes the whole input in one call, up to 10,000 bids |
-| What counts as new work for the hackathon, given the scaffold was created on 28 Oct? | Eligibility | Organizers | Before 1 Nov | **Open. Overdue. Not sent** |
-| Is a TEE service from a third party acceptable? | Eligibility | Organizers | Before 1 Nov | **Open. Overdue. Not sent** |
-| Any limit on using real funds in the demo? | Safety | Organizers | Before 1 Nov | **Open. Overdue. Not sent** |
+| What counts as new work for the hackathon, given the scaffold was created on 28 Oct? | Eligibility | Nobody (no organizer contact) | Before 1 Nov | **Dropped: no contact. Plain labelling instead** |
+| Is a TEE service from a third party acceptable? | Eligibility | Nobody (no organizer contact) | Before 1 Nov | **Dropped: no contact. Plain labelling instead** |
+| Any limit on using real funds in the demo? | Safety | Nobody (no organizer contact) | Before 1 Nov | **Dropped: no contact. Plain labelling instead** |
 
 ## Decided so far
 - The project is a sealed-bid, uniform-price launch.

@@ -238,3 +238,13 @@ test("a real launch shows its stored bid count and never invents bids; a sample 
   const first = (await sampleCount.innerText()).trim();
   await expect(sampleCount).not.toHaveText(first, { timeout: 15_000 });
 });
+
+test("the sample verifier works while the backend is on (the backend does not know samples)", async ({ page }) => {
+  await stubBackend(page); // every unknown path answers 404, like the real backend does for a sample launch id
+  await page.goto("/verify");
+  await page.getByRole("button", { name: /PixelPup/ }).click();
+  await page.getByLabel(/Pretend someone cheated/i).check();
+  await page.getByRole("button", { name: /run the checks/i }).click();
+  await expect(page.getByText(/checks failed/)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/has not settled yet/)).toHaveCount(0);
+});

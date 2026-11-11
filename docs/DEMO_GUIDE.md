@@ -2,6 +2,8 @@
 
 Written 10 Nov 2026, updated after a full end-to-end test. On 10 Nov **every step of the run sheet below was run in a real browser** against the production build of the web app, a real PostgreSQL, the real backend and the live NEAR Intents service, and all of it passed with no page errors. The only part never run is signing in with a real wallet (Plan A).
 
+A ready-made walkthrough video with a voice-over is built from this guide: see [`../video/README.md`](../video/README.md) (the file is `video/Unmask-Demo.mp4`, not committed).
+
 ## 1. What the demo shows, and what it does not
 
 It shows a sealed-bid launch from bid to result: bids are sealed in the browser, one price is found by the Rust engine, and the result page shows the allocations, who was left out and why, where refunds and tokens would go, and what the evidence is.

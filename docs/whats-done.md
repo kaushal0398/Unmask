@@ -61,7 +61,7 @@ Nothing here talks to a chain, an enclave or a wallet yet. Every launch, bid and
 | Toasts, confirm dialogs, loading and error pages, skip link, contrast and mobile fixes | `toast.tsx`, `confirm.tsx`, `app/loading.tsx`, `app/error.tsx` |
 | Social preview images for the site and every launch | `src/lib/og.tsx`, `opengraph-image.tsx` |
 | Playwright tests: every route at 375px with accessibility checks, bid flow, failed payment, clock, failed create | `e2e/` |
-| Drafts for you: organizer questions, demo script and X post, deploy notes | `docs/questions-for-organizers.md`, `demo-script.md`, `deploy.md` |
+| Drafts for you: demo script and X post, deploy notes | `demo-script.md`, `deploy.md` |
 
 43 unit tests pass (`npm test`), 16 browser tests pass (`npm run test:e2e`), and lint, typecheck and the production build are clean.
 
@@ -72,7 +72,6 @@ Nothing here talks to a chain, an enclave or a wallet yet. Every launch, bid and
 - [ ] Set up an OutLayer wallet with a few dollars of USDC (keys outside the repo)
 - [ ] Find the standard NEP-141 contract and the storage deposit flow
 - [ ] Check the Rust and WebAssembly toolchain on every machine
-- [ ] Send the questions to the organizers
 - [ ] Make the repository public
 - [ ] Decide who owns what
 

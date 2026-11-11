@@ -409,7 +409,12 @@ export class HttpLaunchApi implements LaunchApi {
       const response = await request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/result`);
       return await toResult(response.result);
     } catch (error) {
-      if (error instanceof ApiError && error.code === "not_found") return null;
+      // The backend does not know the sample launches and answers 404 for them. A sample still has its own sample
+      // result. A launch id that is not a sample never gets one (this.demo.getLaunch is null for it).
+      if (error instanceof ApiError && error.code === "not_found") {
+        if (await this.demo.getLaunch(id)) return this.demo.getResult(id);
+        return null;
+      }
       throw error;
     }
   }

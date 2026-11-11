@@ -11,7 +11,7 @@ Tick these before showing or recording the demo. The full walkthrough is in [`DE
 | 3 | Backend tests | `cd backend && npm test` | All pass | [ ] |
 | 4 | WASM matches TypeScript | `sh snipe-proof-auction/build.sh && python3 scripts/check-wasm-vectors.py` | `12/12 match the TypeScript rule` | [ ] |
 | 5 | Production build | `npx next build` | `Compiled successfully` and all pages generated | [ ] |
-| 5b | Browser suite | `npx playwright test` | `26 passed` | [ ] |
+| 5b | Browser suite | `npx playwright test` | `27 passed` | [ ] |
 | 6 | Backend env is set | `backend/.env` has `DATABASE_URL`, `NEAR_RPC_URL`, a fixed `DEV_ENCLAVE_SEED` | Backend starts | [ ] |
 | 7 | Real settlement end to end | `cd backend && npm run e2e:settle` (backend and database running) | `e2e settle: all checks passed` and a real `intents:` line | [ ] |
 | 7b | API privacy | `cd backend && npm run e2e:privacy` (backend and database running) | `e2e privacy: 31 checks passed` | [ ] |
