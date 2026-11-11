@@ -2,6 +2,8 @@
 
 Rewritten 10 Nov 2026. **Nothing in this document has been deployed.** The production build passes (`npx next build`), and the container files have never been built, so treat every step as untried until you have done it once.
 
+If you are debugging a Vercel deployment, start with [`vercel-fix.md`](vercel-fix.md).
+
 ## What there is to deploy
 
 | Part | What it needs | Where it can run |

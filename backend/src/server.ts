@@ -1050,21 +1050,29 @@ app.setErrorHandler((error: unknown, _req, reply) => {
 // SERVER STARTUP AND SHUTDOWN
 // --------------------------------------------------
 
-const host = process.env.HOST ?? "127.0.0.1";
-const port = Number(process.env.PORT ?? 4001);
+// On Vercel the platform calls the exported app itself, so it must not open a port. Everywhere else (local, Docker,
+// any container host) we listen as before.
+const onVercel = Boolean(process.env.VERCEL);
 
-try {
-  await app.listen({ host, port });
-} catch (error) {
-  app.log.error(error);
-  await prisma.$disconnect();
-  process.exit(1);
-}
+if (!onVercel) {
+  const host = process.env.HOST ?? "127.0.0.1";
+  const port = Number(process.env.PORT ?? 4001);
 
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
-  process.on(signal, async () => {
-    await app.close();
+  try {
+    await app.listen({ host, port });
+  } catch (error) {
+    app.log.error(error);
     await prisma.$disconnect();
-    process.exit(0);
-  });
+    process.exit(1);
+  }
+
+  for (const signal of ["SIGINT", "SIGTERM"] as const) {
+    process.on(signal, async () => {
+      await app.close();
+      await prisma.$disconnect();
+      process.exit(0);
+    });
+  }
 }
+
+export default app;
