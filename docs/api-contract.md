@@ -72,7 +72,7 @@ The browser builds this ([`src/lib/seal.ts`](../src/lib/seal.ts)); the backend n
   - `payout?`: `{ refundTo?, tokensTo? }`, each `{ chain, address }`. Tokens may only go to a NEAR account.
 - `commitment`: SHA-256 (hex) of `JSON.stringify([launchId, bidder, limit, qty, paymentCheckId, salt])`. The claim key is left out. The bidder keeps the salt to prove the bid was theirs.
 
-The backend rejects a `ciphertext` that is readable JSON (`plaintext_bid`), a commitment that is not 64 hex characters, a payment check that is not `locked`, and a second bid from the same account (`duplicate_bid`).
+The backend rejects a `ciphertext` that starts with `{`, i.e. raw JSON (`plaintext_bid`). This only guards against sending the bid in the clear by mistake: the server cannot tell a real sealed box from any other opaque text, and base64 of JSON is accepted. It also rejects a commitment that is not 64 hex characters, a payment check that is not `locked`, and a second bid from the same account (`duplicate_bid`).
 
 ## 5. Settlement and result
 

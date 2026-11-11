@@ -1,0 +1,66 @@
+[
+ {
+  "id": "t01",
+  "say": "Hello. This is the technical walkthrough of Unmask. No screen demo this time: this is what happens under the hood when you sign in, seal a bid, settle a launch and check the result. Every value you will see on screen was captured from a real run of the backend."
+ },
+ {
+  "id": "t02",
+  "say": "First, the architecture. The browser, built with Next.js, does the sealing and the checking. The backend is Fastify with PostgreSQL. It stores ciphertext and nothing else about a bid. A development enclave holds the key, and runs the Rust auction engine. NEAR is used for sign-in, and NEAR Intents for price quotes. The dashed boxes are not done yet: a real enclave with attestation, and real payment locks."
+ },
+ {
+  "id": "t03",
+  "say": "Step one is sign-in, with NEP-413. The backend issues a one-time challenge with a nonce. The wallet signs it. The backend verifies the signature, and then asks the NEAR RPC whether that key is a full-access key on the account. Only then does it issue a session token. The challenge is single use and expires in five minutes."
+ },
+ {
+  "id": "t04",
+  "say": "Step two is the payment check. Before bidding, you lock funds for the bid. The request names the bidder, the token and the amount in atomic units. Five thousand dollars is five billion units at six decimals. The response carries a claim key. That key later goes inside the sealed bid, never to the backend. Today the check is a database row, and the response says so."
+ },
+ {
+  "id": "t05",
+  "say": "Step three is sealing, and it happens in the browser. The bid is a small JSON object: the limit price, the quantity, the payment check and its claim key, and a random salt. The browser encrypts it with a libsodium sealed box, addressed to the enclave's public key. A sealed box uses a fresh ephemeral key pair, so only the holder of the enclave's secret key can open it. Not the site, not the creator, not another bidder."
+ },
+ {
+  "id": "t06",
+  "say": "The commitment is a SHA-256 hash over the launch, the bidder, the limit, the quantity, the payment check and the salt, in a fixed order. The claim key is left out. Nobody can guess the amounts from the hash because of the salt. Later you can show the salt, and prove that this exact bid was yours."
+ },
+ {
+  "id": "t07",
+  "say": "Step four, submit. The request contains the ciphertext, the commitment, the payment check id and the key id. No amounts. The backend answers with a receipt. This is the row it stores: ciphertext and commitment. And this is the public view of the launch: only a count of sealed bids. The count is public by design, and it does leak demand over time."
+ },
+ {
+  "id": "t08",
+  "say": "The backend refuses what it should. No session: unauthorized. Raw JSON as the ciphertext: plaintext bid. A second bid from the same account: duplicate bid. Locking funds for a bid after the window: closed. One honest note. The plaintext guard only checks that the text does not start with a curly brace. It cannot tell a real sealed box from any other opaque text."
+ },
+ {
+  "id": "t09",
+  "say": "Now the honest part. In this development setup the backend holds the enclave key, so it can open every bid. This is the output of the development enclave opening the bid we just sealed. That is why we call it a stand-in. The design goal is a key that lives only inside attested hardware. We have not built that part yet, and the threat model document says so."
+ },
+ {
+  "id": "t10",
+  "say": "Settlement. Only the creator can call settle, and only after the window closes. The enclave opens every bid. It re-checks any agent's rules, and validates payout addresses. Bids that fail are left out, each with a reason. Here are the two real ones from this run. The rest become the engine's input: canonical strings, with no floating point anywhere."
+ },
+ {
+  "id": "t11",
+  "say": "The engine implements a uniform price rule. Keep bids at or above the reserve. Sort by limit price, highest first. Walk down adding quantity until the supply is reached. That bid's limit is the clearing price. Everyone above it is filled in full, and bids exactly at the price share the rest pro-rata. Every winner pays the clearing price, and money is rounded up. These are the real fills from this run."
+ },
+ {
+  "id": "t12",
+  "say": "Three hashes make the run checkable. The input hash is a SHA-256 of the canonical engine input. The code hash identifies the engine that ran. The output hash is a SHA-256 of exactly what the engine wrote. The mode says dev, and the attestation is none. Anyone can recompute the first and third. The second is only a claim until a real enclave signs it."
+ },
+ {
+  "id": "t13",
+  "say": "The verify page recomputes six checks in your browser. Four we can really do: rebuild the input from the public numbers and match the hash, run the rule again in TypeScript and get the same fills, check that the money adds up to the last unit, and check the published output is what the engine wrote. Two we cannot do from here: that the code is the published code, and that hardware signed it. They show as not checked, never as a pass."
+ },
+ {
+  "id": "t14",
+  "say": "What is real on the chain side. NEAR sign-in is real: NEP-413 and an RPC key check. The NEAR Intents price is a real live quote, a preview with no deposit address. The engine builds to WebAssembly and runs under wasmtime. A remote run on OutLayer has not been retried, so nothing is attested. And there is no token contract and no real payment lock yet. Those are stand-ins."
+ },
+ {
+  "id": "t15",
+  "say": "How we test it. The Rust engine and the TypeScript rule agree on two hundred and twelve shared cases, including the WebAssembly build. Property tests with a seeded generator check the ten guarantees. Mutation checks confirm the tests catch a broken rule. There are 133 frontend tests, 64 backend tests, 27 browser tests, and a privacy test with 31 checks on what the API exposes."
+ },
+ {
+  "id": "t16",
+  "say": "To sum up. Bids are sealed in the browser. The engine finds one price in exact integer arithmetic. Anyone can recompute the hashes and the result. And where we cannot prove something yet, the system says not checked. The code, the specs and the threat model are in the repository. Thank you."
+ }
+]

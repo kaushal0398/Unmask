@@ -1,5 +1,7 @@
 # Demo video (Unmask-Demo.mp4)
 
+There is a second, technical video with no screen demo: see [`tech/README.md`](tech/README.md).
+
 A 3 minute 40 second walkthrough with a voice-over, built from the **real running app** (production build, real backend, real PostgreSQL, live NEAR Intents price preview). It follows `docs/DEMO_GUIDE.md` Plan B: the demo wallet is used (so bids and agent rules are unsigned) and the settle step uses the `settle:demo` shortcut, which the narration says out loud. Nothing in it claims attestation, TEE or real funds.
 
 Made the same way as the other hackathon videos: Chrome-recorded screen clips with a visible cursor, edge-tts voice, ffmpeg.
