@@ -12,10 +12,7 @@ import { WalletButton } from "@/components/wallet-button";
 const links = [
   { href: "/launches", label: "Launches" },
   { href: "/my-bids", label: "My Bids" },
-  { href: "/how-it-works", label: "How it works" },
-  { href: "/compare", label: "Compare" },
   { href: "/verify", label: "Verify" },
-  { href: "/faq", label: "FAQ" },
 ];
 
 export function Logo({ className }: { className?: string }) {
@@ -23,13 +20,13 @@ export function Logo({ className }: { className?: string }) {
     <Link
       href="/"
       className={cx(
-        "flex items-center gap-2.5 font-semibold tracking-tight",
+        "flex items-center gap-3 text-2xl font-semibold tracking-tight",
         className
       )}
-      aria-label="Sealed, home"
+      aria-label="Unmask, home"
     >
-      <LogoMark className="size-7 text-text" />
-      Sealed
+      <LogoMark className="size-12" />
+      Unmask
     </Link>
   );
 }
@@ -42,7 +39,7 @@ export function Nav() {
     pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-black/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
         <Logo />
 

@@ -177,6 +177,14 @@ export class MockLaunchApi implements LaunchApi {
 
   // ---- bids -------------------------------------------------------------------------------------
 
+  async getVerification() {
+    return null;
+  }
+
+  async settleLaunch(): Promise<Result> {
+    throw new ApiError("closed", "Demo launches settle on their own clock.");
+  }
+
   async submitBid(bid: SealedBid) {
     await this.wait();
     const l = this.all().find((x) => x.id === bid.launchId);
@@ -237,9 +245,7 @@ export class MockLaunchApi implements LaunchApi {
     return [];
   }
 
-  async verifyReceipt(
-    _receiptId: string,
-  ): Promise<ReceiptVerification> {
+  async verifyReceipt(): Promise<ReceiptVerification> {
     throw new ApiError(
       "not_found",
       "Receipt verification is only available with the backend API.",

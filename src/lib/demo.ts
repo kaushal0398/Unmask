@@ -44,6 +44,7 @@ const PUP_BIDS: Bid[] = [
   { id: "h", label: "sniper-2.near", limit: 0.015, qty: 150_000, isBot: true },
   { id: "i", label: "sniper-3.near", limit: 0.015, qty: 150_000, isBot: true },
   { id: "j", label: "sniper-4.near", limit: 0.015, qty: 150_000, isBot: true },
+  { id: "k", label: "your-agent.near", limit: 0.045, qty: 100_000, isAgent: true },
 ];
 
 /** Bids the open launches would reveal at the close in a demo. They are not shown while bidding is open. */

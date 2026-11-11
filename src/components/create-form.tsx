@@ -36,7 +36,7 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
   );
 }
 
-const inputClass = "w-full rounded-none border border-line-strong bg-black px-4 py-3 text-base outline-none placeholder:text-faint focus:bg-white/[0.03]";
+const inputClass = "w-full rounded-none border border-line-strong bg-bg px-4 py-3 text-base outline-none placeholder:text-faint focus:bg-white/[0.03]";
 
 export function CreateForm() {
   const { auth, mode } = useWallet();
@@ -131,7 +131,7 @@ export function CreateForm() {
           {steps.map((st) => (
             <li key={st.id} className="flex items-start gap-3 text-sm">
               <span className="mt-0.5">
-                {st.state === "done" ? <Check className="size-4 text-verified" /> : st.state === "running" ? <Loader2 className="size-4 animate-spin text-seal" /> : st.state === "failed" ? <AlertTriangle className="size-4 text-danger" /> : <span className="block size-4 border border-line-strong" />}
+                {st.state === "done" ? <Check className="size-4 text-verified" /> : st.state === "running" ? <Loader2 className="size-4 animate-spin text-seal-fg" /> : st.state === "failed" ? <AlertTriangle className="size-4 text-danger" /> : <span className="block size-4 border border-line-strong" />}
               </span>
               <span className={st.state === "pending" ? "text-faint" : "text-text"}>
                 {st.label}
@@ -159,7 +159,7 @@ export function CreateForm() {
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
           Demo only: nothing was deployed. In the real flow this deploys the NEP-141 token, registers the launch with the enclave, and starts the clock. Share the link, and bids stay sealed until the close.
         </p>
-        <div className="mt-6 flex items-center gap-2 rounded-none border border-line-strong bg-black p-2 pl-4 text-left">
+        <div className="mt-6 flex items-center gap-2 rounded-none border border-line-strong bg-bg p-2 pl-4 text-left">
           <Mono className="flex-1 truncate text-sm text-muted">{link}</Mono>
           <Button tone="ghost" className="px-3 py-2" onClick={() => { void navigator.clipboard?.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
             {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
@@ -196,7 +196,7 @@ export function CreateForm() {
             <input className={cx(inputClass, "font-mono")} inputMode="numeric" value={supply} onChange={(e) => setSupply(e.target.value)} />
           </Field>
           <Field label="Reserve price per token" hint="Bids under this are not in the auction." error={show("reserve")}>
-            <div className="flex items-center rounded-none border border-line-strong bg-black px-4 focus-within:bg-white/[0.03]">
+            <div className="flex items-center rounded-none border border-line-strong bg-bg px-4 focus-within:bg-white/[0.03]">
               <span className="text-muted">$</span>
               <input className="w-full bg-transparent px-2 py-3 font-mono text-base outline-none" inputMode="decimal" value={reserve} onChange={(e) => setReserve(e.target.value)} />
             </div>
@@ -219,7 +219,7 @@ export function CreateForm() {
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             {([["return", "Return unsold tokens to me"], ["burn", "Burn them"]] as const).map(([v, label]) => (
               <label key={v} className={cx("flex cursor-pointer items-center gap-3 rounded-none border p-4 text-sm transition-colors", unsold === v ? "border-seal bg-seal/5" : "border-line-strong hover:bg-white/5")}>
-                <input type="radio" name="unsold" className="accent-[#8b7bff]" checked={unsold === v} onChange={() => setUnsold(v)} />
+                <input type="radio" name="unsold" className="accent-[#e501a5]" checked={unsold === v} onChange={() => setUnsold(v)} />
                 {label}
               </label>
             ))}

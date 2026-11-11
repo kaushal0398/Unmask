@@ -1,0 +1,8 @@
+audio/
+build/
+cards/
+clips/
+raw/
+durations.json
+*.mp4
+*.wav

@@ -4,6 +4,8 @@
  * The wallet signs a message without sending a transaction or spending gas.
  */
 
+import { AGENT_RECIPIENT, rulesMessage, rulesNonce, type AgentRules } from "@/lib/agent";
+
 export type NearNetwork = "mainnet" | "testnet";
 
 export type SignedIn = {
@@ -18,7 +20,9 @@ export type SignedIn = {
 };
 
 export interface ConnectorLike {
-  connect(): Promise<WalletLike>;
+  connect(input?: { walletId?: string }): Promise<WalletLike>;
+  /** The already-connected wallet, when the connector can give it without asking again. */
+  wallet?(): Promise<WalletLike>;
   disconnect(): Promise<void>;
 }
 
@@ -247,5 +251,22 @@ export async function signInWithWallet(
         ? error.message
         : "The wallet could not complete authentication.",
     );
+  }
+}
+
+/**
+ * Ask the connected wallet to sign agent rules (NEP-413). Returns null-free or throws a WalletError.
+ * The backend checks this signature when the launch settles (backend/src/agent-rules.ts).
+ */
+export async function signAgentRules(connector: ConnectorLike, rules: AgentRules): Promise<{ signature: string; publicKey: string }> {
+  try {
+    const wallet = connector.wallet ? await connector.wallet() : await connector.connect();
+    const signed = await wallet.signMessage({ message: rulesMessage(rules), recipient: AGENT_RECIPIENT, nonce: await rulesNonce(rules) });
+    if (!signed.signature || !signed.publicKey) throw new WalletError("failed", "The wallet returned no signature.");
+    if (signed.accountId !== rules.owner) throw new WalletError("failed", "The signing wallet account does not match the account the rules are for.");
+    return { signature: signed.signature, publicKey: signed.publicKey };
+  } catch (error) {
+    if (error instanceof WalletError) throw error;
+    throw new WalletError(looksCancelled(error) ? "cancelled" : "failed", looksCancelled(error) ? "You closed the wallet without signing." : "The wallet could not sign the rules.");
   }
 }

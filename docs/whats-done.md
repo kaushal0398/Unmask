@@ -4,6 +4,18 @@ Stage: **the interface is built on demo data; the enclave, the token and the mon
 
 Hackathon: development 1–14 Nov 2026, submit by 14 Nov 23:59 UTC.
 
+## Status on 9 Nov (read this first; the sections below are the older record)
+
+The product is now called **Unmask**; the theme is pure black with pink `#E501A5` and a white-bordered button style (older sections still say amber/violet and "Sealed").
+
+| Area | Now |
+|---|---|
+| Backend (Fastify, PostgreSQL, Prisma) | Built for local development: wallet sign-in sessions, launches, payment checks (mock), sealed bids, receipts, **enclave key, settle, result** |
+| Frontend to backend | `getApi()` returns the HTTP adapter. Enclave key and result now come from the backend |
+| Rust auction engine | `enclave/auction-engine`, exact integers with 256-bit intermediates, matches TypeScript on 12 shared cases (`shared/test-vectors/auction-v1-cases.json`) |
+| Settlement | Works on one machine with a **development enclave**: not confidential, not attested ([`settlement-dev.md`](settlement-dev.md)) |
+| Still not built | Real OutLayer enclave and attestation, real payment checks and fund movement, NEP-141 token and payouts, deployment, demo video, submission |
+
 ## Done
 
 | Item | Date | Where |
@@ -25,7 +37,7 @@ Nothing here talks to a chain, an enclave or a wallet yet. Every launch, bid and
 |---|---|---|
 | Black theme and design system | Pure black; amber means sealed, green means verified, red means a sniper or a failed check; Geist, Geist Mono and an italic serif for emphasis | `src/app/globals.css`, `src/components/ui.tsx` |
 | **Landing page** | Hero with the sealed-envelope stack, a scrolling ticker, the race, live meme cards, how it works, a clearing demo, hidden-versus-public, honest limits | `src/app/page.tsx` |
-| **The race** | The same ten bids in a first-come launch and a sealed one. The sealed side is computed by the real auction rule | `src/components/race-demo.tsx`, `src/lib/race.ts` |
+| **The race** | The same eleven bids in a first-come launch and a sealed one. The sealed side is computed by the real auction rule | `src/components/race-demo.tsx`, `src/lib/race.ts` |
 | **Meme cards** | Each token has a colour, a bobbing mascot and a status sticker, and tilts on hover | `src/components/launch-card.tsx` |
 | **Launches** | Filterable grid | `src/app/launches/page.tsx` |
 | **Launch page, three states** | Bidding open (countdown, sealed stack, bid form), settling (progress steps), settled (clearing price, opened bids, proof hashes) | `src/app/launches/[id]/page.tsx` |
@@ -49,7 +61,7 @@ Nothing here talks to a chain, an enclave or a wallet yet. Every launch, bid and
 | Toasts, confirm dialogs, loading and error pages, skip link, contrast and mobile fixes | `toast.tsx`, `confirm.tsx`, `app/loading.tsx`, `app/error.tsx` |
 | Social preview images for the site and every launch | `src/lib/og.tsx`, `opengraph-image.tsx` |
 | Playwright tests: every route at 375px with accessibility checks, bid flow, failed payment, clock, failed create | `e2e/` |
-| Drafts for you: organizer questions, demo script and X post, deploy notes | `docs/questions-for-organizers.md`, `demo-script.md`, `deploy.md` |
+| Drafts for you: demo script and X post, deploy notes | `demo-script.md`, `deploy.md` |
 
 43 unit tests pass (`npm test`), 16 browser tests pass (`npm run test:e2e`), and lint, typecheck and the production build are clean.
 
@@ -60,7 +72,6 @@ Nothing here talks to a chain, an enclave or a wallet yet. Every launch, bid and
 - [ ] Set up an OutLayer wallet with a few dollars of USDC (keys outside the repo)
 - [ ] Find the standard NEP-141 contract and the storage deposit flow
 - [ ] Check the Rust and WebAssembly toolchain on every machine
-- [ ] Send the questions to the organizers
 - [ ] Make the repository public
 - [ ] Decide who owns what
 

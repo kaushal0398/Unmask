@@ -1,0 +1,49 @@
+# TESTED 10 Nov 2026: `docker compose build` and `docker compose up -d` worked, the backend ran its migrations and the Rust engine inside the image,
+# a seeded launch settled (price $0.03, 1,000,000 sold, $30,000 raised, 2 bids left out) and `npm run demo:preflight` passed 12 of 12.
+# Not tested: a real hosting provider, HTTPS, or anything but the development enclave.
+# The whole stack with one command:  docker compose up --build
+#   web      http://localhost:3000
+#   backend  http://localhost:4001   (settlement uses the DEVELOPMENT enclave: not confidential, not attested)
+#   db       PostgreSQL, published on 54330 so you can run the seed and e2e scripts from your machine
+#
+# Dev-only defaults below (database password, enclave seed). Never reuse them anywhere real.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: unmask
+    ports:
+      - "54330:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d unmask"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/unmask
+      NODE_ENV: development
+      NEAR_NETWORK: testnet
+      NEAR_RPC_URL: https://rpc.testnet.near.org
+      # Fixed so bids sealed to it stay readable across restarts. Set your own with DEV_ENCLAVE_SEED=$(openssl rand -hex 32).
+      DEV_ENCLAVE_SEED: ${DEV_ENCLAVE_SEED:-6b3f1c0e9d7a4b28a5c6e1f0d93b7a42c8e5f61a0b9d3c7e2f4a8b1c5d6e7f90}
+    ports:
+      - "4001:4001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend

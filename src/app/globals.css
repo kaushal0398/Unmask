@@ -1,10 +1,11 @@
 @import "tailwindcss";
 
 /*
- * Pure black, with three meanings of colour and no others:
- *   violet = sealed (a bid nobody can see)
+ * Dark grey (#000000), with three meanings of colour and no others:
+ *   pink = sealed (a bid nobody can see)
  *   green  = verified (checked, and it holds)
  *   red    = the sniper, or a check that failed
+ * plus three accents for decoration: amber = price, cyan = NEAR, orange = hype
  */
 @theme inline {
   /* Square boxes: every rounded-* utility draws a sharp corner. */
@@ -18,16 +19,21 @@
   --radius-4xl: 0;
 
   --color-bg: #000000;
-  --color-surface: #0a0a0b;
-  --color-raised: #111114;
+  --color-surface: #000000;
+  --color-raised: #000000;
   --color-line: rgb(255 255 255 / 0.08);
   --color-line-strong: rgb(255 255 255 / 0.16);
   --color-text: #ededed;
   --color-muted: #a9a9b3;
   --color-faint: #8b8b95;
-  --color-seal: #8b7bff;
+  --color-seal: #e501a5;
+  /* Pink for TEXT: #E501A5 is just under WCAG AA for small text on black, this is 7:1. Fills and borders keep #E501A5. */
+  --color-seal-fg: #ff4fcf;
   --color-verified: #00ec97;
   --color-danger: #ff5c5c;
+  --color-price: #ffb547;
+  --color-near: #38d5ff;
+  --color-hot: #ff8a3d;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -51,12 +57,12 @@ body {
 }
 
 ::selection {
-  background: rgb(139 123 255 / 0.3);
+  background: rgb(229 1 165 / 0.3);
 }
 
-/* A soft violet glow behind the hero and the sealed stack. */
+/* A soft pink glow behind the hero and the sealed stack. */
 .glow-seal {
-  background: radial-gradient(60% 60% at 50% 40%, rgb(139 123 255 / 0.16), transparent 70%);
+  background: radial-gradient(60% 60% at 50% 40%, rgb(229 1 165 / 0.16), transparent 70%);
 }
 .glow-verified {
   background: radial-gradient(60% 60% at 50% 40%, rgb(0 236 151 / 0.12), transparent 70%);
@@ -109,7 +115,7 @@ textarea:focus-visible {
   border-radius: 0;
 }
 
-/* Crosshair corner marks on a box: two corners always, both lit in violet and longer on hover. */
+/* Crosshair corner marks on a box: two corners always, both lit in pink and longer on hover. */
 .corners { position: relative; }
 .corners::before,
 .corners::after {

@@ -1,27 +1,54 @@
-# Sealed: snipe-proof token launches
+<p align="center"><img src="public/logo.svg" alt="Unmask logo" width="96" height="96" /></p>
 
-> A token launch where everyone bids in secret, everyone pays the same price, and anyone can check afterwards that the auction was run fairly. Built on NEAR.
+<h1 align="center">Unmask</h1>
+
+<p align="center"><b>The token launch where bots lose their edge.</b><br/>
+<b>Bid blind, win fair, check everything.</b><br/>
+Sealed-bid token launches on NEAR: everyone pays one price, and anyone can verify the result.</p>
+
+> Everyone bids blind, everyone pays the same clearing price, and the bids are unmasked only after the window closes, so anyone can check that the auction was run fairly.
 
 | | |
 |---|---|
-| **Status** | Interface built on demo data. Auction rule written and tested. Enclave, payment checks and token not built yet: **nothing here moves real funds.** |
+| **Status** | Interface, the auction rule (TypeScript and Rust), in-browser bid sealing, wallet sign-in, the backend and settlement are built. We are now making the enclave, payment checks and the token real: **nothing here moves real funds yet.** |
 | **Hackathon** | NEAR Hackathon, development 1–14 Nov 2026, submission by 14 Nov 23:59 UTC |
 | **Tracks** | 11 Memecoins With Mechanics · 3 Privacy & Private AI · 4 Autonomous Business · 1 Unstoppable DeFi |
-| **Stack** | Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Rust → WebAssembly (planned) |
+| **Stack** | Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Fastify + PostgreSQL (Prisma) · libsodium · Rust → WebAssembly (planned) |
 
 ## Contents
 
-[The problem](#the-problem) · [The idea](#the-idea) · [How a launch runs](#how-a-launch-runs) · [The auction rule](#the-auction-rule) · [What is real today](#what-is-real-today) · [The interface](#the-interface) · [Architecture](#architecture) · [NEAR protocols](#near-protocols) · [Getting started](#getting-started) · [Project structure](#project-structure) · [Documentation](#documentation) · [Roadmap](#roadmap) · [Limitations](#limitations)
+[The problem](#the-problem) · [Why the name](#why-the-name) · [The idea](#the-idea) · [How a launch runs](#how-a-launch-runs) · [The auction rule](#the-auction-rule) · [What is built](#what-is-built-and-what-we-are-making-real) · [Features](#features) · [The interface](#the-interface) · [Architecture](#architecture) · [NEAR protocols](#near-protocols) · [Getting started](#getting-started) · [Project structure](#project-structure) · [Documentation](#documentation) · [Limitations](#limitations)
+
+## Screenshots
+
+Production build, real backend (development enclave, so the result is labelled not attested).
+
+![Home](docs/images/01-home.jpg)
+
+![The race](docs/images/02-race.jpg)
+
+![Bid form: agent mode and funding](docs/images/03-bid-agent-and-funding.jpg)
+
+![Result](docs/images/04-result.jpg)
+
+![Payout plan](docs/images/05-payout-plan.jpg)
+
+![Verify](docs/images/06-verify.jpg)
+
 
 ## The problem
 
 On most launchpads the first buyers win. Bots watch for a launch, buy in the first blocks, bundle wallets and sell into the people who arrive later. The advantage comes from **timing and visibility**: the price moves as people buy, so being first, or seeing other people's orders, pays.
 
+## Why the name
+
+Bids are masked while the window is open: nobody, the creator included, can read them. After the window closes the enclave **unmasks** them, finds one price and publishes proof. Unmask also describes the goal: bots lose their cover, and the launch can be inspected end to end.
+
 ## The idea
 
 Take both advantages away.
 
-- **Sealed.** Buyers submit bids during a window, and nobody (the creator included) can read them until it closes. The public sees only how many bids there are.
+- **Masked.** Buyers submit bids during a window, and nobody (the creator included) can read them until it closes. The public sees only how many bids there are.
 - **One price.** When the window closes, a private auctioneer running in a hardware enclave (a TEE) finds the single price that sells the supply. Every winner pays it, not their own limit. Everyone else is refunded in full.
 - **Provable.** The enclave publishes its code hash, the result and an attestation. Anyone can recompute the hashes, re-run the rule on the bids and check the transfers.
 
@@ -50,26 +77,55 @@ Example: 1,000,000 tokens for sale, reserve $0.01.
 
 The clearing price is **$0.03**. A pays $12,000 (not $0.05), B pays $9,000, C pays $9,000, and the creator receives $30,000. The rule is implemented in [`src/lib/auction.ts`](src/lib/auction.ts) and this example is one of its tests.
 
-## What is real today
+## What is built, and what we are making real
+
+The work is split in two: what already runs, and what we are building next so that every part is real, end to end. Nothing here moves real funds yet.
+
+**Built and working**
 
 | Piece | State |
 |---|---|
 | The interface: every screen below, the animations and the drawings | Built |
-| The auction rule (uniform price, pro-rata at the price, whole-token rounding) | Built, 17 tests |
-| Hashing and re-running the auction on the verify page | Built, runs in your browser |
-| Launches, bids and results on screen | **Demo data** |
-| The attestation check | **Demo stand-in** |
-| The enclave that runs the auction | Not built |
-| OutLayer payment checks and real funds | Not built |
-| The NEP-141 token and payouts | Not built |
+| The auction rule, exact integers, in TypeScript and in Rust, matching on 12 shared cases | Built, tested ([`docs/auction-core-v1.md`](docs/auction-core-v1.md)) |
+| Bid sealing in the browser (libsodium sealed box) and the commitment check | Built |
+| NEAR wallet sign-in (signed challenge, sessions) | Built |
+| Backend API (Fastify, PostgreSQL, Prisma): launches, bids, sessions, receipts, enclave key, settle, result | Built |
+| Settlement: open bids, reject dishonest ones with a recorded reason, run the Rust engine, store and publish the result | Built, runs on one machine ([`docs/settlement-dev.md`](docs/settlement-dev.md)) |
+| Verify a real settled launch in your browser: rebuilds the input and the engine output from the public numbers, re-runs the rule, checks the money. The code and attestation checks say **not checked** | Built, tested against real engine output and tampering ([`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md)) |
+| The WASM build of the engine (`wasm32-wasip2`) runs under Wasmtime and matches TypeScript on all 12 shared cases; the backend can settle with it | Built, tested (`python3 scripts/check-wasm-vectors.py`) |
+| Agent bidding inside signed rules, enforced again at settlement | Built, tested ([below](#features)) |
+| Your result card: paid, got, refunded, effective price, shareable image | Built |
+| Fund-a-bid price quotes from other chains through NEAR Intents 1Click | Built as a dry-run preview; one real quote has been fetched through our backend |
+| Choose where refunds and tokens go, with a transfer plan in the public result | Built as a plan; nothing is sent |
+
+**Being made real next**
+
+| Piece | Today | Target |
+|---|---|---|
+| The enclave that runs the auction | Runs in the backend process, so it is not confidential | The same Rust engine inside an OutLayer TEE |
+| Attestation | Not produced; the result is labelled `dev` | A real attestation, verified on the verify page |
+| Payment checks and funds | Locks nothing | Real OutLayer payment checks, claims and refunds. This also makes funding from another chain and cross-chain refunds real |
+| The token and payouts | Not deployed | A NEP-141 token with real payouts to winners |
+| Live data on the landing page and launch cards | Sample launches | Launches read from the backend |
+
+## Features
+
+Four additions, inspired by what [nearly.trade](https://nearly.trade) is building on NEAR Intents (see [`docs/improvements-and-additions.md`](docs/improvements-and-additions.md)). Each says exactly how real it is.
+
+| Feature | What it does | How real it is |
+|---|---|---|
+| **Agent bidding inside signed rules** | You set a maximum price, a maximum quantity, a maximum amount to lock and an expiry, and sign them with your wallet (NEP-413). An agent places the sealed bid inside those limits. The **same limits are checked again when the launch settles**, so a bid that breaks them, or a claim whose hash or signature does not check out, is left out with a recorded reason. In the landing-page race the agent is the cyan bar beside the red bots. | The rules, the enforcement and the signature check are tested, including a forged key, a restricted key and swapped rules. Signing with a live wallet has not been tried. The demo wallet cannot sign, so its rules are marked unsigned. |
+| **Your result card** | After settlement, your paid, got, refunded and effective price, and what you saved against your own limit, with *Save as image* and *Copy summary*. Only public facts go in it. | Built. It reads the real result from the backend. |
+| **Fund a bid from another chain** | In the bid form, pick a token on Ethereum, Base, Arbitrum or Solana and see the real NEAR Intents price to deliver the USDC the bid needs: you pay, minimum, cost, time. | A price **preview** (dry run, no deposit address). It went through our own backend to the live service. Taking a real deposit is off unless the operator sets `ONECLICK_ALLOW_LIVE=1`, and the payment checks that would receive the money are not real yet. NEAR Intents is mainnet only. |
+| **Choose where refunds and tokens go** | Send your USDC refund to any supported chain and your tokens to any NEAR account. Sealed inside the bid. The public result shows a plan: who gets what, where, and which transfers would go through NEAR Intents. | A plan only: `payoutsExecuted` stays `false`. A bad address skips the bid, so funds come back through the payment check. Tokens cannot go to other chains: a new launch token is not carried by NEAR Intents. |
 
 ## The interface
 
-Pure black, square boxes, violet for *sealed*, green for *verified*, red for a bot or a failed check. Every screen runs on demo data and says so.
+Pure black, square boxes, pink for *masked*, green for *verified*, red for a bot or a failed check. Screens that show sample launches say so.
 
 | Route | What it is |
 |---|---|
-| `/` | Landing: the sealed-envelope hero, the bots-versus-sealed race, live meme cards, how it works, a clearing demo |
+| `/` | Landing: the sealed-envelope hero, the bots-versus-Unmask race, live meme cards, how it works, a clearing demo |
 | `/launches` | Every launch, with stats and a filter |
 | `/launches/[id]` | One launch in one of three states: bidding open (countdown, sealed stack, bid form), settling, or settled (clearing price, opened bids, proof hashes) |
 | `/launches/new` | Create a launch, with a live preview |
@@ -82,20 +138,76 @@ Pure black, square boxes, violet for *sealed*, green for *verified*, red for a b
 
 ## Architecture
 
+Three trust zones. Only the enclave ever sees a bid in the clear, and everything it does can be checked by anyone.
+
+```mermaid
+flowchart LR
+  subgraph Browser["Browser (Next.js, untrusted)"]
+    UI["Create, bid, results, verify"]
+    SEAL["libsodium sealed box<br/>bid is encrypted here"]
+    VER["Verify page<br/>re-hashes and re-runs the auction"]
+  end
+
+  subgraph Backend["Backend API (Fastify, sees ciphertext only)"]
+    API["Launches, bids, sessions, receipts"]
+    DB[("PostgreSQL<br/>launches, encrypted bids, results")]
+    SET["Settlement<br/>close, call enclave, refund, pay out"]
+  end
+
+  subgraph Enclave["OutLayer enclave (Rust to WebAssembly, Intel TDX)"]
+    DEC["Decrypt bids"]
+    AUC["Uniform-price auction"]
+    SIG["Sign result + code hash + attestation"]
+  end
+
+  subgraph NEAR["NEAR"]
+    PC["OutLayer payment checks<br/>lock each bid"]
+    TOK["NEP-141 token"]
+    INT["intents.near"]
+  end
+
+  UI --> SEAL --> API
+  API <--> DB
+  API --> PC
+  SET --> DEC --> AUC --> SIG --> SET
+  SET --> PC
+  SET --> TOK
+  PC --- INT
+  SIG -. published .-> VER
+  TOK -. on-chain transfers .-> VER
 ```
- Browser (Next.js)
-   create / bid / results / verify
-        |
-        v
- Next.js server routes  ---->  Store (launches, encrypted bids, results)
-        |
-        v
- OutLayer enclave (Rust -> WebAssembly, Intel TDX)
-   decrypts bids, claims payment checks, runs the auction, signs the result
-        |
-        v
- NEAR: NEP-141 token | OutLayer payment checks | intents.near
+
+**A launch, step by step**
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant B as Bidder (browser)
+  participant A as Backend API
+  participant P as Payment checks
+  participant E as Enclave
+  participant N as NEAR
+
+  B->>P: lock the most this bid could owe
+  B->>B: seal the bid to the enclave public key
+  B->>A: submit ciphertext + commitment + check id
+  A-->>B: receipt (count goes up, amounts stay hidden)
+  Note over A: window closes, input hash published
+  A->>E: all ciphertexts + launch rules
+  E->>E: decrypt, find the one clearing price
+  E-->>A: result + code hash + input hash + attestation
+  A->>P: claim what winners owe, reclaim the rest
+  A->>N: send tokens to winners, proceeds to the creator
+  B->>A: verify page fetches the published result
+  B->>B: re-hash, re-run the auction, compare
 ```
+
+| Zone | Sees | Can it cheat? |
+|---|---|---|
+| Browser | Its own bid | Only against itself |
+| Backend | Ciphertexts, counts, results | It cannot read a bid, and it cannot change the result without breaking the hashes |
+| Enclave | Every bid, only while settling | Limited by its public code hash and attestation |
+| NEAR | Transfers | Public by design |
 
 ## NEAR protocols
 
@@ -113,12 +225,36 @@ How the pieces fit together is in [`docs/near-integration.md`](docs/near-integra
 
 ```sh
 npm install
-npm run dev          # http://localhost:3000
+npm run dev          # the app, http://localhost:3000
 npm test             # the auction rule, the race and the verify checks
 npm run typecheck
 npm run lint
 npm run build
 ```
+
+Rust engine and shared vectors:
+
+```sh
+cd enclave/auction-engine && cargo test     # must match shared/test-vectors on every case
+npx tsx scripts/gen-test-vectors.ts          # regenerate the cases from the TypeScript rule
+sh snipe-proof-auction/build.sh              # build the WASM artifact for OutLayer
+python3 scripts/check-wasm-vectors.py        # run it under Wasmtime on every shared case
+```
+
+The backend lives in `backend/` and needs PostgreSQL:
+
+```sh
+cd backend
+npm install
+npx prisma migrate dev
+npm run dev
+```
+
+Copy `backend/.env.example` to `.env` first: the backend will not start without `NEAR_RPC_URL`. `npm run e2e:settle` (in `backend/`) settles a seeded launch end to end against a live database, `npm run seed:demo` and `npm run settle:demo` set up and settle a launch for the demo ([`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md)), and `AUCTION_ENGINE_WASM` makes settlement run the WASM artifact.
+
+`npm test` in `backend/` builds the Rust engine first if it is missing, so it works on a fresh clone. Use `npm run typecheck` (not a bare `tsc`) in the frontend: it generates the Next.js route types first.
+
+Its write endpoints are for local development only: see [`docs/backend-phase2.md`](docs/backend-phase2.md).
 
 Node.js 24 was used during development. This project's `AGENTS.md` asks you to read the guide in `node_modules/next/dist/docs/` before writing code, because this Next.js version has breaking changes. Two matter here: with Cache Components on, anything that depends on the clock lives in a client component, and a dynamic route's `params` is read inside a `Suspense` boundary.
 
@@ -131,18 +267,16 @@ src/
 └── lib/
     ├── auction.ts       The uniform-price sealed-bid rule
     ├── race.ts          The same bids as a first-come launch and a sealed one
+    ├── agent.ts         Agent rules: the check, the proposal, the signed message
+    ├── intents/         NEAR Intents 1Click client and address checks
+    ├── result-card.ts   Your result card and its image
     ├── verify-demo.ts   The checks the verify page runs
     └── demo.ts          Made-up launches and bids
+backend/            Fastify + Prisma API: auth, launches, bids, receipts, settlement, agent rules, NEAR Intents proxy
+enclave/            Rust auction engine (compiled to WebAssembly, in progress)
+shared/             Test vectors shared by TypeScript and Rust
+e2e/                Playwright smoke tests
 docs/               Project documentation (below)
-```
-
-Planned:
-
-```
-src/lib/outlayer/       Payment checks and enclave calls
-src/lib/near/           Token helpers and storage deposits
-enclave/                Rust crate compiled to WebAssembly
-test-vectors/           JSON cases shared by TypeScript and Rust
 ```
 
 ## Documentation
@@ -155,18 +289,23 @@ test-vectors/           JSON cases shared by TypeScript and Rust
 | [`docs/whats-done.md`](docs/whats-done.md) | What is finished and what is next |
 | [`docs/protocols-integrated.md`](docs/protocols-integrated.md) | Each NEAR protocol and its status |
 | [`docs/decisions-and-open-questions.md`](docs/decisions-and-open-questions.md) | Decisions to settle and open questions |
+| [`docs/auction-core-v1.md`](docs/auction-core-v1.md) | The exact integer auction rule and its shared test vector |
+| [`docs/improvements-and-additions.md`](docs/improvements-and-additions.md) | Ideas from nearly.trade and NEAR Intents: what to add and in what order |
+| [`docs/PRIVACY_THREAT_MODEL.md`](docs/PRIVACY_THREAT_MODEL.md) | Who can read a sealed bid and when: what is tested, what the backend operator can still do, the leaks that survive a perfect enclave, and the options to close the gap |
+| [`docs/OUTLAYER_ATTESTATION.md`](docs/OUTLAYER_ATTESTATION.md) | What an OutLayer attestation covers, how to verify one with `outlayer-verify`, how our hashes line up, and the privacy gap it does not close |
+| [`docs/AUCTION_SPEC.md`](docs/AUCTION_SPEC.md) | The full auction rule: units, the algorithm, the policy decisions, 14 guarantees, worked examples and how each is tested |
+| [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) | How to run and show the demo: setup, seeding, three plans, a three-minute run sheet, what to say and not say, troubleshooting |
+| [`docs/DEMO_CHECKLIST.md`](docs/DEMO_CHECKLIST.md) | The pre-flight and just-before-you-start checklists, with expected results |
+| [`docs/NEARLY_FEATURES_AND_CHECKS.md`](docs/NEARLY_FEATURES_AND_CHECKS.md) | The features inspired by nearly.trade, how real each is, and exactly how to check each one |
+| [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md) | The day-by-day plan to 14 Nov: what is left, what we add, owners, cut lines |
+| [`docs/OUTLAYER_BLOCKER_REVIEW.md`](docs/OUTLAYER_BLOCKER_REVIEW.md) | The FastFS and OutLayer blocker, checked against the chain: the upload worked, what to retry, what to fix |
+| [`docs/PROJECT_PROGRESS.md`](docs/PROJECT_PROGRESS.md) | Teammate handoff: the OutLayer project, the FastFS upload blocker and the next steps |
+| [`docs/PROJECT_ROADMAP.md`](docs/PROJECT_ROADMAP.md) | Teammate roadmap from prototype to MVP to production, with completion gates and a master checklist |
+| [`docs/settlement-dev.md`](docs/settlement-dev.md) | How a launch settles on one machine, and what is and is not real |
+| [`docs/backend-phase2.md`](docs/backend-phase2.md) | The backend: invariants, trust boundary and next work |
+| [`docs/api-contract.md`](docs/api-contract.md) | The HTTP API the interface talks to |
+| [`docs/demo-script.md`](docs/demo-script.md) | The demo, step by step |
 | [`docs/submission-checklist.md`](docs/submission-checklist.md) | What the hackathon form needs |
-
-## Roadmap
-
-| Phase | Dates | Goal |
-|---|---|---|
-| 0 Prepare | 28–31 Oct | Read the OutLayer docs, test payment checks with tiny amounts, answer open questions |
-| 1 Reference auction | 1–3 Nov | The auction in TypeScript with shared test vectors, and the first-come versus sealed comparison. *The rule and the comparison are built; the shared vectors are not.* |
-| 2 Enclave | 4–7 Nov | The same auction in Rust and WebAssembly inside OutLayer, with a verified attestation |
-| 3 Money and token | 7–10 Nov | Bid flow, settlement, token distribution, a mainnet rehearsal |
-| 4 Polish | 10–12 Nov | The verify page against the real attestation, error states, README |
-| 5 Ship | 12–14 Nov | Final launch, demo, submission |
 
 ## Limitations
 
@@ -177,7 +316,10 @@ test-vectors/           JSON cases shared by TypeScript and Rust
 
 ## Team
 
-To be added.
+| | Role | GitHub |
+|---|---|---|
+| **Ayush Singh** | Co-founder · CTO | [@ayushsingh82](https://github.com/ayushsingh82) |
+| **Kaushal** | Co-founder · Engineering Lead | [@kaushal0398](https://github.com/kaushal0398) |
 
 ## License
 

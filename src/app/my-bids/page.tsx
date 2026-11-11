@@ -20,7 +20,7 @@ import { shortHash } from "@/lib/format";
 function statusStyle(state: string) {
   switch (state) {
     case "locked":
-      return "border-seal/40 text-seal";
+      return "border-seal/40 text-seal-fg";
     case "claimed":
       return "border-verified/40 text-verified";
     case "reclaimed":
@@ -107,10 +107,10 @@ export default function MyBidsPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl px-5 py-12">
+    <div className="mx-auto min-h-screen max-w-6xl px-5 py-12">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-seal">
+          <p className="text-xs uppercase tracking-[0.2em] text-seal-fg">
             Your activity
           </p>
 
@@ -138,21 +138,21 @@ export default function MyBidsPage() {
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="border border-line bg-black/40 p-4">
+        <div className="border border-line bg-bg/40 p-4">
           <p className="text-xs text-muted">Total bids</p>
           <p className="mt-2 font-mono text-2xl">
             {bids.length}
           </p>
         </div>
 
-        <div className="border border-line bg-black/40 p-4">
+        <div className="border border-line bg-bg/40 p-4">
           <p className="text-xs text-muted">Locked checks</p>
           <p className="mt-2 font-mono text-2xl">
             {bids.filter((b) => b.paymentCheck.state === "locked").length}
           </p>
         </div>
 
-        <div className="col-span-2 border border-line bg-black/40 p-4 sm:col-span-1">
+        <div className="col-span-2 border border-line bg-bg/40 p-4 sm:col-span-1">
           <p className="text-xs text-muted">Wallet</p>
           <p className="mt-2 truncate font-mono text-sm">
             {account ?? "Not connected"}
@@ -161,8 +161,8 @@ export default function MyBidsPage() {
       </div>
 
       {!sessionToken && (
-        <div className="mt-8 border border-line bg-black/40 p-8 text-center">
-          <Wallet className="mx-auto size-8 text-seal" />
+        <div className="mt-8 border border-line bg-bg/40 p-8 text-center">
+          <Wallet className="mx-auto size-8 text-seal-fg" />
 
           <h2 className="mt-4 text-lg font-semibold">
             Connect your wallet
@@ -204,7 +204,7 @@ export default function MyBidsPage() {
       )}
 
       {sessionToken && !loading && !error && bids.length === 0 && (
-        <div className="mt-8 border border-line bg-black/40 p-10 text-center">
+        <div className="mt-8 border border-line bg-bg/40 p-10 text-center">
           <Lock className="mx-auto size-8 text-muted" />
 
           <h2 className="mt-4 text-lg font-semibold">
@@ -230,7 +230,7 @@ export default function MyBidsPage() {
           {bids.map((bid) => (
             <article
               key={bid.id}
-              className="border border-line bg-black/40 p-5 sm:p-6"
+              className="border border-line bg-bg/40 p-5 sm:p-6"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -271,7 +271,7 @@ export default function MyBidsPage() {
                   </p>
                   <Link
                     href={`/my-bids/${encodeURIComponent(bid.id)}`}
-                    className="mt-1 block break-all font-mono text-xs text-seal hover:underline"
+                    className="mt-1 block break-all font-mono text-xs text-seal-fg hover:underline"
                   >
                     {bid.receiptId}
                   </Link>
@@ -281,7 +281,7 @@ export default function MyBidsPage() {
                   <p className="text-xs text-muted">
                     Commitment
                   </p>
-                  <p className="mt-1 font-mono text-xs text-seal">
+                  <p className="mt-1 font-mono text-xs text-seal-fg">
                     {shortHash(bid.commitment, 12, 8)}
                   </p>
                 </div>
@@ -319,7 +319,7 @@ export default function MyBidsPage() {
 
                 <Link
                   href={`/launches/${encodeURIComponent(bid.launchId)}`}
-                  className="inline-flex items-center gap-2 text-sm text-seal hover:underline"
+                  className="inline-flex items-center gap-2 text-sm text-seal-fg hover:underline"
                 >
                   View launch
                   <ExternalLink className="size-3.5" />
@@ -335,6 +335,6 @@ export default function MyBidsPage() {
         No real funds are transferred or locked. Bid amounts
         and decrypted bid contents are not displayed here.
       </p>
-    </main>
+    </div>
   );
 }

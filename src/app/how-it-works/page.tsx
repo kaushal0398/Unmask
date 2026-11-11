@@ -15,9 +15,9 @@ const EXAMPLE: Bid[] = [
 ];
 
 const STEPS = [
-  { Art: SealStepArt, tone: "text-seal", n: "01", title: "Create", who: "The creator", text: "Sets the token, how many tokens are for sale, a reserve price, the bidding window and an optional cap per account. These are fixed from this moment, so no one can bend them after seeing the bids." },
-  { Art: SealStepArt, tone: "text-seal", n: "02", title: "Bid", who: "A buyer", text: "Chooses the most they'd pay per token and how many they want. The bid is encrypted so only the enclave can read it, and the most they could owe is locked in a payment check they control." },
-  { Art: WaitStepArt, tone: "text-seal", n: "03", title: "Close", who: "The clock", text: "Bidding stops at the deadline. The public sees how many bids there are, never an amount. A buyer who changes their mind can withdraw their payment check, which only cancels their own bid." },
+  { Art: SealStepArt, tone: "text-seal-fg", n: "01", title: "Create", who: "The creator", text: "Sets the token, how many tokens are for sale, a reserve price, the bidding window and an optional cap per account. These are fixed from this moment, so no one can bend them after seeing the bids." },
+  { Art: SealStepArt, tone: "text-seal-fg", n: "02", title: "Bid", who: "A buyer", text: "Chooses the most they'd pay per token and how many they want. The bid is encrypted so only the enclave can read it, and the most they could owe is locked in a payment check they control." },
+  { Art: WaitStepArt, tone: "text-seal-fg", n: "03", title: "Close", who: "The clock", text: "Bidding stops at the deadline. The public sees how many bids there are, never an amount. A buyer who changes their mind can withdraw their payment check, which only cancels their own bid." },
   { Art: ClearStepArt, tone: "text-verified", n: "04", title: "Clear", who: "The enclave", text: "Sorts the bids by limit price and fills them from the top until the supply is sold. The price of the last bid filled is the clearing price. Every winner pays it. Bids at that price share what is left pro-rata." },
   { Art: ClearStepArt, tone: "text-verified", n: "05", title: "Settle", who: "The enclave", text: "Sends tokens to winners, returns every unused amount to its bidder, and sends the proceeds to the creator. Nobody has to ask for a refund." },
   { Art: VerifyStepArt, tone: "text-verified", n: "06", title: "Verify", who: "Anyone", text: "The code hash, the input hash, the attestation and the result are published. Anyone can recompute them and check the transfers on chain." },
@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
         <Container>
           <ol className="grid gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-3">
             {STEPS.map((s) => (
-              <li key={s.n} className="bg-black p-6 sm:p-7">
+              <li key={s.n} className="bg-bg p-6 sm:p-7">
                 <div className="flex items-center justify-between font-mono text-xs text-faint">
                   <span>{s.n}</span>
                   <span className="border border-line-strong px-2 py-0.5">{s.who}</span>
@@ -66,11 +66,11 @@ export default function HowItWorksPage() {
               <p className="font-mono text-xs uppercase tracking-widest text-verified">The auction rule</p>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Uniform price, found after the close.</h2>
               <ol className="mt-8 space-y-5 text-sm leading-relaxed text-muted">
-                <li className="flex gap-4"><Mono className="text-seal">1</Mono><span>Sort bids by limit price, highest first.</span></li>
-                <li className="flex gap-4"><Mono className="text-seal">2</Mono><span>Fill them in that order until the supply is sold.</span></li>
-                <li className="flex gap-4"><Mono className="text-seal">3</Mono><span>The clearing price is the limit of the last bid filled, even partly. If demand at or above the reserve falls short of the supply, it is the reserve.</span></li>
-                <li className="flex gap-4"><Mono className="text-seal">4</Mono><span>Every winner pays the clearing price for what they get, not their own limit.</span></li>
-                <li className="flex gap-4"><Mono className="text-seal">5</Mono><span>Bids at the clearing price share what is left pro-rata. A bid below it wins nothing and is refunded in full.</span></li>
+                <li className="flex gap-4"><Mono className="text-seal-fg">1</Mono><span>Sort bids by limit price, highest first.</span></li>
+                <li className="flex gap-4"><Mono className="text-seal-fg">2</Mono><span>Fill them in that order until the supply is sold.</span></li>
+                <li className="flex gap-4"><Mono className="text-seal-fg">3</Mono><span>The clearing price is the limit of the last bid filled, even partly. If demand at or above the reserve falls short of the supply, it is the reserve.</span></li>
+                <li className="flex gap-4"><Mono className="text-seal-fg">4</Mono><span>Every winner pays the clearing price for what they get, not their own limit.</span></li>
+                <li className="flex gap-4"><Mono className="text-seal-fg">5</Mono><span>Bids at the clearing price share what is left pro-rata. A bid below it wins nothing and is refunded in full.</span></li>
               </ol>
             </div>
             <Card className="p-0">
@@ -116,7 +116,7 @@ export default function HowItWorksPage() {
           <h2 className="text-3xl font-semibold tracking-tight">Words you will see</h2>
           <dl className="mt-10 grid gap-px border border-line bg-line sm:grid-cols-2">
             {GLOSSARY.map(([k, v]) => (
-              <div key={k} className="bg-black p-6">
+              <div key={k} className="bg-bg p-6">
                 <dt className="font-medium text-text">{k}</dt>
                 <dd className="mt-2 text-sm leading-relaxed text-muted">{v}</dd>
               </div>

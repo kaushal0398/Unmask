@@ -13,7 +13,7 @@ const TINTS = ["#f4f4f5", "#d4d4d8", "#a1a1aa", "#e4e4e7", "#8b8b93", "#c4c4cc"]
 function Bar({ side }: { side: RaceSide }) {
   let h = -1;
   return (
-    <div className="flex h-12 w-full overflow-hidden border border-line-strong bg-black p-1" role="img" aria-label={`Bots hold ${Math.round(side.botShare * 100)} percent`}>
+    <div className="flex h-12 w-full overflow-hidden border border-line-strong bg-bg p-1" role="img" aria-label={`Bots hold ${Math.round(side.botShare * 100)} percent`}>
       {side.slices.map((s: Slice, i) => {
         if (s.kind === "human") h++;
         return (
@@ -68,8 +68,8 @@ export function CompareLab() {
           <span className="mt-2 block text-xs text-faint">Each one asks for 15% of the supply.</span>
         </label>
         <label className="block">
-          <span className="flex items-baseline justify-between text-sm"><span className="font-medium">What the bots will pay</span><Mono className="text-lg text-seal">{usd(botLimit)}</Mono></span>
-          <input type="range" min={0.011} max={0.06} step={0.001} value={botLimit} onChange={(e) => setBotLimit(Number(e.target.value))} className="mt-4 w-full accent-[#8b7bff]" aria-label="Bot limit price" />
+          <span className="flex items-baseline justify-between text-sm"><span className="font-medium">What the bots will pay</span><Mono className="text-lg text-seal-fg">{usd(botLimit)}</Mono></span>
+          <input type="range" min={0.011} max={0.06} step={0.001} value={botLimit} onChange={(e) => setBotLimit(Number(e.target.value))} className="mt-4 w-full accent-[#e501a5]" aria-label="Bot limit price" />
           <span className="mt-2 block text-xs text-faint">Raise it and the bots start to win the sealed launch too: they have to pay for it.</span>
         </label>
       </Card>

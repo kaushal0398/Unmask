@@ -10,7 +10,7 @@ import { clearAuction, type Bid, type Outcome } from "@/lib/auction";
  * Sealed is not an illustration: it is the auction rule itself (`clearAuction`).
  */
 
-export type Slice = { id: string; label: string; share: number; kind: "bot" | "human" | "unsold"; avgPrice: number | null };
+export type Slice = { id: string; label: string; share: number; kind: "bot" | "human" | "agent" | "unsold"; avgPrice: number | null };
 
 export type RaceSide = { slices: Slice[]; botShare: number; humansServed: number; humans: number; unsoldShare: number; finalPrice: number };
 
@@ -27,7 +27,7 @@ export function firstCome(bids: Bid[], supply: number, startPrice: number, endPr
       q = Math.min(q, Math.max(0, limitSold - sold));
     }
     q = Math.floor(q);
-    slices.push({ id: b.id, label: b.label, share: q / supply, kind: b.isBot ? "bot" : "human", avgPrice: q > 0 ? priceAt(sold + q / 2) : null });
+    slices.push({ id: b.id, label: b.label, share: q / supply, kind: b.isBot ? "bot" : b.isAgent ? "agent" : "human", avgPrice: q > 0 ? priceAt(sold + q / 2) : null });
     sold += q;
   }
   const humans = bids.filter((b) => !b.isBot).length;
@@ -35,7 +35,7 @@ export function firstCome(bids: Bid[], supply: number, startPrice: number, endPr
   return {
     slices: slices.filter((s) => s.share > 0),
     botShare: slices.filter((s) => s.kind === "bot").reduce((a, s) => a + s.share, 0),
-    humansServed: slices.filter((s) => s.kind === "human" && s.share > 0).length,
+    humansServed: slices.filter((s) => (s.kind === "human" || s.kind === "agent") && s.share > 0).length,
     humans,
     unsoldShare: (supply - sold) / supply,
     finalPrice: priceAt(sold),
@@ -47,7 +47,7 @@ export function sealed(bids: Bid[], supply: number, reserve: number): RaceSide &
   const slices: Slice[] = outcome.fills
     .filter((f) => f.filled > 0)
     .sort((a, b) => b.bid.limit - a.bid.limit || a.bid.id.localeCompare(b.bid.id))
-    .map((f) => ({ id: f.bid.id, label: f.bid.label, share: f.filled / supply, kind: f.bid.isBot ? ("bot" as const) : ("human" as const), avgPrice: outcome.price }));
+    .map((f) => ({ id: f.bid.id, label: f.bid.label, share: f.filled / supply, kind: f.bid.isBot ? ("bot" as const) : f.bid.isAgent ? ("agent" as const) : ("human" as const), avgPrice: outcome.price }));
   if (outcome.unsold > 0) slices.push({ id: "unsold", label: "unsold", share: outcome.unsold / supply, kind: "unsold", avgPrice: null });
   return {
     outcome,

@@ -9,6 +9,9 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
+import { AgentMode, type AgentApplied } from "@/components/agent-mode";
+import { FundFromChain } from "@/components/fund-from-chain";
+import { emptyPayout, PayoutFields, payoutProblems, toPayout, type PayoutDraft } from "@/components/payout-fields";
 import { PaymentCheckPanel } from "@/components/payment-check-panel";
 import { useToast } from "@/components/toast";
 import { useConfirm } from "@/components/confirm";
@@ -104,6 +107,10 @@ export function BidForm({
     duplicateBid?: boolean;
   } | null>(null);
 
+  const [agentOn, setAgentOn] = useState(false);
+  const [agent, setAgent] = useState<AgentApplied | null>(null);
+  const [payout, setPayout] = useState<PayoutDraft>(emptyPayout);
+
   const [withdrawing, setWithdrawing] = useState(false);
   const [reclaiming, setReclaiming] = useState(false);
 
@@ -138,8 +145,12 @@ export function BidForm({
     );
   }
 
+  // The payout box shows its own errors next to the field; they still block sealing.
+  const payoutIssues = payoutProblems(payout);
+  if (agentOn && !agent) problems.push("Set and sign the agent's rules first, or turn agent mode off.");
+
   const ready =
-    limit !== "" && qty !== "" && problems.length === 0;
+    limit !== "" && qty !== "" && problems.length === 0 && payoutIssues.length === 0;
 
   const locked = ready ? l * q : 0;
 
@@ -235,6 +246,8 @@ export function BidForm({
           id: check.id,
           key,
         },
+        ...(agentOn && agent ? { agent: agent.claim } : {}),
+        ...(toPayout(payout) ? { payout: toPayout(payout) } : {}),
       };
 
       const sealed = await sealBid(plaintextBid, enclave);
@@ -389,7 +402,7 @@ export function BidForm({
               {i < stepIndex ? (
                 <Check className="size-4 text-verified" />
               ) : i === stepIndex ? (
-                <Loader2 className="size-4 animate-spin text-seal" />
+                <Loader2 className="size-4 animate-spin text-seal-fg" />
               ) : (
                 <span className="size-4 rounded-none border border-line-strong" />
               )}
@@ -432,7 +445,7 @@ export function BidForm({
           <div className="flex justify-between gap-4">
             <dt className="text-muted">Commitment</dt>
             <dd>
-              <Mono className="text-seal">
+              <Mono className="text-seal-fg">
                 {shortHash(receipt.commitment, 10, 8)}
               </Mono>
             </dd>
@@ -461,7 +474,7 @@ export function BidForm({
           </Button>
         </div>
 
-        <p className="mt-5 border border-line bg-black/40 p-4 text-xs leading-relaxed text-muted">
+        <p className="mt-5 border border-line bg-bg/40 p-4 text-xs leading-relaxed text-muted">
           Development mode: the payment provider and enclave are
           currently mocks. No real funds are locked, and production
           settlement and TEE privacy are not yet implemented.
@@ -489,7 +502,7 @@ export function BidForm({
           Place a sealed bid
         </h3>
 
-        <span className="flex items-center gap-1.5 text-xs text-seal">
+        <span className="flex items-center gap-1.5 text-xs text-seal-fg">
           <Lock className="size-3.5" />
           private
         </span>
@@ -568,7 +581,7 @@ export function BidForm({
             Most you would pay per token
           </span>
 
-          <div className="mt-2 flex items-center rounded-none border border-line-strong bg-black px-4 focus-within:bg-white/[0.03]">
+          <div className="mt-2 flex items-center rounded-none border border-line-strong bg-bg px-4 focus-within:bg-white/[0.03]">
             <span className="text-muted">$</span>
 
             <input
@@ -576,7 +589,7 @@ export function BidForm({
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
               placeholder={String(launch.reserve * 3)}
-              disabled={biddingClosed || duplicateBid}
+              disabled={biddingClosed || duplicateBid || (agentOn && !!agent)}
               className="w-full bg-transparent px-2 py-3 font-mono text-lg outline-none placeholder:text-faint"
               aria-label="Limit price per token in dollars"
             />
@@ -592,13 +605,13 @@ export function BidForm({
             How many tokens you want
           </span>
 
-          <div className="mt-2 flex items-center rounded-none border border-line-strong bg-black px-4 focus-within:bg-white/[0.03]">
+          <div className="mt-2 flex items-center rounded-none border border-line-strong bg-bg px-4 focus-within:bg-white/[0.03]">
             <input
               inputMode="numeric"
               value={qty}
               onChange={(e) => setQty(e.target.value)}
               placeholder={String(Math.floor(cap / 10))}
-              disabled={biddingClosed || duplicateBid}
+              disabled={biddingClosed || duplicateBid || (agentOn && !!agent)}
               className="w-full bg-transparent py-3 font-mono text-lg outline-none placeholder:text-faint"
               aria-label="Quantity of tokens"
             />
@@ -615,6 +628,25 @@ export function BidForm({
           </span>
         </label>
 
+        <div className="space-y-3">
+          <label className="flex cursor-pointer items-center gap-3 text-sm">
+            <input type="checkbox" className="accent-[#e501a5]" checked={agentOn} disabled={biddingClosed || duplicateBid || !account} onChange={(e) => { setAgentOn(e.target.checked); if (!e.target.checked) setAgent(null); }} />
+            <span className="text-text">Let an agent place this bid inside rules I set</span>
+          </label>
+          {agentOn && account && (
+            <AgentMode
+              launch={launch}
+              account={account}
+              applied={agent}
+              disabled={biddingClosed || duplicateBid}
+              onApply={(a) => { setAgent(a); setLimit(String(a.limit)); setQty(String(a.qty)); }}
+              onClear={() => setAgent(null)}
+            />
+          )}
+          <PayoutFields value={payout} onChange={setPayout} account={account} disabled={biddingClosed || duplicateBid} />
+          <FundFromChain amountUsd={locked} disabled={biddingClosed || duplicateBid} />
+        </div>
+
         {problems.length > 0 && !duplicateBid && (
           <ul
             className="space-y-1 text-sm text-danger"
@@ -626,7 +658,7 @@ export function BidForm({
           </ul>
         )}
 
-        <div className="rounded-none border border-line bg-black/40 p-4 text-sm">
+        <div className="rounded-none border border-line bg-bg/40 p-4 text-sm">
           <div className="flex justify-between">
             <span className="text-muted">
               Maximum bid amount

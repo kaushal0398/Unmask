@@ -17,7 +17,7 @@ const columns = [
     title: "Learn",
     links: [
       { href: "/how-it-works", label: "How it works" },
-      { href: "/compare", label: "Sealed vs first-come" },
+      { href: "/compare", label: "Unmask vs first-come" },
       { href: "/faq", label: "FAQ" },
     ],
   },
@@ -40,11 +40,11 @@ export function Footer() {
       <Container className="py-16">
         <div className="grid gap-12 lg:grid-cols-[1.3fr_2fr]">
           <div>
-            <Link href="/" className="flex items-center gap-2.5 text-lg font-semibold tracking-tight" aria-label="Sealed, home">
-              <LogoMark className="size-8 text-text" /> Sealed
+            <Link href="/" className="flex items-center gap-3 text-3xl font-semibold tracking-tight" aria-label="Unmask, home">
+              <LogoMark className="size-16" /> Unmask
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted">
-              Sealed-bid token launches on NEAR. Everyone bids in secret, everyone pays the same price, and anyone can check how it was run.
+              The token launch where bots lose their edge. Bid blind, win fair, check everything. Sealed-bid launches on NEAR.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
@@ -68,9 +68,8 @@ export function Footer() {
       </Container>
 
       <div className="relative overflow-hidden border-t border-line" aria-hidden>
-        <div className="grid-fade pointer-events-none absolute inset-0 opacity-60" />
-        <p className="relative -mb-[3vw] select-none px-2 text-center text-[27vw] font-extrabold uppercase leading-[0.82] tracking-tighter text-transparent [-webkit-text-stroke:1px_rgb(255_255_255/0.12)] sm:text-[24vw]">
-          <span className="bg-gradient-to-b from-white/25 via-seal/20 to-transparent bg-clip-text">Sealed</span>
+        <p className="relative -mb-[3vw] select-none px-2 text-center text-[27vw] font-extrabold uppercase leading-[0.82] tracking-tighter text-white [-webkit-text-stroke:2px_#ffffff] sm:text-[24vw]">
+          Unmask
         </p>
       </div>
     </footer>

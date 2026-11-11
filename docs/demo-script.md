@@ -1,23 +1,27 @@
-# Demo script (about 2 minutes)
+# Demo script (about 3 and a half minutes)
 
-Press `d` (or open any page with `?demo=1`) to show the demo controls. Use the demo wallet unless the real wallet is tested.
+The short version. Setup, the three plans, troubleshooting and the full pre-flight list are in [`DEMO_GUIDE.md`](DEMO_GUIDE.md) and [`DEMO_CHECKLIST.md`](DEMO_CHECKLIST.md).
+
+> The earlier version of this script used the demo wallet to seal a bid and a button that fast-forwards the clock. Neither works any more: the bid flow now needs a real signed-in wallet. This script uses what works today.
 
 | Time | On screen | Say |
 |---|---|---|
-| 0:00 | Home: the bots-versus-sealed race | "On most launches the first buyers win. Bots watch, buy in the first blocks, sell into everyone else." |
-| 0:15 | Press play on the race | "Same bids, two launches. First-come: bots take most of it. Sealed: they win nothing." |
-| 0:30 | `/launches/moonbean`, countdown | "Here everyone bids in secret. All anyone sees is a count." |
-| 0:40 | Connect, enter 0.05 and 10,000, Seal | "The bid is encrypted in my browser to the enclave's key. Funds sit in a payment check I control." |
-| 1:00 | Withdraw, then bid again (shows the confirm dialogs) | "I can take it back any time before the close." |
-| 1:10 | Demo panel: Skip to the close, then 600× | "Window closes. The enclave opens the bids and finds one price." |
-| 1:30 | Settled view, the ladder | "Everyone to the left pays the same clearing price. Bots bid low and were priced out." |
-| 1:45 | `/verify`, run the checks, then tick "pretend someone cheated" | "Anyone can recompute this. Change one number and a check fails." |
-| 2:00 | Close | "Fairness comes from the rule and the proof, not from trusting us." |
+| 0:00 | Home | "The token launch where bots lose their edge. Bid blind, win fair, check everything." |
+| 0:15 | The race, press play | "First-come: bots take most of it. Sealed: they win nothing. The cyan bar is an agent bidding inside rules its owner set." |
+| 0:40 | The open launch | "Everyone bids in secret. All anyone sees is a count." |
+| 0:55 | Agent mode, set rules | "The agent can only bid inside limits I set, and the check runs again at settlement." |
+| 1:15 | Payout fields, bad then good address | "I can send my refund to another chain. A bad address is caught before I seal." |
+| 1:30 | Pay from another chain, get a price | "A live price from NEAR Intents. A preview: nothing is paid." |
+| 1:55 | The closed launch, then Settle | "The window has closed. The engine opens the bids and finds one price." |
+| 2:15 | The result | "$0.03 for everyone. The snipers were priced out. This refund goes to Arbitrum: a plan, nothing is sent yet." |
+| 2:35 | Bids left out, then the evidence | "Two bids were left out with reasons. This was settled by the development enclave: reproducible, not attested." |
+| 3:00 | Verify this launch, Run the checks | "It rebuilds the input from the public numbers, runs the rule again in my browser and checks the money. Four checks pass. Two say not checked: the code and the attestation. I can't check those from here, so they don't count as passes." |
+| 3:20 | Close | "Fairness comes from the rule and the proof, not from trusting us, and where we can't prove something yet, it says so." |
 
-Say clearly: this build runs on demo data and a stand-in for the enclave; no funds move. Update this line once the core is connected.
+Say this clearly: **the enclave and the payment checks are development stand-ins, and no funds move.** Update this line when the real parts are connected.
 
 ## X post draft
 
-> Built at the NEAR Hackathon: Sealed, a token launch where everyone bids in secret and everyone pays the same price, so bots can't snipe it by being first. A hardware enclave finds the one fair price, and anyone can check afterwards that it ran honestly. Demo: <video link> · Code: <repo link> #NEARHackathon
+> Built at the NEAR Hackathon: Unmask, a token launch where everyone bids in secret and everyone pays the same price, so bots can't snipe it by being first. The Rust engine finds the one fair price, an agent can only bid inside rules you set, and anyone can check the result. Demo: <video link> · Code: <repo link> #NEARHackathon
 
-(Replace the links, and add the handles the organizers ask for. Posting is yours to do.)
+(Replace the links, and add the handles the organizers ask for. Posting is yours to do. Do not say "attested" or "TEE" until that is true.)

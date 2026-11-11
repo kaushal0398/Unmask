@@ -4,6 +4,18 @@ Updated 30 Oct. Hackathon development 1–14 Nov 2026, submit by 14 Nov 23:59 UT
 
 **One line:** the whole interface is built and tested on demo data. Everything that touches a chain, an enclave or real money is not built, and that is the teammates' part below. The two sides meet at one file: [`src/lib/api/types.ts`](../src/lib/api/types.ts) (see [`api-contract.md`](api-contract.md)).
 
+## Status on 9 Nov (read this first; the sections below are the older record)
+
+The product is now called **Unmask**; the theme is pure black with pink `#E501A5` and a white-bordered button style (older sections still say amber/violet and "Sealed").
+
+| Area | Now |
+|---|---|
+| Backend (Fastify, PostgreSQL, Prisma) | Built for local development: wallet sign-in sessions, launches, payment checks (mock), sealed bids, receipts, **enclave key, settle, result** |
+| Frontend to backend | `getApi()` returns the HTTP adapter. Enclave key and result now come from the backend |
+| Rust auction engine | `enclave/auction-engine`, exact integers with 256-bit intermediates, matches TypeScript on 12 shared cases (`shared/test-vectors/auction-v1-cases.json`) |
+| Settlement | Works on one machine with a **development enclave**: not confidential, not attested ([`settlement-dev.md`](settlement-dev.md)) |
+| Still not built | Real OutLayer enclave and attestation, real payment checks and fund movement, NEP-141 token and payouts, deployment, demo video, submission |
+
 ## Done (frontend, on demo data)
 
 | Area | State |
@@ -59,7 +71,6 @@ Updated 30 Oct. Hackathon development 1–14 Nov 2026, submit by 14 Nov 23:59 UT
 - [ ] Preview-image check: paste a link on X.
 
 ### Everyone
-- [ ] Send the organizer questions ([`questions-for-organizers.md`](questions-for-organizers.md)) and keep the answer in writing.
 - [ ] Make the repository public and deploy a hosted preview ([`deploy.md`](deploy.md)).
 - [ ] Record the demo ([`demo-script.md`](demo-script.md)), post on X, fill in the submission form ([`submission-checklist.md`](submission-checklist.md)).
 

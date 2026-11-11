@@ -15,9 +15,10 @@ import { TokenArt } from "@/components/token-art";
 import { useToast } from "@/components/toast";
 import { useWallet } from "@/components/wallet";
 import { getApi } from "@/lib/api";
-import { Badge, Button, Card, Mono, cx } from "@/components/ui";
+import { Badge, Button, Card, DemoNote, Mono, cx } from "@/components/ui";
 import type { Launch } from "@/lib/demo";
 import type { ReceiptVerification } from "@/lib/api/types";
+import { VerifyBackendLaunch } from "@/components/verify-launch";
 import { shortHash } from "@/lib/format";
 import { runChecks, type Check as CheckResult } from "@/lib/verify-demo";
 
@@ -32,6 +33,7 @@ const TITLES = [
 export function VerifyPanel({ launches }: { launches: Launch[] }) {
   const params = useSearchParams();
   const wanted = params.get("launch");
+  // A launch id that is not one of the samples is a real launch from the backend: verify THAT one, never a sample.
   const { account, auth, mode } = useWallet();
   const [id, setId] = useState(
     launches.find((l) => l.id === wanted)?.id ?? launches[0]!.id,
@@ -57,6 +59,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
   const [revealError, setRevealError] = useState<string | null>(null);
 
   const toast = useToast();
+  const backendId = wanted && !launches.some((l) => l.id === wanted) ? wanted : null;
   const launch = launches.find((l) => l.id === id)!;
   const failed = results.filter((r) => r.status === "fail");
   const receiptFailed = receiptResult?.checks.filter((check) => !check.passed).length ?? 0;
@@ -237,6 +240,11 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
 
   return (
     <div className="space-y-8">
+      {backendId ? (
+        <DemoNote>A real launch from the development backend, not sample data. The enclave is a stand-in, so what can be checked is the arithmetic and the hashes, not who ran the code.</DemoNote>
+      ) : (
+        <DemoNote />
+      )}
       <Card className="p-5 sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -262,7 +270,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
             }}
             placeholder="Paste receipt ID (e.g. rcpt_0001)"
             autoComplete="off"
-            className="min-w-0 flex-1 rounded-none border border-line bg-black/30 px-4 py-3 text-sm text-text outline-none transition-colors placeholder:text-faint focus:border-verified/60"
+            className="min-w-0 flex-1 rounded-none border border-line bg-bg/30 px-4 py-3 text-sm text-text outline-none transition-colors placeholder:text-faint focus:border-verified/60"
           />
           <button
             type="submit"
@@ -373,7 +381,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
                   accept=".json,application/json"
                   onChange={(event) => void verifyRevealFile(event)}
                   disabled={revealRunning || receiptResult.status !== "record_verified"}
-                  className="block w-full text-xs text-muted file:mr-3 file:border file:border-line-strong file:bg-black file:px-3 file:py-2 file:text-xs file:text-text hover:file:bg-white/5 disabled:opacity-50"
+                  className="block w-full text-xs text-muted file:mr-3 file:border file:border-line-strong file:bg-bg file:px-3 file:py-2 file:text-xs file:text-text hover:file:bg-white/5 disabled:opacity-50"
                 />
               </label>
               {revealRunning && (
@@ -424,6 +432,9 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
         )}
       </Card>
 
+      {backendId ? (
+        <VerifyBackendLaunch id={backendId} />
+      ) : (
       <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
         <div className="space-y-5">
           <Card className="p-5">
@@ -504,7 +515,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                           <div className="border-t border-line px-5 pb-5 pt-4">
                             <p className={cx("text-sm leading-relaxed", r.status === "fail" ? "text-danger" : "text-muted")}>{r.detail}</p>
-                            <dl className="mt-4 space-y-2 rounded-none bg-black/50 p-4 text-xs">
+                            <dl className="mt-4 space-y-2 rounded-none bg-bg/50 p-4 text-xs">
                               {r.evidence.map(([k, v]) => (
                                 <div key={k} className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-6">
                                   <dt className="text-faint">{k}</dt>
@@ -525,6 +536,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
           <div className="mt-6"><Badge tone="neutral">Demo: hashing and re-running the auction are real; the attestation needs the enclave</Badge></div>
         </div>
       </div>
+      )}
     </div>
   );
 }

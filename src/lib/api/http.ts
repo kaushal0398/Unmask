@@ -2,7 +2,11 @@
 import {
   ApiError,
   CreateStepError,
+  type Allocation,
+  type PlannedTransfer,
   type CreateLaunchInput,
+  type EnclaveKey,
+  type Result,
   type CreateStep,
   type Launch,
   type LaunchApi,
@@ -11,6 +15,7 @@ import {
   type ReceiptVerification,
 } from "@/lib/api/types";
 import { MockLaunchApi } from "@/lib/api/mock";
+import type { RawResult } from "@/lib/verify-result";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4001";
@@ -41,6 +46,30 @@ type BackendLaunch = {
   bidCount: number;
   tokenContract: string | null;
   codeHash: string | null;
+};
+
+type BackendResult = {
+  mode: "dev" | "outlayer" | "tee";
+  launchId: string;
+  clearingPrice: string;
+  sold: string;
+  totalRaised: string;
+  outcome: {
+    unsold: string;
+    fills: Array<{ bidId?: string; bidder: string; limitPrice: string; requested: string; filled: string; payment: string; refund: string }>;
+    skipped?: Array<{ bidId: string; reason: string }>;
+    payouts?: PlannedTransfer[];
+    payoutsExecuted?: boolean;
+    /** SHA-256 of the engine's exact output bytes: the output hash an attestation would cover. */
+    engineOutputHash?: string;
+    engineKind?: "wasm" | "native";
+    agents?: Array<{ bidId: string; bidder: string; rulesHash: string; signed: boolean }>;
+  };
+  inputHash: string;
+  codeHash: string;
+  attestation: string | null;
+  skippedBids: number;
+  settledAt: string;
 };
 
 type BackendPaymentCheck = {
@@ -200,6 +229,50 @@ async function request<T>(
   return data as T;
 }
 
+async function toResult(r: BackendResult): Promise<Result> {
+  const unit = (value: string, decimals: number) => Number(value) / 10 ** decimals;
+  const agentByBidder = new Map((r.outcome.agents ?? []).map((a) => [a.bidder, a]));
+  const allocations: Allocation[] = r.outcome.fills.map((f) => {
+    const agent = agentByBidder.get(f.bidder);
+    return {
+      bidder: f.bidder,
+      limit: unit(f.limitPrice, PAYMENT_DECIMALS),
+      qty: unit(f.requested, TOKEN_DECIMALS),
+      filled: unit(f.filled, TOKEN_DECIMALS),
+      paid: unit(f.payment, PAYMENT_DECIMALS),
+      refund: unit(f.refund, PAYMENT_DECIMALS),
+      ...(agent ? { agent: { signed: agent.signed } } : {}),
+    };
+  });
+  // The hash of the engine's own output bytes when the backend recorded it; otherwise a hash of what we were sent.
+  const resultHash =
+    r.outcome.engineOutputHash ??
+    Array.from(
+      new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(r.outcome)))),
+      (b) => b.toString(16).padStart(2, "0"),
+    ).join("");
+  const skipped = r.outcome.skipped ?? [];
+  return {
+    launchId: r.launchId,
+    clearingPrice: unit(r.clearingPrice, PAYMENT_DECIMALS),
+    sold: unit(r.sold, TOKEN_DECIMALS),
+    unsold: unit(r.outcome.unsold, TOKEN_DECIMALS),
+    raised: unit(r.totalRaised, PAYMENT_DECIMALS),
+    allocations,
+    totalBids: allocations.length + r.skippedBids,
+    codeHash: r.codeHash,
+    inputHash: r.inputHash,
+    // Only a verified attestation counts as "tdx". An OutLayer run keeps its URL, but is not called attested.
+    attestation: { kind: r.mode === "tee" ? "tdx" : "dev", quote: r.mode === "tee" ? (r.attestation ?? "") : "", codeHash: r.codeHash, inputHash: r.inputHash, resultHash, signer: "dev-enclave" },
+    settledAt: r.settledAt,
+    mode: r.mode,
+    ...(r.mode === "outlayer" && r.attestation ? { attestationUrl: r.attestation } : {}),
+    payouts: r.outcome.payouts ?? [],
+    payoutsExecuted: r.outcome.payoutsExecuted ?? false,
+    skipped,
+  };
+}
+
 export class HttpLaunchApi implements LaunchApi {
   private readonly demo = new MockLaunchApi();
 
@@ -217,10 +290,15 @@ export class HttpLaunchApi implements LaunchApi {
   }
 
   async listLaunches(): Promise<Launch[]> {
-    const [demoLaunches, response] = await Promise.all([
-      this.demo.listLaunches(),
-      request<{ launches: BackendLaunch[] }>("/v1/launches"),
-    ]);
+    const demoLaunches = await this.demo.listLaunches();
+    let response: { launches: BackendLaunch[] };
+    try {
+      response = await request<{ launches: BackendLaunch[] }>("/v1/launches");
+    } catch (error) {
+      // With the backend off the sample launches still list, so the page is never blank. Any other failure is real.
+      if (error instanceof ApiError && error.code === "network") return demoLaunches;
+      throw error;
+    }
 
     const backendLaunches = response.launches.map(mapLaunch);
     const existingIds = new Set(
@@ -245,9 +323,12 @@ export class HttpLaunchApi implements LaunchApi {
     } catch (error) {
       if (
         error instanceof ApiError &&
-        error.code === "not_found"
+        (error.code === "not_found" || error.code === "network")
       ) {
-        return this.demo.getLaunch(id);
+        // A sample launch still works when the backend is off or does not know it. A launch the backend should
+        // know (not a sample) still reports the real error, so a down backend is never hidden behind fake data.
+        const sample = await this.demo.getLaunch(id);
+        if (sample || error.code === "not_found") return sample;
       }
 
       throw error;
@@ -323,12 +404,47 @@ export class HttpLaunchApi implements LaunchApi {
     }
   }
 
-  getResult(id: string) {
-    return this.demo.getResult(id);
+  async getResult(id: string): Promise<Result | null> {
+    try {
+      const response = await request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/result`);
+      return await toResult(response.result);
+    } catch (error) {
+      // The backend does not know the sample launches and answers 404 for them. A sample still has its own sample
+      // result. A launch id that is not a sample never gets one (this.demo.getLaunch is null for it).
+      if (error instanceof ApiError && error.code === "not_found") {
+        if (await this.demo.getLaunch(id)) return this.demo.getResult(id);
+        return null;
+      }
+      throw error;
+    }
   }
 
-  getEnclaveKey(id: string) {
-    return this.demo.getEnclaveKey(id);
+  async getVerification(id: string) {
+    try {
+      const [launch, result] = await Promise.all([
+        request<{ launch: BackendLaunch }>(`/v1/launches/${encodeURIComponent(id)}`),
+        request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/result`),
+      ]);
+      return {
+        launch: { id: launch.launch.id, supplyAtomic: launch.launch.supplyAtomic, reserveAtomic: launch.launch.reserveAtomic, tokenDecimals: launch.launch.tokenDecimals },
+        result: result.result as unknown as RawResult,
+      };
+    } catch (error) {
+      if (error instanceof ApiError && error.code === "not_found") return null;
+      throw error;
+    }
+  }
+
+  async settleLaunch(id: string): Promise<Result> {
+    const token = this.requireSession();
+    const response = await request<{ result: BackendResult }>(`/v1/launches/${encodeURIComponent(id)}/settle`, { method: "POST", body: "{}" }, token);
+    return toResult(response.result);
+  }
+
+  /** The key a bid is sealed to. Never falls back to a demo key: a bid sealed to it could not be opened. */
+  async getEnclaveKey(id: string): Promise<EnclaveKey> {
+    const response = await request<{ key: EnclaveKey }>(`/v1/launches/${encodeURIComponent(id)}/enclave-key`);
+    return response.key;
   }
 
   async createPaymentCheck(input: {
@@ -485,7 +601,7 @@ export class HttpLaunchApi implements LaunchApi {
     return this.demo.withdrawBid(launchId, bidder);
   }
 
-  positions(account: string) {
+  positions() {
     return this.demo.positions();
   }
 }

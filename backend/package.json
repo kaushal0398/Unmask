@@ -9,16 +9,25 @@
     "start": "node --env-file=.env dist/server.js",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate --schema=prisma/schema.prisma",
-    "db:migrate": "prisma migrate dev --schema=prisma/schema.prisma"
+    "db:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
+    "test": "tsx --test \"src/**/*.test.ts\"",
+    "engine:build": "cargo build --release --manifest-path ../enclave/auction-engine/Cargo.toml",
+    "e2e:settle": "tsx scripts/e2e-settle.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "settle:demo": "tsx scripts/settle-demo.ts",
+    "pretest": "node scripts/ensure-engine.mjs",
+    "e2e:privacy": "tsx scripts/e2e-privacy.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.4.0",
     "@prisma/client": "6.19.3",
     "fastify": "^5.0.0",
+    "libsodium-wrappers": "^0.8.4",
     "near-api-js": "^7.4.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@types/libsodium-wrappers": "^0.7.14",
     "@types/node": "^20.0.0",
     "prisma": "6.19.3",
     "tsx": "^4.0.0",

@@ -28,7 +28,7 @@ export function PortfolioView() {
   if (!account) {
     return (
       <Card className="mx-auto max-w-xl p-10 text-center">
-        <span className="mx-auto grid size-14 place-items-center border border-seal/40 bg-seal/10 text-seal"><Wallet className="size-6" /></span>
+        <span className="mx-auto grid size-14 place-items-center border border-seal/40 bg-seal/10 text-seal-fg"><Wallet className="size-6" /></span>
         <h2 className="mt-5 text-xl font-semibold tracking-tight">Connect a wallet to see your bids</h2>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted">Use your NEAR wallet, or the demo wallet, which holds nothing and signs nothing.</p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">

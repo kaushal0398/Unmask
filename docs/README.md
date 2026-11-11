@@ -12,7 +12,6 @@
 | [`protocols-integrated.md`](protocols-integrated.md) | Each NEAR protocol, how we use it and its status |
 | [`decisions-and-open-questions.md`](decisions-and-open-questions.md) | Decisions to settle and open questions |
 | [`submission-checklist.md`](submission-checklist.md) | What the hackathon form needs |
-| [`questions-for-organizers.md`](questions-for-organizers.md) | Draft questions to send |
 | [`demo-script.md`](demo-script.md) | Video script and X post |
 | [`deploy.md`](deploy.md) | Hosting and environment variables |
 

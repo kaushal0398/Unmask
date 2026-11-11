@@ -5,7 +5,6 @@ import { Container, DemoNote, Eyebrow } from "@/components/ui";
 export function PageHeader({ eyebrow, title, children, tone, demo = false }: { eyebrow: string; title: ReactNode; children?: ReactNode; tone?: "seal" | "verified" | "muted"; demo?: boolean }) {
   return (
     <div className="relative border-b border-line">
-      <div className="grid-fade pointer-events-none absolute inset-0 opacity-70" />
       <Container className="relative py-14 sm:py-20">
         <Eyebrow tone={tone}>{eyebrow}</Eyebrow>
         <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight text-balance sm:text-6xl">{title}</h1>

@@ -1,0 +1,284 @@
+{
+ "launch": {
+  "id": "cmwavnj0m00001ece2e687omx",
+  "name": "DemoCoin",
+  "symbol": "DEMO",
+  "creator": "ayush.testnet",
+  "emoji": "\ud83c\udfad",
+  "hue": 320,
+  "tagline": "Bid blind. Pay one price.",
+  "supplyAtomic": "1000000",
+  "reserveAtomic": "10000",
+  "tokenDecimals": 0,
+  "paymentToken": "usdc.test",
+  "paymentDecimals": 6,
+  "capBps": null,
+  "status": "settled",
+  "opensAt": "2026-11-10T14:01:12.431Z",
+  "closesAt": "2026-11-10T16:00:12.431Z",
+  "bidCount": 11,
+  "tokenContract": null,
+  "codeHash": "f4b00fec8bb8c289da06ce1c0d3afd7175540790ac4dd814573665c4c2b32321"
+ },
+ "result": {
+  "launchId": "cmwavnj0m00001ece2e687omx",
+  "clearingPrice": "30000",
+  "sold": "1000000",
+  "totalRaised": "30000000000",
+  "outcome": {
+   "sold": "1000000",
+   "fills": [
+    {
+     "bidId": "cmwavnj1p00041ece4u9u6nd8",
+     "bidder": "ana.testnet",
+     "filled": "400000",
+     "locked": "20000000000",
+     "refund": "8000000000",
+     "payment": "12000000000",
+     "requested": "400000",
+     "limitPrice": "50000"
+    },
+    {
+     "bidId": "cmwavnj2200081eceptsxnsqn",
+     "bidder": "ayush.testnet",
+     "filled": "300000",
+     "locked": "12000000000",
+     "refund": "3000000000",
+     "payment": "9000000000",
+     "requested": "300000",
+     "limitPrice": "40000"
+    },
+    {
+     "bidId": "cmwavnj23000c1ece7fflea44",
+     "bidder": "chi.testnet",
+     "filled": "300000",
+     "locked": "9000000000",
+     "refund": "0",
+     "payment": "9000000000",
+     "requested": "300000",
+     "limitPrice": "30000"
+    },
+    {
+     "bidId": "cmwavnj25000g1ecedkha7u51",
+     "bidder": "dev.testnet",
+     "filled": "0",
+     "locked": "4000000000",
+     "refund": "4000000000",
+     "payment": "0",
+     "requested": "200000",
+     "limitPrice": "20000"
+    },
+    {
+     "bidId": "cmwavnj26000k1ececfokezt0",
+     "bidder": "agent-owner.testnet",
+     "filled": "0",
+     "locked": "1000000000",
+     "refund": "1000000000",
+     "payment": "0",
+     "requested": "50000",
+     "limitPrice": "20000"
+    },
+    {
+     "bidId": "cmwavnj27000o1ecezdmuczh3",
+     "bidder": "sniper-a.testnet",
+     "filled": "0",
+     "locked": "2250000000",
+     "refund": "2250000000",
+     "payment": "0",
+     "requested": "150000",
+     "limitPrice": "15000"
+    },
+    {
+     "bidId": "cmwavnj2a000s1ece8nygr816",
+     "bidder": "sniper-b.testnet",
+     "filled": "0",
+     "locked": "2250000000",
+     "refund": "2250000000",
+     "payment": "0",
+     "requested": "150000",
+     "limitPrice": "15000"
+    },
+    {
+     "bidId": "cmwavnj2c000w1ece79udzevl",
+     "bidder": "sniper-c.testnet",
+     "filled": "0",
+     "locked": "2250000000",
+     "refund": "2250000000",
+     "payment": "0",
+     "requested": "150000",
+     "limitPrice": "15000"
+    },
+    {
+     "bidId": "cmwavnj2d00101ecem3p8upfk",
+     "bidder": "sniper-d.testnet",
+     "filled": "0",
+     "locked": "2250000000",
+     "refund": "2250000000",
+     "payment": "0",
+     "requested": "150000",
+     "limitPrice": "15000"
+    }
+   ],
+   "agents": [
+    {
+     "bidId": "cmwavnj26000k1ececfokezt0",
+     "bidder": "agent-owner.testnet",
+     "signed": false,
+     "rulesHash": "4732d490f4b18308ccb67bc37dfc2eed58f0dc815e90a6cbb32d204e3b59716d"
+    }
+   ],
+   "supply": "1000000",
+   "unsold": "0",
+   "payouts": [
+    {
+     "to": {
+      "chain": "near",
+      "address": "ana.testnet"
+     },
+     "kind": "refund",
+     "bidId": "cmwavnj1p00041ece4u9u6nd8",
+     "bidder": "ana.testnet",
+     "viaIntents": false,
+     "amountAtomic": "8000000000"
+    },
+    {
+     "to": {
+      "chain": "near",
+      "address": "ana.testnet"
+     },
+     "kind": "tokens",
+     "bidId": "cmwavnj1p00041ece4u9u6nd8",
+     "bidder": "ana.testnet",
+     "viaIntents": false,
+     "amountAtomic": "400000"
+    },
+    {
+     "to": {
+      "chain": "near",
+      "address": "ayush.testnet"
+     },
+     "kind": "refund",
+     "bidId": "cmwavnj2200081eceptsxnsqn",
+     "bidder": "ayush.testnet",
+     "viaIntents": false,
+     "amountAtomic": "3000000000"
+    },
+    {
+     "to": {
+      "chain": "near",
+      "address": "ayush.testnet"
+     },
+     "kind": "tokens",
+     "bidId": "cmwavnj2200081eceptsxnsqn",
+     "bidder": "ayush.testnet",
+     "viaIntents": false,
+     "amountAtomic": "300000"
+    },
+    {
+     "to": {
+      "chain": "near",
+      "address": "chi.testnet"
+     },
+     "kind": "tokens",
+     "bidId": "cmwavnj23000c1ece7fflea44",
+     "bidder": "chi.testnet",
+     "viaIntents": false,
+     "amountAtomic": "300000"
+    },
+    {
+     "to": {
+      "chain": "arb",
+      "address": "0x2527D02599Ba641c19FEa793cD0F167589a0f10D"
+     },
+     "kind": "refund",
+     "bidId": "cmwavnj25000g1ecedkha7u51",
+     "bidder": "dev.testnet",
+     "viaIntents": true,
+     "amountAtomic": "4000000000"
+    },
+    {
+     "to": {
+      "chain": "near",
+      "address": "agent-owner.testnet"
+     },
+     "kind": "refund",
+     "bidId": "cmwavnj26000k1ececfokezt0",
+     "bidder": "agent-owner.testnet",
+     "viaIntents": false,
+     "amountAtomic": "1000000000"
+    },
+    {
+     "to": {
+      "chain": "near",
+      "address": "sniper-a.testnet"
+     },
+     "kind": "refund",
+     "bidId": "cmwavnj27000o1ecezdmuczh3",
+     "bidder": "sniper-a.testnet",
+     "viaIntents": false,
+     "amountAtomic": "2250000000"
+    },
+    {
+     "to": {
+      "chain": "near",
+      "address": "sniper-b.testnet"
+     },
+     "kind": "refund",
+     "bidId": "cmwavnj2a000s1ece8nygr816",
+     "bidder": "sniper-b.testnet",
+     "viaIntents": false,
+     "amountAtomic": "2250000000"
+    },
+    {
+     "to": {
+      "chain": "near",
+      "address": "sniper-c.testnet"
+     },
+     "kind": "refund",
+     "bidId": "cmwavnj2c000w1ece79udzevl",
+     "bidder": "sniper-c.testnet",
+     "viaIntents": false,
+     "amountAtomic": "2250000000"
+    },
+    {
+     "to": {
+      "chain": "near",
+      "address": "sniper-d.testnet"
+     },
+     "kind": "refund",
+     "bidId": "cmwavnj2d00101ecem3p8upfk",
+     "bidder": "sniper-d.testnet",
+     "viaIntents": false,
+     "amountAtomic": "2250000000"
+    }
+   ],
+   "skipped": [
+    {
+     "bidId": "cmwavnj2e00141ecejf9t6f44",
+     "reason": "agent bid breaks its rules: price_above_max"
+    },
+    {
+     "bidId": "cmwavnj2f00181eceuj4eyeyk",
+     "reason": "invalid payout destination (refundTo: not a 0x address with 40 hex characters)"
+    }
+   ],
+   "version": "1",
+   "auctionId": "cmwavnj0m00001ece2e687omx",
+   "engineKind": "native",
+   "totalLocked": "55000000000",
+   "totalRaised": "30000000000",
+   "clearingPrice": "30000",
+   "tokenDecimals": 0,
+   "totalRefunded": "25000000000",
+   "outlayerCallId": null,
+   "payoutsExecuted": false,
+   "engineOutputHash": "cca430194ea7fd5a8fe18347ba73b52d4c3dc2667b9424266eef08b83d0910d4"
+  },
+  "inputHash": "9ff52d440d96a4b6367116881a1be3464e8029e99e1a71e0b632c3cd6f7e28c9",
+  "codeHash": "f4b00fec8bb8c289da06ce1c0d3afd7175540790ac4dd814573665c4c2b32321",
+  "attestation": null,
+  "mode": "dev",
+  "skippedBids": 2,
+  "settledAt": "2026-11-10T16:03:19.459Z"
+ }
+}

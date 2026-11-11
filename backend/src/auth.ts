@@ -24,7 +24,7 @@ if (!RPC_URL) {
   throw new Error("NEAR_RPC_URL is required");
 }
 
-const provider = new JsonRpcProvider({
+export const provider = new JsonRpcProvider({
   url: RPC_URL,
 });
 
@@ -40,7 +40,7 @@ export async function createChallenge(accountId: string) {
   const nonce = randomBytes(32).toString("hex");
 
   const message =
-    `Sign in to Sealed. Challenge: ${nonce}`;
+    `Sign in to Unmask. Challenge: ${nonce}`;
 
   const expiresAt = new Date(
     Date.now() + CHALLENGE_TTL * 1000,

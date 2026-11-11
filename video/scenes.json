@@ -1,0 +1,135 @@
+[
+ {
+  "id": "01-title",
+  "kind": "title",
+  "title": "Unmask",
+  "sub": "The token launch where bots lose their edge.",
+  "say": "Hello, and thank you for watching. This is Unmask. The token launch where bots lose their edge. Bid blind, win fair, check everything."
+ },
+ {
+  "id": "02-problem",
+  "kind": "list",
+  "tag": "THE PROBLEM",
+  "title": "Fast bots win token launches",
+  "items": [
+   "First come, first served rewards the fastest bot",
+   "Everyday buyers get what is left",
+   "Nobody can check the launch was fair"
+  ],
+  "say": "On most token launches, whoever is fastest wins. Bots snipe the supply, regular buyers get what is left, and nobody can check what really happened."
+ },
+ {
+  "id": "03-solution",
+  "kind": "steps",
+  "tag": "THE SOLUTION",
+  "title": "Bid blind. Pay one price.",
+  "items": [
+   [
+    "1",
+    "Seal: your bid is encrypted in your browser"
+   ],
+   [
+    "2",
+    "Close: nobody sees any bid until the window ends"
+   ],
+   [
+    "3",
+    "One price: the engine finds a single price for everyone"
+   ],
+   [
+    "4",
+    "Check: anyone can re-run the result"
+   ]
+  ],
+  "say": "Unmask is a sealed-bid launch on NEAR. You seal your bid in your browser. Nobody sees any bid until the window closes. Then an engine opens them all and finds one price that every winner pays. And anyone can check the result."
+ },
+ {
+  "id": "04-race",
+  "kind": "clip",
+  "tag": "WHY IT WORKS",
+  "cap": "Same bids, two launches",
+  "say": "Here are the same eleven bids on two launches. On a first-come launch, the bots take most of the supply. On a sealed launch, being first means nothing, so the bots win nothing. The cyan bar is an agent bidding inside rules its owner set."
+ },
+ {
+  "id": "05-open",
+  "kind": "clip",
+  "tag": "STEP 1",
+  "cap": "An open launch",
+  "say": "This is an open launch. There is a countdown, and all anyone can see is how many sealed bids there are. Not who bid, not how much. To bid, you pick a limit price and a size, and the browser seals it before it leaves your computer."
+ },
+ {
+  "id": "06-agent",
+  "kind": "clip",
+  "tag": "AGENT MODE",
+  "cap": "Rules for a bidding agent",
+  "say": "You can also let an agent bid for you. You set the rules: a maximum price, a maximum size, and an expiry. The agent can only bid inside them, and the check runs again at settlement. In this recording I am using the demo wallet, so the rules show as unsigned."
+ },
+ {
+  "id": "07-payout",
+  "kind": "clip",
+  "tag": "PAYOUTS",
+  "cap": "Refunds and tokens, anywhere",
+  "say": "You can send your refund to another chain. Type a bad address, and it is caught before you seal. Type a good one, and the warning goes away. Tokens can only go to a NEAR account."
+ },
+ {
+  "id": "08-funding",
+  "kind": "clip",
+  "tag": "NEAR INTENTS",
+  "cap": "Pay from another chain",
+  "say": "You can also pay from another chain. This is a live price from NEAR Intents: about five dollars of USDC on Arbitrum, to deliver five on NEAR. It is a preview. There is no deposit address, and nothing is paid."
+ },
+ {
+  "id": "09-closed",
+  "kind": "clip",
+  "tag": "STEP 2",
+  "cap": "The window closes, then settle",
+  "say": "Now a launch whose window has closed. No more bids are accepted, and only the creator can settle it. For this recording I skip the wallet sign-in and call the very same settle route. The engine opens the bids, and finds one price."
+ },
+ {
+  "id": "10-result",
+  "kind": "clip",
+  "tag": "STEP 3",
+  "cap": "One price for everyone",
+  "say": "Three cents for everyone. One million tokens sold, thirty thousand dollars raised. Whatever they offered, every winner paid exactly this. The snipers bid low and were priced out. Two bids were left out, each with a reason. And this refund goes to Arbitrum. That is a plan: nothing is sent yet."
+ },
+ {
+  "id": "11-verify",
+  "kind": "clip",
+  "tag": "STEP 4",
+  "cap": "Check it yourself",
+  "say": "Now the part that matters. This page rebuilds the input from the public numbers, runs the rule again in your browser, and checks the money. Four checks pass. Two say not checked: whether the code is the published code, and whether hardware signed it. We cannot check those from here, so they do not count as passes."
+ },
+ {
+  "id": "12-cheat",
+  "kind": "clip",
+  "tag": "SAMPLE LAUNCH",
+  "cap": "What cheating looks like",
+  "say": "Here is a sample launch where we pretend someone cheated. The checks catch it: the rule gives a different answer. On a sample, the enclave signature is simulated, but the arithmetic is real. The point is that the result is something you can test, not something you have to trust."
+ },
+ {
+  "id": "13-tour",
+  "kind": "clip",
+  "tag": "THE REST",
+  "cap": "Launches, create, compare",
+  "say": "There is a list of launches, a page to create your own and set the rules once, and a playground to turn the bots up and watch what happens on each side."
+ },
+ {
+  "id": "14-honest",
+  "kind": "list",
+  "tag": "BEING HONEST",
+  "title": "What is real, and what is not yet",
+  "items": [
+   "Real: the Rust auction engine, sealing in the browser, the live price preview",
+   "Stand-ins: the enclave and the payment checks",
+   "Not yet: attestation, and real funds. Nothing is attested, and no money moves"
+  ],
+  "say": "We want to be plain about this. The auction engine, the sealing in your browser, and the live price preview are real. The enclave and the payment checks are development stand-ins. Nothing is attested yet, and no funds move."
+ },
+ {
+  "id": "15-close",
+  "kind": "title",
+  "title": "Unmask",
+  "sub": "Fairness comes from the rule and the proof, not from trusting us.",
+  "say": "Fairness comes from the rule and the proof, not from trusting us. And where we cannot prove something yet, Unmask says so. Thank you."
+ }
+]

@@ -1,0 +1,448 @@
+1
+00:00:00,300 --> 00:00:00,681
+Hello.
+
+2
+00:00:00,681 --> 00:00:03,475
+This is the technical walkthrough of Unmask.
+
+3
+00:00:03,475 --> 00:00:05,063
+No screen demo this time:
+
+4
+00:00:05,063 --> 00:00:11,603
+this is what happens under the hood when you sign in, seal a bid, settle a launch and check the result.
+
+5
+00:00:11,603 --> 00:00:16,620
+Every value you will see on screen was captured from a real run of the backend.
+
+6
+00:00:17,220 --> 00:00:18,912
+First, the architecture.
+
+7
+00:00:18,912 --> 00:00:23,636
+The browser, built with Next.js, does the sealing and the checking.
+
+8
+00:00:23,636 --> 00:00:26,385
+The backend is Fastify with PostgreSQL.
+
+9
+00:00:26,385 --> 00:00:29,910
+It stores ciphertext and nothing else about a bid.
+
+10
+00:00:29,910 --> 00:00:34,845
+A development enclave holds the key, and runs the Rust auction engine.
+
+11
+00:00:34,845 --> 00:00:39,075
+NEAR is used for sign-in, and NEAR Intents for price quotes.
+
+12
+00:00:39,075 --> 00:00:41,472
+The dashed boxes are not done yet:
+
+13
+00:00:41,472 --> 00:00:45,420
+a real enclave with attestation, and real payment locks.
+
+14
+00:00:46,020 --> 00:00:48,401
+Step one is sign-in, with NEP-413.
+
+15
+00:00:48,401 --> 00:00:52,113
+The backend issues a one-time challenge with a nonce.
+
+16
+00:00:52,113 --> 00:00:53,513
+The wallet signs it.
+
+17
+00:00:53,513 --> 00:01:01,637
+The backend verifies the signature, and then asks the NEAR RPC whether that key is a full-access key on the account.
+
+18
+00:01:01,637 --> 00:01:04,438
+Only then does it issue a session token.
+
+19
+00:01:04,438 --> 00:01:08,360
+The challenge is single use and expires in five minutes.
+
+20
+00:01:08,960 --> 00:01:11,003
+Step two is the payment check.
+
+21
+00:01:11,003 --> 00:01:13,930
+Before bidding, you lock funds for the bid.
+
+22
+00:01:13,930 --> 00:01:18,765
+The request names the bidder, the token and the amount in atomic units.
+
+23
+00:01:18,765 --> 00:01:22,850
+Five thousand dollars is five billion units at six decimals.
+
+24
+00:01:22,850 --> 00:01:25,097
+The response carries a claim key.
+
+25
+00:01:25,097 --> 00:01:29,455
+That key later goes inside the sealed bid, never to the backend.
+
+26
+00:01:29,455 --> 00:01:33,540
+Today the check is a database row, and the response says so.
+
+27
+00:01:34,140 --> 00:01:37,659
+Step three is sealing, and it happens in the browser.
+
+28
+00:01:37,659 --> 00:01:39,717
+The bid is a small JSON object:
+
+29
+00:01:39,717 --> 00:01:45,427
+the limit price, the quantity, the payment check and its claim key, and a random salt.
+
+30
+00:01:45,427 --> 00:01:51,469
+The browser encrypts it with a libsodium sealed box, addressed to the enclave's public key.
+
+31
+00:01:51,469 --> 00:01:58,440
+A sealed box uses a fresh ephemeral key pair, so only the holder of the enclave's secret key can open it.
+
+32
+00:01:58,440 --> 00:02:01,760
+Not the site, not the creator, not another bidder.
+
+33
+00:02:02,360 --> 00:02:10,807
+The commitment is a SHA-256 hash over the launch, the bidder, the limit, the quantity, the payment check and the salt, in a fixed order.
+
+34
+00:02:10,807 --> 00:02:12,422
+The claim key is left out.
+
+35
+00:02:12,422 --> 00:02:16,334
+Nobody can guess the amounts from the hash because of the salt.
+
+36
+00:02:16,334 --> 00:02:20,620
+Later you can show the salt, and prove that this exact bid was yours.
+
+37
+00:02:21,220 --> 00:02:22,544
+Step four, submit.
+
+38
+00:02:22,544 --> 00:02:29,091
+The request contains the ciphertext, the commitment, the payment check id and the key id.
+
+39
+00:02:29,091 --> 00:02:29,900
+No amounts.
+
+40
+00:02:29,900 --> 00:02:32,475
+The backend answers with a receipt.
+
+41
+00:02:32,475 --> 00:02:34,387
+This is the row it stores:
+
+42
+00:02:34,387 --> 00:02:36,300
+ciphertext and commitment.
+
+43
+00:02:36,300 --> 00:02:39,389
+And this is the public view of the launch:
+
+44
+00:02:39,389 --> 00:02:41,449
+only a count of sealed bids.
+
+45
+00:02:41,449 --> 00:02:46,230
+The count is public by design, and it does leak demand over time.
+
+46
+00:02:46,830 --> 00:02:49,490
+The backend refuses what it should.
+
+47
+00:02:49,490 --> 00:02:50,326
+No session:
+
+48
+00:02:50,326 --> 00:02:51,314
+unauthorized.
+
+49
+00:02:51,314 --> 00:02:53,366
+Raw JSON as the ciphertext:
+
+50
+00:02:53,366 --> 00:02:54,431
+plaintext bid.
+
+51
+00:02:54,431 --> 00:02:57,091
+A second bid from the same account:
+
+52
+00:02:57,091 --> 00:02:58,155
+duplicate bid.
+
+53
+00:02:58,155 --> 00:03:01,271
+Locking funds for a bid after the window:
+
+54
+00:03:01,271 --> 00:03:01,803
+closed.
+
+55
+00:03:01,803 --> 00:03:03,019
+One honest note.
+
+56
+00:03:03,019 --> 00:03:09,100
+The plaintext guard only checks that the text does not start with a curly brace.
+
+57
+00:03:09,100 --> 00:03:13,660
+It cannot tell a real sealed box from any other opaque text.
+
+58
+00:03:14,260 --> 00:03:15,524
+Now the honest part.
+
+59
+00:03:15,524 --> 00:03:20,958
+In this development setup the backend holds the enclave key, so it can open every bid.
+
+60
+00:03:20,958 --> 00:03:25,824
+This is the output of the development enclave opening the bid we just sealed.
+
+61
+00:03:25,824 --> 00:03:27,973
+That is why we call it a stand-in.
+
+62
+00:03:27,973 --> 00:03:32,143
+The design goal is a key that lives only inside attested hardware.
+
+63
+00:03:32,143 --> 00:03:36,630
+We have not built that part yet, and the threat model document says so.
+
+64
+00:03:37,230 --> 00:03:38,009
+Settlement.
+
+65
+00:03:38,009 --> 00:03:42,753
+Only the creator can call settle, and only after the window closes.
+
+66
+00:03:42,753 --> 00:03:44,736
+The enclave opens every bid.
+
+67
+00:03:44,736 --> 00:03:49,198
+It re-checks any agent's rules, and validates payout addresses.
+
+68
+00:03:49,198 --> 00:03:52,597
+Bids that fail are left out, each with a reason.
+
+69
+00:03:52,597 --> 00:03:55,500
+Here are the two real ones from this run.
+
+70
+00:03:55,500 --> 00:03:57,978
+The rest become the engine's input:
+
+71
+00:03:57,978 --> 00:04:01,590
+canonical strings, with no floating point anywhere.
+
+72
+00:04:02,190 --> 00:04:05,104
+The engine implements a uniform price rule.
+
+73
+00:04:05,104 --> 00:04:07,407
+Keep bids at or above the reserve.
+
+74
+00:04:07,407 --> 00:04:09,779
+Sort by limit price, highest first.
+
+75
+00:04:09,779 --> 00:04:13,438
+Walk down adding quantity until the supply is reached.
+
+76
+00:04:13,438 --> 00:04:16,080
+That bid's limit is the clearing price.
+
+77
+00:04:16,080 --> 00:04:22,246
+Everyone above it is filled in full, and bids exactly at the price share the rest pro-rata.
+
+78
+00:04:22,246 --> 00:04:26,447
+Every winner pays the clearing price, and money is rounded up.
+
+79
+00:04:26,447 --> 00:04:29,090
+These are the real fills from this run.
+
+80
+00:04:29,690 --> 00:04:32,307
+Three hashes make the run checkable.
+
+81
+00:04:32,307 --> 00:04:36,523
+The input hash is a SHA-256 of the canonical engine input.
+
+82
+00:04:36,523 --> 00:04:39,794
+The code hash identifies the engine that ran.
+
+83
+00:04:39,794 --> 00:04:44,300
+The output hash is a SHA-256 of exactly what the engine wrote.
+
+84
+00:04:44,300 --> 00:04:47,717
+The mode says dev, and the attestation is none.
+
+85
+00:04:47,717 --> 00:04:50,697
+Anyone can recompute the first and third.
+
+86
+00:04:50,697 --> 00:04:54,840
+The second is only a claim until a real enclave signs it.
+
+87
+00:04:55,440 --> 00:04:58,578
+The verify page recomputes six checks in your browser.
+
+88
+00:04:58,578 --> 00:04:59,856
+Four we can really do:
+
+89
+00:04:59,856 --> 00:05:12,754
+rebuild the input from the public numbers and match the hash, run the rule again in TypeScript and get the same fills, check that the money adds up to the last unit, and check the published output is what the engine wrote.
+
+90
+00:05:12,754 --> 00:05:14,323
+Two we cannot do from here:
+
+91
+00:05:14,323 --> 00:05:18,100
+that the code is the published code, and that hardware signed it.
+
+92
+00:05:18,100 --> 00:05:20,540
+They show as not checked, never as a pass.
+
+93
+00:05:21,140 --> 00:05:23,449
+What is real on the chain side.
+
+94
+00:05:23,449 --> 00:05:25,014
+NEAR sign-in is real:
+
+95
+00:05:25,014 --> 00:05:27,174
+NEP-413 and an RPC key check.
+
+96
+00:05:27,174 --> 00:05:33,059
+The NEAR Intents price is a real live quote, a preview with no deposit address.
+
+97
+00:05:33,059 --> 00:05:37,306
+The engine builds to WebAssembly and runs under wasmtime.
+
+98
+00:05:37,306 --> 00:05:42,520
+A remote run on OutLayer has not been retried, so nothing is attested.
+
+99
+00:05:42,520 --> 00:05:46,990
+And there is no token contract and no real payment lock yet.
+
+100
+00:05:46,990 --> 00:05:48,480
+Those are stand-ins.
+
+101
+00:05:49,080 --> 00:05:50,124
+How we test it.
+
+102
+00:05:50,124 --> 00:05:58,333
+The Rust engine and the TypeScript rule agree on two hundred and twelve shared cases, including the WebAssembly build.
+
+103
+00:05:58,333 --> 00:06:02,786
+Property tests with a seeded generator check the ten guarantees.
+
+104
+00:06:02,786 --> 00:06:06,543
+Mutation checks confirm the tests catch a broken rule.
+
+105
+00:06:06,543 --> 00:06:15,170
+There are 133 frontend tests, 64 backend tests, 27 browser tests, and a privacy test with 31 checks on what the API exposes.
+
+106
+00:06:15,770 --> 00:06:16,455
+To sum up.
+
+107
+00:06:16,455 --> 00:06:18,577
+Bids are sealed in the browser.
+
+108
+00:06:18,577 --> 00:06:22,342
+The engine finds one price in exact integer arithmetic.
+
+109
+00:06:22,342 --> 00:06:25,559
+Anyone can recompute the hashes and the result.
+
+110
+00:06:25,559 --> 00:06:30,283
+And where we cannot prove something yet, the system says not checked.
+
+111
+00:06:30,283 --> 00:06:34,595
+The code, the specs and the threat model are in the repository.
+
+112
+00:06:34,595 --> 00:06:35,280
+Thank you.
+

@@ -10,10 +10,17 @@ import {
   sealedBidSchema,
 } from "./schemas.js";
 import { MockPaymentProvider } from "./payment-provider.js";
+import { devEnclaveKey, openBid } from "./dev-enclave.js";
+import { runAuction } from "./engine.js";
+import { OutLayerError } from "./outlayer.js";
+import { buildInput, inputHash, planPayouts, sha256Hex } from "./settlement-core.js";
+import { ProxyError, createOneClickProxy } from "./oneclick.js";
+import { corsOrigins } from "./cors.js";
 import {
   createChallenge,
   verifyChallenge,
   getSessionAccount,
+  provider as nearProvider,
 } from "./auth.js";
 
 const app = Fastify({
@@ -23,10 +30,7 @@ const app = Fastify({
 
 // Register CORS here
 await app.register(cors, {
-  origin: [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-  ],
+  origin: corsOrigins(process.env.CORS_ORIGINS),
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 });
@@ -132,7 +136,7 @@ function publicLaunch(l: PublicLaunchInput) {
 
 app.get("/health", async () => ({
   ok: true,
-  service: "snipe-proof-api",
+  service: "unmask-api",
   mode: isDev ? "development" : "production",
 }));
 
@@ -893,6 +897,127 @@ app.get<{ Params: { receiptId: string } }>(
 
 // --------------------------------------------------
 // ERROR HANDLER
+// --------------------------------------------------
+// ENCLAVE KEY, SETTLEMENT AND RESULT (development enclave)
+// --------------------------------------------------
+
+function publicResult(s: { launchId: string; clearingPrice: string; sold: string; totalRaised: string; outcome: unknown; inputHash: string; codeHash: string; attestation: string | null; mode: string; skippedBids: number; createdAt: Date }) {
+  return {
+    launchId: s.launchId,
+    clearingPrice: s.clearingPrice,
+    sold: s.sold,
+    totalRaised: s.totalRaised,
+    outcome: s.outcome,
+    inputHash: s.inputHash,
+    codeHash: s.codeHash,
+    attestation: s.attestation,
+    mode: s.mode,
+    skippedBids: s.skippedBids,
+    settledAt: s.createdAt.toISOString(),
+  };
+}
+
+// The key bids are sealed to. In development this is the dev enclave's key and carries no attestation.
+app.get("/v1/enclave-key", async () => ({ key: devEnclaveKey() }));
+app.get<{ Params: { id: string } }>("/v1/launches/:id/enclave-key", async () => ({ key: devEnclaveKey() }));
+
+app.post<{ Params: { id: string } }>("/v1/launches/:id/settle", async (req, reply) => {
+  if (!isDev) {
+    throw fail(501, "not_implemented", "Settlement needs the real OutLayer enclave. The development enclave is disabled in production.");
+  }
+  const account = await requireSession(req);
+  const launch = await prisma.launch.findUnique({
+    where: { id: req.params.id },
+    include: { settlement: true, bids: { include: { paymentCheck: true }, orderBy: { createdAt: "asc" } } },
+  });
+  if (!launch) return reply.code(404).send({ error: { code: "not_found", message: "Launch not found" } });
+  if (launch.creator !== account) throw fail(403, "forbidden", "Only the creator can settle this launch.");
+  if (launch.settlement) return { result: publicResult(launch.settlement), alreadySettled: true };
+  if (launch.state === "DRAFT" || launch.state === "CANCELLED") throw fail(409, "bad_state", `A ${launch.state.toLowerCase()} launch cannot be settled.`);
+  if (launch.state === "OPEN" && (!launch.closesAt || launch.closesAt > new Date())) throw fail(409, "not_closed", "The bidding window is still open.");
+
+  const rows = launch.bids.map((b) => ({
+    row: {
+      id: b.id,
+      bidder: b.bidder,
+      commitment: b.commitment,
+      paymentCheckId: b.paymentCheckId,
+      checkAmountAtomic: b.paymentCheck.amountAtomic,
+      checkLocked: b.paymentCheck.state === "LOCKED",
+      submittedAt: b.createdAt,
+    },
+    plain: openBid(b.ciphertext),
+  }));
+  const { input, skipped, meta } = await buildInput(launch, rows, { provider: nearProvider });
+  let run;
+  try {
+    run = await runAuction(input);
+  } catch (error) {
+    if (error instanceof OutLayerError) throw fail(error.reason === "bad_config" ? 500 : 502, `outlayer_${error.reason}`, error.message);
+    throw error;
+  }
+  const engineOutput = run.raw;
+  const outcome = JSON.parse(engineOutput) as { clearingPrice: string; sold: string; totalRaised: string; fills: Array<{ bidId: string; bidder: string; filled: string; refund: string }> };
+  const payouts = planPayouts(outcome.fills, meta);
+  const agents = meta.filter((m) => m.agent).map((m) => ({ bidId: m.bidId, bidder: m.bidder, rulesHash: m.agent!.rulesHash, signed: m.agent!.signed }));
+  const codeHash = run.codeHash;
+
+  try {
+    const saved = await prisma.$transaction(async (tx) => {
+      const settlement = await tx.settlement.create({
+        data: {
+          launchId: launch.id,
+          clearingPrice: outcome.clearingPrice,
+          sold: outcome.sold,
+          totalRaised: outcome.totalRaised,
+          outcome: { ...outcome, skipped, payouts, agents, payoutsExecuted: false, engineOutputHash: sha256Hex(engineOutput), engineKind: run.kind, outlayerCallId: run.callId } as object,
+          inputHash: inputHash(input),
+          codeHash,
+          attestation: run.attestationUrl,
+          mode: run.mode,
+          skippedBids: skipped.length,
+        },
+      });
+      await tx.launch.update({ where: { id: launch.id }, data: { state: "SETTLED", codeHash } });
+      return settlement;
+    });
+    return { result: publicResult(saved), alreadySettled: false };
+  } catch (error) {
+    if ((error as { code?: string }).code === "P2002") {
+      const existing = await prisma.settlement.findUnique({ where: { launchId: launch.id } });
+      if (existing) return { result: publicResult(existing), alreadySettled: true };
+    }
+    throw error;
+  }
+});
+
+app.get<{ Params: { id: string } }>("/v1/launches/:id/result", async (req, reply) => {
+  const settlement = await prisma.settlement.findUnique({ where: { launchId: req.params.id } });
+  if (!settlement) return reply.code(404).send({ error: { code: "not_settled", message: "This launch has not been settled yet." } });
+  return { result: publicResult(settlement) };
+});
+
+// --------------------------------------------------
+// FUNDING FROM ANOTHER CHAIN (NEAR Intents 1Click, quotes only unless live is switched on)
+// --------------------------------------------------
+
+const oneClick = createOneClickProxy({
+  base: process.env.ONECLICK_API_BASE,
+  jwt: process.env.ONECLICK_JWT,
+  allowLive: process.env.ONECLICK_ALLOW_LIVE === "1",
+});
+
+function intentsFailure(error: unknown): never {
+  if (error instanceof ProxyError) throw fail(error.status, error.code, error.message);
+  throw error;
+}
+
+app.get("/v1/intents/tokens", async () => oneClick.tokens().catch(intentsFailure));
+app.post("/v1/intents/quote", async (req) => oneClick.quote(req.body).catch(intentsFailure));
+app.get<{ Querystring: { depositAddress?: string; depositMemo?: string } }>("/v1/intents/status", async (req) =>
+  oneClick.status(req.query.depositAddress, req.query.depositMemo).catch(intentsFailure),
+);
+
 // --------------------------------------------------
 
 app.setErrorHandler((error: unknown, _req, reply) => {

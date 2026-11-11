@@ -13,6 +13,7 @@ const HUMAN_TINTS = ["#f4f4f5", "#d4d4d8", "#a1a1aa", "#e4e4e7", "#8b8b93", "#c4
 
 function sliceColor(s: Slice, humanIndex: number) {
   if (s.kind === "bot") return "var(--color-danger)";
+  if (s.kind === "agent") return "var(--color-near)";
   if (s.kind === "unsold") return "transparent";
   return HUMAN_TINTS[humanIndex % HUMAN_TINTS.length]!;
 }
@@ -22,7 +23,7 @@ function SupplyBar({ side, tone, base }: { side: RaceSide; tone: "danger" | "sea
   let human = -1;
   return (
     <div>
-      <div className="flex h-14 w-full overflow-hidden rounded-none border border-line-strong bg-black p-1 sm:h-16" role="img" aria-label={`Supply split: bots hold ${Math.round(side.botShare * 100)} percent`}>
+      <div className="flex h-14 w-full overflow-hidden rounded-none border border-line-strong bg-bg p-1 sm:h-16" role="img" aria-label={`Supply split: bots hold ${Math.round(side.botShare * 100)} percent`}>
         {side.slices.map((s, i) => {
           if (s.kind === "human") human++;
           const unsold = s.kind === "unsold";
@@ -47,7 +48,7 @@ function SupplyBar({ side, tone, base }: { side: RaceSide; tone: "danger" | "sea
       </div>
       <div className="mt-2 flex justify-between text-[11px] text-faint">
         <span>first token</span>
-        <span className={tone === "danger" ? "text-danger" : "text-seal"}>{tone === "danger" ? "bought in the order people arrive" : "split by price, never by arrival"}</span>
+        <span className={tone === "danger" ? "text-danger" : "text-seal-fg"}>{tone === "danger" ? "bought in the order people arrive" : "split by price, never by arrival"}</span>
         <span>last token</span>
       </div>
     </div>
@@ -55,7 +56,7 @@ function SupplyBar({ side, tone, base }: { side: RaceSide; tone: "danger" | "sea
 }
 
 function Panel({ title, tone, line, side, base, children }: { title: string; tone: "danger" | "seal"; line: string; side: RaceSide; base: number; children: React.ReactNode }) {
-  const avgHuman = side.slices.filter((s) => s.kind === "human" && s.avgPrice).map((s) => s.avgPrice!);
+  const avgHuman = side.slices.filter((s) => (s.kind === "human" || s.kind === "agent") && s.avgPrice).map((s) => s.avgPrice!);
   const priceText = avgHuman.length ? (Math.min(...avgHuman) === Math.max(...avgHuman) ? usd(avgHuman[0]!) : `${usd(Math.min(...avgHuman))} to ${usd(Math.max(...avgHuman))}`) : "no one";
   return (
     <Card className={cx("relative overflow-hidden p-5 sm:p-6", tone === "danger" ? "border-danger/20" : "border-seal/25")}>
@@ -100,7 +101,7 @@ const Step = ({ delay, children }: { delay: number; children: React.ReactNode })
   </motion.li>
 );
 
-/** Ten bids, two launches. The point of the product, in one picture. */
+/** Eleven bids, two launches. The point of the product, in one picture. */
 export function RaceDemo() {
   const [run, setRun] = useState(0);
   const { fc, sb } = useMemo(() => ({ fc: firstCome(RACE_BIDS, RACE_SUPPLY, RACE_RESERVE, 0.06), sb: sealed(RACE_BIDS, RACE_SUPPLY, RACE_RESERVE) }), []);
@@ -116,14 +117,14 @@ export function RaceDemo() {
           </Step>
         </Panel>
         <Panel title="A sealed-bid launch" tone="seal" line="order does not matter" side={sb} base={1.2}>
-          <Step delay={1.2}>The same ten bids go in sealed. Nobody, the creator included, sees an amount.</Step>
+          <Step delay={1.2}>The same eleven bids go in sealed. Nobody, the creator included, sees an amount.</Step>
           <Step delay={2.0}>At the close the enclave finds one price that sells the supply: <Mono className="text-text">{usd(sb.finalPrice)}</Mono>.</Step>
-          <Step delay={2.8}>The bots had bid low, hoping for a cheap start. They win nothing and are refunded. {sb.humansServed} people are served at the same price.</Step>
+          <Step delay={2.8}>The bots had bid low, hoping for a cheap start. They win nothing and are refunded. {sb.humansServed} people are served at the same price, including your agent (cyan), which bid inside rules you signed.</Step>
         </Panel>
       </div>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-2xl text-xs leading-relaxed text-faint">
-          Illustration, same ten bids on both sides. The first-come side uses a simple rising price curve with the fastest buyers served first. The sealed side is the real auction rule, run on those bids.
+          Illustration, same eleven bids on both sides. The first-come side uses a simple rising price curve with the fastest buyers served first. The sealed side is the real auction rule, run on those bids.
         </p>
         <Button tone="ghost" onClick={() => setRun((r) => r + 1)}>
           <RotateCcw className="size-4" /> Replay

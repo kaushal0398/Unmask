@@ -64,7 +64,9 @@ export function PaymentCheckPanel({
   const sessionToken =
     account && auth?.token && mode === "real" ? auth.token : undefined;
 
-  const [check, setCheck] = useState<PaymentCheck | null>(null);
+  const [polled, setCheck] = useState<PaymentCheck | null>(null);
+  // Without an authenticated session there is nothing to show, whatever was polled before.
+  const check = sessionToken ? polled : null;
   const [busy, setBusy] = useState(false);
 
   // Poll only when the real wallet has an authenticated session.
@@ -72,8 +74,6 @@ export function PaymentCheckPanel({
     let live = true;
 
     if (!sessionToken) {
-      setCheck(null);
-
       return () => {
         live = false;
       };
@@ -156,7 +156,7 @@ export function PaymentCheckPanel({
 
   return (
     <div
-      className="border border-line bg-black/40 p-4 text-sm"
+      className="border border-line bg-bg/40 p-4 text-sm"
       aria-live="polite"
     >
       <div className="flex items-center justify-between gap-3">
