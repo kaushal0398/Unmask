@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Captures REAL data for the technical video: it makes real calls to the running backend and records what came back.
  *   (backend running, DATABASE_URL / DEV_ENCLAVE_SEED / NEAR_RPC_URL set)   npx tsx video/tech/capture.ts
