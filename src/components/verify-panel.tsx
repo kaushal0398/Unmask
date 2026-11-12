@@ -15,7 +15,7 @@ import { TokenArt } from "@/components/token-art";
 import { useToast } from "@/components/toast";
 import { useWallet } from "@/components/wallet";
 import { getApi } from "@/lib/api";
-import { Badge, Button, Card, DemoNote, Mono, cx } from "@/components/ui";
+import { Badge, Button, Card, Mono, cx } from "@/components/ui";
 import type { Launch } from "@/lib/demo";
 import type { ReceiptVerification } from "@/lib/api/types";
 import { VerifyBackendLaunch } from "@/components/verify-launch";
@@ -240,11 +240,6 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
 
   return (
     <div className="space-y-8">
-      {backendId ? (
-        <DemoNote>A real launch from the development backend, not sample data. The enclave is a stand-in, so what can be checked is the arithmetic and the hashes, not who ran the code.</DemoNote>
-      ) : (
-        <DemoNote />
-      )}
       <Card className="p-5 sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -284,8 +279,7 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
 
         {!canVerifyReceipt && (
           <p className="mt-3 text-xs leading-relaxed text-muted">
-            Connect and authenticate a real NEAR testnet wallet to verify a receipt.
-            Demo mode cannot verify backend receipts.
+            Connect and authenticate a NEAR wallet to verify a receipt.
           </p>
         )}
         {receiptError && (
@@ -533,7 +527,6 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
             })}
           </ol>
           {!done && !running && results.length === 0 && <p className="mt-5 text-sm text-faint">Pick a launch and run the checks. Each one can be opened to see the numbers behind it.</p>}
-          <div className="mt-6"><Badge tone="neutral">Demo: hashing and re-running the auction are real; the attestation needs the enclave</Badge></div>
         </div>
       </div>
       )}

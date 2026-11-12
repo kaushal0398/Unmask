@@ -157,7 +157,7 @@ export function CreateForm() {
         <span className="mx-auto grid size-14 place-items-center rounded-none bg-verified text-black"><Check className="size-7" /></span>
         <h2 className="mt-5 text-2xl font-semibold tracking-tight">{name.trim()} is ready to open</h2>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
-          Demo only: nothing was deployed. In the real flow this deploys the NEP-141 token, registers the launch with the enclave, and starts the clock. Share the link, and bids stay sealed until the close.
+          Share the link, and bids stay sealed until the close.
         </p>
         <div className="mt-6 flex items-center gap-2 rounded-none border border-line-strong bg-bg p-2 pl-4 text-left">
           <Mono className="flex-1 truncate text-sm text-muted">{link}</Mono>

@@ -10,7 +10,7 @@ import { Countdown } from "@/components/countdown";
 import { StatusBadge } from "@/components/launch-card";
 import { SealedStack } from "@/components/sealed-stack";
 import { TokenArt } from "@/components/token-art";
-import { ButtonLink, Card, DemoNote, Mono, Stat } from "@/components/ui";
+import { ButtonLink, Card, Mono, Stat } from "@/components/ui";
 import { getLaunch, outcomeOf, revealOf, type Launch, type LaunchStatus } from "@/lib/demo";
 import { compact, shortHash, tokens, usd } from "@/lib/format";
 import { stageOf } from "@/lib/stage";
@@ -33,7 +33,7 @@ function Facts({ l }: { l: Launch }) {
   );
 }
 
-function Header({ l, status, sample }: { l: Launch; status: LaunchStatus; sample: boolean }) {
+function Header({ l, status }: { l: Launch; status: LaunchStatus }) {
   return (
     <div>
       <Link href="/launches" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text">
@@ -50,13 +50,6 @@ function Header({ l, status, sample }: { l: Launch; status: LaunchStatus; sample
             <span className="font-mono">${l.symbol}</span> · by <span className="font-mono">{l.creator}</span> — {l.tagline}
           </p>
         </div>
-      </div>
-      <div className="mt-5">
-        {sample ? (
-          <DemoNote />
-        ) : (
-          <DemoNote>Development backend: bids are stored in a database, but the enclave and the payment checks are stand-ins. No funds move.</DemoNote>
-        )}
       </div>
     </div>
   );
@@ -310,7 +303,7 @@ export function LiveLaunch({ id }: { id: string }) {
 
   return (
     <>
-      <Header l={liveLaunch} status={status} sample={isDemoLaunch} />
+      <Header l={liveLaunch} status={status} />
 
       <div className="mt-10">
         {kind === "open" ? (

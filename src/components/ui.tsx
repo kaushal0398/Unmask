@@ -76,9 +76,3 @@ export function Stat({ label, value, hint, tone, className }: { label: string; v
 }
 
 /** Shown on every screen that runs on made-up data. */
-export const DemoNote = ({ children }: { children?: ReactNode }) => (
-  <p className="inline-flex items-center gap-2 rounded-none border border-dashed border-line-strong px-3 py-1 text-xs text-faint">
-    <span className="size-1.5 rounded-none bg-faint" />
-    {children ?? "Demo data. Nothing here is real yet."}
-  </p>
-);

@@ -343,12 +343,6 @@ export function BidReceiptView() {
         </Link>
       </div>
 
-      <p className="mt-8 border border-line p-4 text-xs leading-relaxed text-muted">
-        Development implementation: this receipt displays backend-recorded
-        identifiers and payment-check information. The payment provider
-        and enclave are mocks. It does not constitute an on-chain
-        settlement proof or TEE attestation.
-      </p>
     </div>
   );
 }

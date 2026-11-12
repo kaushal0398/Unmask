@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Unmask vs first-come" };
 export default function ComparePage() {
   return (
     <>
-      <PageHeader eyebrow="Compare" title={<>The same buyers. <Emph>Two</Emph> kinds of launch.</>} demo>
+      <PageHeader eyebrow="Compare" title={<>The same buyers. <Emph>Two</Emph> kinds of launch.</>}>
         Watch what happens to the supply when the fastest buyer goes first, and when it does not matter who is first.
       </PageHeader>
       <section className="py-14 sm:py-20"><Container><RaceDemo /></Container></section>

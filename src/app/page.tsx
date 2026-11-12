@@ -8,7 +8,7 @@ import { LaunchCard } from "@/components/launch-card";
 import { RaceDemo } from "@/components/race-demo";
 import { SealedStack } from "@/components/sealed-stack";
 import { Ticker } from "@/components/ticker";
-import { ButtonLink, Card, Container, DemoNote, Emph, Eyebrow, SectionHeading } from "@/components/ui";
+import { ButtonLink, Card, Container, Emph, Eyebrow, SectionHeading } from "@/components/ui";
 import { getLaunch, outcomeOf } from "@/lib/demo";
 
 export default function Home() {
@@ -118,7 +118,6 @@ export default function Home() {
           <div className="flex flex-wrap items-end justify-between gap-5">
             <SectionHeading eyebrow="Live right now" title="Pick a coin. Seal a bid.">Open launches are taking sealed bids. Settled ones show their proof.</SectionHeading>
             <div className="flex flex-col items-start gap-3">
-              <DemoNote />
               <Link href="/launches" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text">All launches <ArrowRight className="size-4" /></Link>
             </div>
           </div>

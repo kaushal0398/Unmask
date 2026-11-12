@@ -49,7 +49,7 @@ export default function LaunchesPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Launches" title="Every bid sealed. Every price the same." demo>
+      <PageHeader eyebrow="Launches" title="Every bid sealed. Every price the same.">
         Open one to bid in secret, or look at a settled launch and check how it was run.
       </PageHeader>
 

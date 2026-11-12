@@ -330,11 +330,6 @@ export default function MyBidsPage() {
         </div>
       )}
 
-      <p className="mt-8 text-xs leading-relaxed text-faint">
-        Development mode: payment checks use a mock provider.
-        No real funds are transferred or locked. Bid amounts
-        and decrypted bid contents are not displayed here.
-      </p>
     </div>
   );
 }

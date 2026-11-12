@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "My bids" };
 export default function PortfolioPage() {
   return (
     <>
-      <PageHeader eyebrow="My bids" title="Everything you locked, won and got back." demo>Connect a wallet to see your bids. The demo wallet shows an account with one open bid, one win and one loss.</PageHeader>
+      <PageHeader eyebrow="My bids" title="Everything you locked, won and got back.">Connect a wallet to see your bids.</PageHeader>
       <Container className="py-14 sm:py-20"><PortfolioView /></Container>
     </>
   );
