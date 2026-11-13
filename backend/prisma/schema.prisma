@@ -15,7 +15,6 @@ model Launch {
   emoji           String         @default("🪙")
   hue             Int            @default(145)
   tagline         String         @default("A sealed-bid launch.")
-  imageData       String?
   supplyAtomic    String
   reserveAtomic   String
   tokenDecimals   Int

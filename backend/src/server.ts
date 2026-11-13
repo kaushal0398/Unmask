@@ -59,7 +59,6 @@ type PublicLaunchInput = {
   emoji: string;
   hue: number;
   tagline: string;
-  imageData?: string | null;
   supplyAtomic: string;
   reserveAtomic: string;
   tokenDecimals: number;
@@ -117,7 +116,6 @@ function publicLaunch(l: PublicLaunchInput) {
     emoji: l.emoji,
     hue: l.hue,
     tagline: l.tagline,
-    image: l.imageData ?? null,
     supplyAtomic: l.supplyAtomic,
     reserveAtomic: l.reserveAtomic,
     tokenDecimals: l.tokenDecimals,
@@ -329,7 +327,6 @@ app.post("/v1/launches", async (req, reply) => {
       opensAt: open,
       closesAt: close,
       state: "OPEN",
-      imageData: input.image ?? null,
       tagline:
         "Development launch — token deployment is not yet connected.",
     },
