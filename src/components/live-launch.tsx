@@ -49,6 +49,10 @@ function Header({ l, status }: { l: Launch; status: LaunchStatus }) {
           <p className="mt-2 text-muted">
             <span className="font-mono">${l.symbol}</span> · by <span className="font-mono">{l.creator}</span> — {l.tagline}
           </p>
+          <p className="mt-3 flex flex-wrap gap-4 text-sm">
+            <Link href={`/launches/${encodeURIComponent(l.id)}/passport`} className="text-seal-fg underline underline-offset-4">Launch Risk Passport</Link>
+            <Link href={`/launches/${encodeURIComponent(l.id)}/certificate`} className="text-seal-fg underline underline-offset-4">Result Certificate</Link>
+          </p>
         </div>
       </div>
     </div>

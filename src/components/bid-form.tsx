@@ -8,6 +8,7 @@ import {
   Lock,
   ShieldCheck,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AgentMode, type AgentApplied } from "@/components/agent-mode";
 import { FundFromChain } from "@/components/fund-from-chain";
@@ -79,6 +80,7 @@ export function BidForm({
   const { account, auth, mode } = useWallet();
   const toast = useToast();
   const confirm = useConfirm();
+  const router = useRouter();
 
   const [limit, setLimit] = useState(() =>
     String(launch.reserve * 3)
@@ -284,8 +286,15 @@ export function BidForm({
       // the only copy of the bidder's private reveal material.
       downloadRevealFile(reveal);
 
-      setPhase("sealed");
+      // Keep the private reveal data for the receipt page (this tab only).
+      try {
+        sessionStorage.setItem(`bid-reveal:${receiptId}`, JSON.stringify(reveal));
+      } catch {
+        /* the file was already downloaded above */
+      }
+
       toast("Your bid was submitted.", "ok");
+      router.push(`/my-bids/${encodeURIComponent(receiptId)}`);
     } catch (e) {
       const isDuplicate =
         e instanceof ApiError && e.code === "duplicate_bid";

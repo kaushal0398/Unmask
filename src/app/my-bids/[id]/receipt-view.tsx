@@ -44,6 +44,29 @@ export function BidReceiptView() {
       : undefined;
 
   const [bid, setBid] = useState<MyBid | null>(null);
+  const [reveal, setReveal] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      setReveal(sessionStorage.getItem(`bid-reveal:${bidId}`));
+    } catch {
+      setReveal(null);
+    }
+  }, [bidId]);
+
+  function downloadReveal() {
+    if (!reveal) return;
+    const url = URL.createObjectURL(
+      new Blob([reveal], { type: "application/json" })
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `bid-reveal-${bidId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +87,9 @@ export function BidReceiptView() {
         const bids = await getApi(sessionToken).getMyBids();
 
         if (active) {
-          const found = bids.find((item) => item.id === bidId);
+          const found = bids.find(
+            (item) => item.id === bidId || item.receiptId === bidId
+          );
 
           setBid(found ?? null);
 
@@ -324,6 +349,22 @@ export function BidReceiptView() {
           </div>
         </div>
       </section>
+
+      {reveal && (
+        <section className="mt-5 border border-seal/30 bg-seal/5 p-6">
+          <h2 className="font-semibold">Private bid reveal file</h2>
+          <p className="mt-1 text-xs leading-relaxed text-muted">
+            Contains your bid values and salt. Keep it private until the
+            auction has closed. It is only kept in this browser tab.
+          </p>
+          <button
+            onClick={downloadReveal}
+            className="mt-3 border border-seal px-5 py-3 text-sm text-seal-fg hover:bg-seal/5"
+          >
+            Download reveal file
+          </button>
+        </section>
+      )}
 
       {/* Actions */}
       <div className="mt-5 flex flex-wrap gap-3">
