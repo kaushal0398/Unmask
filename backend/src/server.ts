@@ -14,6 +14,7 @@ import { devEnclaveKey, openBid } from "./dev-enclave.js";
 import { runAuction } from "./engine.js";
 import { OutLayerError } from "./outlayer.js";
 import { anchorConfigFromEnv, anchorResult } from "./anchor.js";
+import { bidMessage, checkActionSignature, createMessage } from "./action-sig.js";
 import { buildInput, inputHash, planPayouts, sha256Hex } from "./settlement-core.js";
 import { ProxyError, createOneClickProxy } from "./oneclick.js";
 import { corsOrigins } from "./cors.js";
@@ -84,6 +85,16 @@ function isApiError(error: unknown): error is ApiError {
 
 function fail(statusCode: number, code: string, message: string) {
   return Object.assign(new Error(message), { statusCode, code });
+}
+
+/**
+ * Each launch and each bid must be approved in the owner's wallet (a gas-free NEP-413 signature over that exact
+ * action), on top of the sign-in session. Set REQUIRE_ACTION_SIGNATURE=0 only for local scripts that have no wallet.
+ */
+async function requireWalletApproval(body: unknown, account: string, expected: (issuedAt: string) => string) {
+  if (process.env.REQUIRE_ACTION_SIGNATURE === "0") return;
+  const problem = await checkActionSignature((body as { actionSig?: unknown } | null)?.actionSig, account, expected, nearProvider);
+  if (problem) throw fail(401, "wallet_signature_required", `Approve this in your wallet first (${problem}).`);
 }
 async function requireSession(req: { headers: { authorization?: string } }) {
   const authorization = req.headers.authorization;
@@ -309,6 +320,10 @@ app.post("/v1/launches", async (req, reply) => {
       },
     });
   }
+
+  await requireWalletApproval(req.body, creator, (issuedAt) =>
+    createMessage({ account: creator, name: input.name, symbol: input.symbol, supplyAtomic: input.supplyAtomic, reserveAtomic: input.reserveAtomic, closesAt: input.closesAt, issuedAt }),
+  );
 
   const launch = await prisma.launch.create({
     data: {
@@ -589,6 +604,10 @@ app.post<{ Params: { id: string } }>(
         },
       });
     }
+
+    await requireWalletApproval(req.body, bidder, (issuedAt) =>
+      bidMessage({ account: bidder, launchId: req.params.id, commitment: parsed.data.commitment, issuedAt }),
+    );
 
     const launch = await prisma.launch.findUnique({
       where: { id: req.params.id },
