@@ -17,8 +17,9 @@ import {
 import { MockLaunchApi } from "@/lib/api/mock";
 import type { RawResult } from "@/lib/verify-result";
 
+// Deployed builds call the backend on the same site (Vercel rewrite). Only local development falls back to port 4001.
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4001";
+  process.env.NEXT_PUBLIC_API_URL ?? (process.env.NODE_ENV === "production" ? "/api/backend" : "http://127.0.0.1:4001");
 
 // Development placeholder only. This is NOT a deployed NEP-141 token.
 const PAYMENT_TOKEN =

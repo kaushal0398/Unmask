@@ -75,7 +75,7 @@ export const networkFromEnv = (
 export const APP_RECIPIENT = "sealed.launch";
 
 const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4001"
+  process.env.NEXT_PUBLIC_API_URL ?? (process.env.NODE_ENV === "production" ? "/api/backend" : "http://127.0.0.1:4001")
 ).replace(/\/+$/, "");
 
 function hexToBytes(value: string): Uint8Array {
