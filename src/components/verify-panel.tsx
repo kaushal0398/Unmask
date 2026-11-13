@@ -9,8 +9,9 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { TokenArt } from "@/components/token-art";
 import { useToast } from "@/components/toast";
 import { useWallet } from "@/components/wallet";
@@ -29,6 +30,51 @@ const TITLES = [
   "Running the rule again gives the same result",
   "The money adds up",
 ];
+
+/** Every token listed on the launches page. Settled ones can be verified now; the rest are not settled yet. */
+function LaunchedHere({ activeId }: { activeId: string | null }) {
+  const [list, setList] = useState<Launch[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    getApi()
+      .listLaunches()
+      .then((all) => live && setList(all as Launch[]))
+      .catch(() => live && setList([]));
+    return () => { live = false; };
+  }, []);
+
+  return (
+    <Card className="p-5">
+      <p className="text-xs uppercase tracking-wider text-faint">All launches</p>
+      {list === null ? (
+        <div className="mt-3 h-12 shimmer" />
+      ) : list.length === 0 ? (
+        <p className="mt-3 text-sm text-muted">No tokens have been launched yet.</p>
+      ) : (
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {list.map((l) => {
+            const settled = l.status === "settled";
+            return (
+              <li key={l.id}>
+                <Link
+                  href={settled ? `/verify?launch=${encodeURIComponent(l.id)}` : `/launches/${encodeURIComponent(l.id)}`}
+                  className={cx("flex items-center gap-3 border p-3 transition-colors", activeId === l.id ? "border-verified/50 bg-verified/5" : "border-line hover:bg-white/5")}
+                >
+                  <TokenArt hue={l.hue} emoji={l.emoji} image={l.image} symbol={l.symbol} size={38} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium">{l.name}</span>
+                    <span className="block font-mono text-xs text-muted">${l.symbol}</span>
+                  </span>
+                  <span className={cx("ml-auto shrink-0 text-[10px] uppercase tracking-wider", settled ? "text-verified" : "text-faint")}>{settled ? "Verify" : l.status === "open" ? "Bids open" : "Settling"}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Card>
+  );
+}
 
 export function VerifyPanel({ launches }: { launches: Launch[] }) {
   const params = useSearchParams();
@@ -425,6 +471,8 @@ export function VerifyPanel({ launches }: { launches: Launch[] }) {
           </div>
         )}
       </Card>
+
+      <LaunchedHere activeId={wanted} />
 
       {backendId ? (
         <VerifyBackendLaunch id={backendId} />
