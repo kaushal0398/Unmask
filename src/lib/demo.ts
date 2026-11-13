@@ -22,6 +22,8 @@ export type Launch = {
   status: LaunchStatus;
   /** For an open launch: how long from "now" it stays open. */
   closesInMs?: number;
+  /** Real wall-clock deadline (ISO) for a launch created on the backend. Preferred over `closesInMs`. */
+  closesAt?: string;
   bidCount: number;
   /** For a settled launch: every bid, which the enclave revealed only in aggregate until now. */
   bids?: Bid[];
@@ -29,6 +31,8 @@ export type Launch = {
   inputHash?: string;
   attestation?: string;
   tokenContract: string;
+  /** A picture the creator chose (a small data URL). When absent the emoji and colour are used. */
+  image?: string;
 };
 
 const MIN = 60_000;

@@ -35,6 +35,7 @@ type BackendLaunch = {
   emoji?: string;
   hue?: number;
   tagline?: string;
+  image?: string | null;
   supplyAtomic: string;
   reserveAtomic: string;
   tokenDecimals: number;
@@ -166,6 +167,7 @@ function mapLaunch(item: BackendLaunch): Launch {
     emoji: item.emoji ?? "🪙",
     hue: item.hue ?? 145,
     tagline: item.tagline ?? "A development launch.",
+    ...(item.image ? { image: item.image } : {}),
     creator: item.creator,
     supply: units(item.supplyAtomic, item.tokenDecimals),
     reserve: units(item.reserveAtomic, item.paymentDecimals),
@@ -385,6 +387,7 @@ export class HttpLaunchApi implements LaunchApi {
                 : null,
             opensAt: opensAt.toISOString(),
             closesAt: closesAt.toISOString(),
+            ...(input.image ? { image: input.image } : {}),
           }),
         },
         token,

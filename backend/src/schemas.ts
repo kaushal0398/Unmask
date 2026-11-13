@@ -15,6 +15,7 @@ export const createLaunchSchema = z.object({
   capBps: z.number().int().min(1).max(10_000).nullable().optional(),
   opensAt: z.string().datetime().optional(),
   closesAt: z.string().datetime(),
+  image: z.string().max(120_000).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/).optional(),
 });
 
 export const createCheckSchema = z.object({
