@@ -19,11 +19,11 @@ Owner: needs Neon and Vercel access. Full detail in [`vercel-fix.md`](vercel-fix
 
 ## P1: Launch Risk Passport (`/launches/[id]/passport`)
 Done: reserve, per-account cap, code hash, token contract checks (from the launch record).
-- [ ] Mint / pause / freeze authority (NEAR RPC on the token contract)
-- [ ] Upgrade authority / access keys on the token contract account
-- [ ] Holder concentration (token holder distribution)
-- [ ] Creator wallet history (public transactions)
-- [ ] Liquidity setup and lock
+- [ ] Mint / pause / freeze authority: no standard on-chain way to list privileged methods; stays "unknown" (needs source or audit)
+- [x] Upgrade authority via access keys (live RPC)
+- [x] Supply match and creator-wallet share via NEP-141 views. [ ] Full holder distribution needs an indexer
+- [x] Creator account existence and balance. [ ] Transaction history needs an indexer
+- [ ] Liquidity setup and lock: no pool is created by this product yet, stays "unknown"
 - [ ] AI explanations **after** evidence collection, labelled as AI interpretation, never as a fact
 - [ ] Keep heuristics (wallet clustering) visibly separate from verified facts
 

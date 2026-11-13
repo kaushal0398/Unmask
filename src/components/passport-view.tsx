@@ -7,6 +7,7 @@ import { Badge, Card, Mono } from "@/components/ui";
 import { getApi } from "@/lib/api";
 import type { Launch } from "@/lib/demo";
 import { usd } from "@/lib/format";
+import { accessKeys, NEAR_EXPLORER, NO_CODE, RpcError, viewAccount, viewCall } from "@/lib/near-rpc";
 
 type Severity = "info" | "low" | "medium" | "high" | "unknown";
 type Basis = "verified" | "heuristic" | "unknown";
@@ -45,16 +46,84 @@ export function checksFor(l: Launch): Finding[] {
       : { id: "contract", title: "No token contract recorded", severity: "high", basis: "verified", detail: "There is no contract to inspect.", evidence: "tokenContract missing (launch record)" },
   );
 
-  // Not implemented yet: said plainly instead of passing silently.
-  for (const [id, title] of [
-    ["mint", "Mint, pause and freeze authority"],
-    ["upgrade", "Contract upgrade authority"],
-    ["holders", "Holder concentration"],
-    ["creator", "Creator wallet history"],
-    ["liquidity", "Liquidity setup and lock"],
-  ] as const) {
-    out.push({ id, title, severity: "unknown", basis: "unknown", detail: "This check has not been implemented, so no claim is made either way.", evidence: "No on-chain query was run" });
+  return out;
+}
+
+const unknown = (id: string, title: string, why: string): Finding => ({ id, title, severity: "unknown", basis: "unknown", detail: why, evidence: "No answer from the NEAR RPC" });
+const acct = (a: string) => `${NEAR_EXPLORER}/address/${a}`;
+
+/** Live NEAR RPC reads (testnet unless NEXT_PUBLIC_NEAR_RPC_URL says otherwise). Each check fails to "unknown", never to a guess. */
+export async function chainChecks(l: Launch): Promise<Finding[]> {
+  const out: Finding[] = [];
+  const tc = l.tokenContract;
+
+  if (!tc) {
+    return [unknown("onchain", "On-chain token checks", "This launch has no token contract recorded, so nothing could be read.")];
   }
+
+  let hasContract = false;
+  try {
+    const a = await viewAccount(tc);
+    hasContract = a.code_hash !== NO_CODE;
+    out.push(hasContract
+      ? { id: "deployed", title: "Token contract is deployed", severity: "info", basis: "verified", detail: "Code is deployed on this account.", evidence: `${acct(tc)} · code_hash ${a.code_hash}` }
+      : { id: "deployed", title: "Account has no contract code", severity: "high", basis: "verified", detail: "The account exists but holds no contract, so there is no token to inspect.", evidence: acct(tc) });
+  } catch (e) {
+    out.push(e instanceof RpcError && e.kind === "unknown_account"
+      ? { id: "deployed", title: "Token contract not found on this network", severity: "high", basis: "verified", detail: "The RPC reports no such account. The token may not be deployed, or the address belongs to another network.", evidence: `view_account ${tc} -> unknown account` }
+      : unknown("deployed", "Token contract deployment", "The RPC call failed, so this could not be checked."));
+    return out;
+  }
+
+  // Upgrade authority: a full-access key can redeploy the contract code.
+  try {
+    const { keys } = await accessKeys(tc);
+    const full = keys.filter((k) => k.access_key.permission === "FullAccess");
+    out.push(full.length === 0
+      ? { id: "upgrade", title: "No full-access keys: code cannot be changed", severity: "info", basis: "verified", detail: "No key on the contract account can redeploy it. (A contract could still upgrade itself in code; that is not visible here.)", evidence: `view_access_key_list ${tc} -> ${keys.length} limited key(s)` }
+      : { id: "upgrade", title: "Contract can be upgraded by a full-access key", severity: "medium", basis: "verified", detail: `${full.length} full-access key(s) can redeploy the code or move the account's funds, so the token's rules can change.`, evidence: `view_access_key_list ${tc} -> ${full.map((k) => k.public_key).join(", ")}` });
+  } catch {
+    out.push(unknown("upgrade", "Upgrade authority", "The access-key list could not be read."));
+  }
+
+  // Supply and creator holding (NEP-141 views).
+  let decimals = 0, total = 0n;
+  try {
+    decimals = (await viewCall<{ decimals: number }>(tc, "ft_metadata")).decimals;
+    total = BigInt(await viewCall<string>(tc, "ft_total_supply"));
+    const onChain = Number(total / 10n ** BigInt(Math.max(decimals - 2, 0))) / 10 ** Math.min(decimals, 2);
+    const ok = Math.abs(onChain - l.supply) <= l.supply * 1e-9;
+    out.push(ok
+      ? { id: "supply", title: "On-chain supply matches the launch", severity: "info", basis: "verified", detail: "ft_total_supply equals the supply offered.", evidence: `ft_total_supply ${tc} -> ${onChain}` }
+      : { id: "supply", title: "On-chain supply differs from the launch", severity: "medium", basis: "verified", detail: `The contract reports ${onChain}, the launch says ${l.supply}.`, evidence: `ft_total_supply ${tc} -> ${onChain}` });
+  } catch (e) {
+    out.push(unknown("supply", "Token supply", e instanceof RpcError && e.kind === "no_method" ? "The contract does not expose the standard NEP-141 views, so supply could not be read." : "Supply could not be read."));
+  }
+
+  if (total > 0n) {
+    try {
+      const bal = BigInt(await viewCall<string>(tc, "ft_balance_of", { account_id: l.creator }));
+      const pct = Number((bal * 10000n) / total) / 100;
+      out.push({ id: "creator-share", title: `Creator wallet holds ${pct}% of supply`, severity: "info", basis: "verified", detail: "Measured now. Tokens offered in the auction usually sit with the creator or a contract until settlement, so a high share before the sale is expected. This only covers the creator wallet, not other holders.", evidence: `ft_balance_of ${l.creator} -> ${bal}` });
+    } catch {
+      out.push(unknown("creator-share", "Creator holding", "The creator's balance could not be read."));
+    }
+  }
+
+  try {
+    const c = await viewAccount(l.creator);
+    out.push({ id: "creator", title: "Creator account exists", severity: "info", basis: "verified", detail: "Only existence and balance are checked. Transaction history needs an indexer and is not checked, so no claim is made about it.", evidence: `${acct(l.creator)} · balance ${(Number(BigInt(c.amount) / 10n ** 21n) / 1000).toFixed(3)} NEAR` });
+  } catch (e) {
+    out.push(e instanceof RpcError && e.kind === "unknown_account"
+      ? { id: "creator", title: "Creator account not found on this network", severity: "medium", basis: "verified", detail: "The RPC reports no such account.", evidence: `view_account ${l.creator} -> unknown account` }
+      : unknown("creator", "Creator account", "The RPC call failed."));
+  }
+
+  if (hasContract) {
+    out.push(unknown("authorities", "Mint, pause and freeze functions", "There is no standard on-chain way to list a contract's privileged methods. This needs the contract source or an audit, so no claim is made."));
+  }
+  out.push(unknown("liquidity", "Liquidity setup and lock", "This product does not create a pool yet, so there is nothing to read."));
+  out.push(unknown("holders", "Full holder distribution", "The RPC cannot list token holders. This needs an indexer."));
   return out;
 }
 
@@ -69,6 +138,7 @@ const tone = (s: Severity) => (s === "high" ? "danger" : s === "medium" ? "seal"
 export function PassportView({ id }: { id: string }) {
   const [launch, setLaunch] = useState<Launch | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+  const [chain, setChain] = useState<Finding[] | null>(null);
   const [reviewedAt] = useState(() => new Date());
 
   useEffect(() => {
@@ -77,11 +147,18 @@ export function PassportView({ id }: { id: string }) {
     return () => { live = false; };
   }, [id]);
 
+  useEffect(() => {
+    if (!launch) return;
+    let live = true;
+    chainChecks(launch).then((f) => live && setChain(f)).catch(() => live && setChain([unknown("onchain", "On-chain checks", "The NEAR RPC could not be reached.")]));
+    return () => { live = false; };
+  }, [launch]);
+
   if (error) return <p className="py-16 text-center text-danger" role="alert">{error}</p>;
   if (launch === undefined) return <p className="flex items-center justify-center gap-2 py-16 text-muted"><Loader2 className="size-4 animate-spin" /> Loading…</p>;
   if (!launch) return <p className="py-16 text-center text-muted">Launch not found.</p>;
 
-  const findings = checksFor(launch);
+  const findings = [...checksFor(launch), ...(chain ?? [])];
   const band = bandOf(findings);
   const unknowns = findings.filter((f) => f.severity === "unknown").length;
 
@@ -98,10 +175,11 @@ export function PassportView({ id }: { id: string }) {
           <Badge>{unknowns} checks not run</Badge>
         </div>
         <p className="mt-3 max-w-2xl text-sm text-muted">
-          Based only on the checks below. A &quot;Low&quot; band does not mean safe: {unknowns} checks have not been implemented yet. This is not a security audit.
+          Based only on the checks below. A &quot;Low&quot; band does not mean safe: {unknowns} checks could not be done. This is not a security audit.
         </p>
       </div>
 
+      {chain === null && <p className="flex items-center gap-2 text-sm text-muted"><Loader2 className="size-4 animate-spin" /> Reading the token contract from the NEAR RPC…</p>}
       <div className="space-y-3">
         {findings.map((f) => (
           <Card key={f.id} className="p-5">
@@ -116,7 +194,7 @@ export function PassportView({ id }: { id: string }) {
         ))}
       </div>
 
-      <p className="text-xs text-faint">Reviewed {reviewedAt.toLocaleString()} · rules {RULES_VERSION} · no AI model was used for these findings.</p>
+      <p className="text-xs text-faint">Reviewed {reviewedAt.toLocaleString()} · rules {RULES_VERSION} · no AI model was used for these findings. On-chain reads come from the NEAR RPC at review time.</p>
     </div>
   );
 }
