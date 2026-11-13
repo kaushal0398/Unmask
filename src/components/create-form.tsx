@@ -7,6 +7,7 @@ import { TokenArt } from "@/components/token-art";
 import { useConfirm } from "@/components/confirm";
 import { useToast } from "@/components/toast";
 import { getApi } from "@/lib/api";
+import { saveTokenImage } from "@/lib/token-image";
 import { CreateStepError, type CreateStep, type CreateStepId } from "@/lib/api/types";
 import { Badge, Button, Card, Mono, cx } from "@/components/ui";
 import { compact, tokens, usd } from "@/lib/format";
@@ -106,12 +107,13 @@ export function CreateForm() {
         windowMinutes: Number(windowMin),
         capPercent: Number(cap),
         unsold,
-        ...(image ? { image } : {}),
       },
       setSteps,
       { resumeFrom },
     );
 
+    // The picture stays in this browser only; it is not sent to the backend.
+    if (image) saveTokenImage(id, image);
     // Go straight to the new launch's own page on this site.
     toast(`${name.trim()} is live.`, "ok");
     router.push(`/launches/${encodeURIComponent(id)}`);
@@ -237,7 +239,7 @@ export function CreateForm() {
             </div>
           </div>
           {imageError && <p className="mt-1.5 text-xs text-danger" role="alert">{imageError}</p>}
-          <p className="mt-1.5 text-xs text-faint">Cropped to a square and resized in your browser. Shown on the launch card and page.</p>
+          <p className="mt-1.5 text-xs text-faint">Optional. Saved in this browser only, so it shows on this device.</p>
         </div>
         <fieldset>
           <legend className="text-sm font-medium">If the supply does not sell out</legend>

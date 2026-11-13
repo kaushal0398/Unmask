@@ -31,7 +31,7 @@ export type Launch = {
   inputHash?: string;
   attestation?: string;
   tokenContract: string;
-  /** A picture the creator chose (a small data URL). When absent the emoji and colour are used. */
+  /** A picture the creator chose on this device (kept in the browser, not the backend). When absent the emoji and colour are used. */
   image?: string;
 };
 

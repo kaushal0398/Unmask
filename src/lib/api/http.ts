@@ -15,6 +15,7 @@ import {
   type ReceiptVerification,
 } from "@/lib/api/types";
 import { MockLaunchApi } from "@/lib/api/mock";
+import { readTokenImage } from "@/lib/token-image";
 import type { RawResult } from "@/lib/verify-result";
 
 // Deployed builds call the backend on the same site (Vercel rewrite). Only local development falls back to port 4001.
@@ -36,7 +37,6 @@ type BackendLaunch = {
   emoji?: string;
   hue?: number;
   tagline?: string;
-  image?: string | null;
   supplyAtomic: string;
   reserveAtomic: string;
   tokenDecimals: number;
@@ -168,7 +168,7 @@ function mapLaunch(item: BackendLaunch): Launch {
     emoji: item.emoji ?? "🪙",
     hue: item.hue ?? 145,
     tagline: item.tagline ?? "A development launch.",
-    ...(item.image ? { image: item.image } : {}),
+    ...(readTokenImage(item.id) ? { image: readTokenImage(item.id) } : {}),
     creator: item.creator,
     supply: units(item.supplyAtomic, item.tokenDecimals),
     reserve: units(item.reserveAtomic, item.paymentDecimals),
@@ -388,7 +388,6 @@ export class HttpLaunchApi implements LaunchApi {
                 : null,
             opensAt: opensAt.toISOString(),
             closesAt: closesAt.toISOString(),
-            ...(input.image ? { image: input.image } : {}),
           }),
         },
         token,

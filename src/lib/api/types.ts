@@ -167,8 +167,6 @@ export type CreateLaunchInput = {
   supply: number;
   reserve: number;
   windowMinutes: number;
-  /** Optional token picture as a small data URL (the form resizes it first). */
-  image?: string;
   /** Percent of supply one account may bid for; 0 for no cap. */
   capPercent: number;
   unsold: "return" | "burn";
