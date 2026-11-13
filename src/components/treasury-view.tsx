@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge, Card, Mono } from "@/components/ui";
 
-const CONTRACT = process.env.NEXT_PUBLIC_TREASURY_CONTRACT;
+const CONTRACT = process.env.NEXT_PUBLIC_TREASURY_CONTRACT ?? "68172a040ac2233dc945dea305ce4a49746f7433274ed82103358bdb0959f035"; // public testnet address of the deployed contract
 const RPC = process.env.NEXT_PUBLIC_NEAR_RPC_URL ?? "https://rpc.testnet.near.org";
 const YOCTO = 10n ** 24n;
 
