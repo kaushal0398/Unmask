@@ -155,6 +155,8 @@ export type Result = {
   attestationUrl?: string;
   payouts?: PlannedTransfer[];
   payoutsExecuted?: boolean;
+  /** The NEAR transaction that recorded this result's commitment, when anchoring is on. Not a token or payout transfer. */
+  anchor?: { txHash: string; contract: string; network: string };
   /** Bids that were left out of the auction, each with the reason. */
   skipped?: SkippedBid[];
 };

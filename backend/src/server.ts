@@ -13,6 +13,7 @@ import { MockPaymentProvider } from "./payment-provider.js";
 import { devEnclaveKey, openBid } from "./dev-enclave.js";
 import { runAuction } from "./engine.js";
 import { OutLayerError } from "./outlayer.js";
+import { anchorConfigFromEnv, anchorResult } from "./anchor.js";
 import { buildInput, inputHash, planPayouts, sha256Hex } from "./settlement-core.js";
 import { ProxyError, createOneClickProxy } from "./oneclick.js";
 import { corsOrigins } from "./cors.js";
@@ -981,7 +982,25 @@ app.post<{ Params: { id: string } }>("/v1/launches/:id/settle", async (req, repl
       await tx.launch.update({ where: { id: launch.id }, data: { state: "SETTLED", codeHash } });
       return settlement;
     });
-    return { result: publicResult(saved), alreadySettled: false };
+    // Best effort: record the result's commitment on NEAR. A failure here never undoes the settlement.
+    let final = saved;
+    const anchorCfg = anchorConfigFromEnv();
+    if (anchorCfg) {
+      try {
+        const anchor = await anchorResult(anchorCfg, {
+          launchId: launch.id,
+          inputHash: saved.inputHash,
+          outputHash: sha256Hex(engineOutput),
+          codeHash: saved.codeHash,
+          clearingPrice: saved.clearingPrice,
+          mode: saved.mode,
+        });
+        final = await prisma.settlement.update({ where: { id: saved.id }, data: { outcome: { ...(saved.outcome as object), anchor } as object } });
+      } catch (err) {
+        req.log.error({ err }, "anchoring the settlement on NEAR failed");
+      }
+    }
+    return { result: publicResult(final), alreadySettled: false };
   } catch (error) {
     if ((error as { code?: string }).code === "P2002") {
       const existing = await prisma.settlement.findUnique({ where: { launchId: launch.id } });

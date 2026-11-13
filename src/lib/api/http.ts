@@ -60,6 +60,8 @@ type BackendResult = {
     skipped?: Array<{ bidId: string; reason: string }>;
     payouts?: PlannedTransfer[];
     payoutsExecuted?: boolean;
+    /** Set when the result commitment was recorded on NEAR through the registry contract. */
+    anchor?: { txHash: string; contract: string; network: string };
     /** SHA-256 of the engine's exact output bytes: the output hash an attestation would cover. */
     engineOutputHash?: string;
     engineKind?: "wasm" | "native";
@@ -269,6 +271,7 @@ async function toResult(r: BackendResult): Promise<Result> {
     ...(r.mode === "outlayer" && r.attestation ? { attestationUrl: r.attestation } : {}),
     payouts: r.outcome.payouts ?? [],
     payoutsExecuted: r.outcome.payoutsExecuted ?? false,
+    ...(r.outcome.anchor ? { anchor: r.outcome.anchor } : {}),
     skipped,
   };
 }

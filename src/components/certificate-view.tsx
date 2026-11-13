@@ -8,6 +8,7 @@ import { getApi } from "@/lib/api";
 import type { Result } from "@/lib/api/types";
 import type { Launch } from "@/lib/demo";
 import { shortHash, tokens, usd } from "@/lib/format";
+import { NEAR_EXPLORER, viewCall } from "@/lib/near-rpc";
 
 const SCHEMA = "result-certificate/1";
 const ALGORITHM = "uniform-price-v1";
@@ -24,6 +25,36 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <dt className="text-sm text-muted">{label}</dt>
       <dd className="min-w-0 break-all text-sm">{children}</dd>
     </div>
+  );
+}
+
+type Anchor = { input_hash: string; output_hash: string; code_hash: string; clearing_price: string; block_height: string };
+
+/** Reads the anchor back from the registry contract and compares it with the published result. */
+function AnchorRow({ r }: { r: Result }) {
+  const a = r.anchor;
+  const [state, setState] = useState<"checking" | "match" | "mismatch" | "unreadable">("checking");
+  useEffect(() => {
+    if (!a) return;
+    let live = true;
+    viewCall<Anchor | null>(a.contract, "get_anchor", { launch_id: r.launchId })
+      .then((c) => {
+        if (!live) return;
+        setState(c && c.input_hash === r.inputHash && c.code_hash === r.codeHash && c.output_hash === r.attestation.resultHash ? "match" : "mismatch");
+      })
+      .catch(() => live && setState("unreadable"));
+    return () => { live = false; };
+  }, [a, r]);
+
+  if (!a) return <>Not anchored on-chain: no NEAR transaction records this result.</>;
+  return (
+    <>
+      <a href={`${NEAR_EXPLORER}/txns/${a.txHash}`} target="_blank" rel="noreferrer" className="text-price underline underline-offset-4"><Mono>{a.txHash}</Mono></a>
+      <span className="mt-1 block text-xs text-faint">
+        Records the input, output and code hashes and the clearing price in the registry contract <Mono>{a.contract}</Mono>. It does not move tokens or funds.{" "}
+        {state === "checking" ? "Checking the contract…" : state === "match" ? "The contract's stored hashes match this result." : state === "mismatch" ? "WARNING: the contract's stored hashes do NOT match this result." : "The contract could not be read just now."}
+      </span>
+    </>
   );
 }
 
@@ -110,7 +141,8 @@ export function CertificateView({ id }: { id: string }) {
                   : "Not available for this run"}
               </Row>
               <Row label="Bids private while open?">Sealed in the browser to the enclave key. {r.mode === "tee" ? "" : "Not guaranteed against the backend: the development enclave is not confidential."}</Row>
-              <Row label="Settlement transaction">{r.payoutsExecuted ? "Payouts executed" : "Planned transfers only: no on-chain settlement transaction is recorded"}</Row>
+              <Row label="Result anchored on-chain"><AnchorRow r={r} /></Row>
+              <Row label="Token and refund transfers">{r.payoutsExecuted ? "Executed" : "Planned only: no token or refund transfer has been sent"}</Row>
             </dl>
             <p className="mt-4 text-xs leading-relaxed text-faint">
               This is an ordinary server-published result. It is called a TEE certificate only if the attestation above is verified.

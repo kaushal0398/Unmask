@@ -29,7 +29,7 @@ Done: reserve, per-account cap, code hash, token contract checks (from the launc
 
 ## P1: Result Certificate (`/launches/[id]/certificate`)
 Done: result, code/input/output hashes, algorithm name, honest TEE status.
-- [ ] Record a settlement transaction hash in the backend and show it (none is stored today)
+- [x] Result commitment anchored on NEAR by a registry contract; hash shown and checked on the certificate (see `FAIRNESS_CERTIFICATE.md`). Needs `ANCHOR_*` set on the backend. Token/refund transfers are still plan-only.
 - [ ] Real TEE attestation verification (see `OUTLAYER_ATTESTATION.md`); only then show "TEE verified"
 - [ ] Show that the auction config was fixed before bidding (e.g. publish a config hash at launch creation)
 
