@@ -59,7 +59,7 @@ async function shrinkImage(file: File): Promise<string> {
 const inputClass = "w-full rounded-none border border-line-strong bg-bg px-4 py-3 text-base outline-none placeholder:text-faint focus:bg-white/[0.03]";
 
 export function CreateForm() {
-  const { auth, mode } = useWallet();
+  const { auth, mode, account, signAction } = useWallet();
   const router = useRouter();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
@@ -109,7 +109,7 @@ export function CreateForm() {
         unsold,
       },
       setSteps,
-      { resumeFrom },
+      { resumeFrom, account: account ?? undefined, sign: signAction },
     );
 
     // The picture stays in this browser only; it is not sent to the backend.

@@ -23,12 +23,14 @@ import { getApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/types";
 import type { Launch } from "@/lib/demo";
 import { shortHash, tokens, usd } from "@/lib/format";
+import { bidMessage } from "@/lib/action";
 import { newSalt, sealBid } from "@/lib/seal";
 
 const SEAL_STEPS = [
   "Creating a development payment check",
   "Fetching the enclave's public key",
   "Sealing your bid in this browser",
+  "Approving this bid in your wallet",
   "Sending the sealed bid to the backend",
 ];
 
@@ -77,7 +79,7 @@ export function BidForm({
   launch: Launch;
   closed?: boolean;
 }) {
-  const { account, auth, mode } = useWallet();
+  const { account, auth, mode, signAction } = useWallet();
   const toast = useToast();
   const confirm = useConfirm();
   const router = useRouter();
@@ -256,8 +258,15 @@ export function BidForm({
 
       setStepIndex(3);
 
-      // Step 4: Submit the sealed bid using the authenticated API.
-      const { receiptId } = await api.submitBid(sealed);
+      // Step 4: the wallet approves this exact bid (a gas-free signature over its commitment; the amount stays sealed).
+      const approval = await signAction(
+        bidMessage({ account, launchId: launch.id, commitment: sealed.commitment, issuedAt: new Date().toISOString() }),
+      );
+
+      setStepIndex(4);
+
+      // Step 5: Submit the sealed bid using the authenticated API.
+      const { receiptId } = await api.submitBid(sealed, approval ?? undefined);
 
       const reveal: BidRevealFile = {
         format: "sealed-launchpad-bid-reveal",
