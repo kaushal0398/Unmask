@@ -41,18 +41,14 @@ function Header({ l, status }: { l: Launch; status: LaunchStatus }) {
         <ArrowLeft className="size-4" /> All launches
       </Link>
       <div className="mt-6 flex flex-wrap items-center gap-5">
-        <TokenArt hue={l.hue} emoji={l.emoji} symbol={l.symbol} size={84} />
+        <TokenArt hue={l.hue} emoji={l.emoji} image={l.image} symbol={l.symbol} size={84} />
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{l.name}</h1>
             <StatusBadge status={status} />
           </div>
           <p className="mt-2 text-muted">
-            <span className="font-mono">${l.symbol}</span> · by <span className="font-mono">{l.creator}</span> — {l.tagline}
-          </p>
-          <p className="mt-3 flex flex-wrap gap-4 text-sm">
-            <Link href={`/launches/${encodeURIComponent(l.id)}/passport`} className="text-seal-fg underline underline-offset-4">Launch Risk Passport</Link>
-            <Link href={`/launches/${encodeURIComponent(l.id)}/certificate`} className="text-seal-fg underline underline-offset-4">Result Certificate</Link>
+            <span className="font-mono">${l.symbol}</span> by <span className="font-mono">{l.creator}</span>
           </p>
         </div>
       </div>
@@ -69,7 +65,7 @@ function OpenView({ l, sample }: { l: Launch; sample: boolean }) {
           <div className="glow-seal pointer-events-none absolute inset-0 opacity-60" />
           <div className="relative">
             <p className="text-xs uppercase tracking-[0.2em] text-seal-fg">Bidding closes in</p>
-            <Countdown closesInMs={l.closesInMs ?? 0} className="mt-4" />
+            <Countdown closesInMs={l.closesInMs ?? 0} closesAt={(l as LiveLaunchData).closesAt} className="mt-4" />
             <SealedStack base={l.bidCount} className="mt-6" live={sample} />
           </div>
         </Card>
@@ -327,6 +323,11 @@ export function LiveLaunch({ id }: { id: string }) {
           <SettledView l={isDemoLaunch ? { ...getLaunch(id)!, closesInMs: liveLaunch.closesInMs } : liveLaunch} />
         )}
       </div>
+
+      <p className="mt-10 flex flex-wrap gap-x-6 gap-y-2 border-t border-line pt-6 text-sm">
+        <Link href={`/launches/${encodeURIComponent(l.id)}/passport`} className="text-seal-fg underline underline-offset-4">Launch Risk Passport</Link>
+        <Link href={`/launches/${encodeURIComponent(l.id)}/certificate`} className="text-seal-fg underline underline-offset-4">Result Certificate</Link>
+      </p>
     </>
   );
 }

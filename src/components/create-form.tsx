@@ -1,13 +1,14 @@
 "use client";
 
-import { AlertTriangle, Check, Copy, Loader2 } from "lucide-react";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TokenArt } from "@/components/token-art";
 import { useConfirm } from "@/components/confirm";
 import { useToast } from "@/components/toast";
 import { getApi } from "@/lib/api";
 import { CreateStepError, type CreateStep, type CreateStepId } from "@/lib/api/types";
-import { Badge, ButtonLink, Button, Card, Mono, cx } from "@/components/ui";
+import { Badge, Button, Card, Mono, cx } from "@/components/ui";
 import { compact, tokens, usd } from "@/lib/format";
 import { useWallet } from "@/components/wallet";
 
@@ -36,20 +37,39 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
   );
 }
 
+/** Crops to a square and shrinks to 256px so the stored picture stays small (a few tens of KB). */
+async function shrinkImage(file: File): Promise<string> {
+  if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) throw new Error("Choose a PNG, JPEG, WebP or GIF image.");
+  if (file.size > 8_000_000) throw new Error("That image is too large (8 MB max).");
+  const bitmap = await createImageBitmap(file);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 256;
+  canvas.getContext("2d")!.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, 256, 256);
+  for (const q of [0.85, 0.7, 0.5]) {
+    const url = canvas.toDataURL("image/webp", q);
+    if (url.startsWith("data:image/webp") && url.length < 110_000) return url;
+    const jpg = canvas.toDataURL("image/jpeg", q);
+    if (jpg.length < 110_000) return jpg;
+  }
+  throw new Error("Could not shrink that image enough. Try a simpler one.");
+}
+
 const inputClass = "w-full rounded-none border border-line-strong bg-bg px-4 py-3 text-base outline-none placeholder:text-faint focus:bg-white/[0.03]";
 
 export function CreateForm() {
   const { auth, mode } = useWallet();
+  const router = useRouter();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [supply, setSupply] = useState("1000000");
   const [reserve, setReserve] = useState("0.01");
   const [windowMin, setWindowMin] = useState("60");
   const [cap, setCap] = useState("5");
+  const [image, setImage] = useState<string | undefined>();
+  const [imageError, setImageError] = useState("");
   const [unsold, setUnsold] = useState<"return" | "burn">("return");
   const [touched, setTouched] = useState(false);
-  const [created, setCreated] = useState<{ id: string } | null>(null);
-  const [copied, setCopied] = useState(false);
   const [steps, setSteps] = useState<CreateStep[] | null>(null);
   const [running, setRunning] = useState(false);
   const confirm = useConfirm();
@@ -86,14 +106,16 @@ export function CreateForm() {
         windowMinutes: Number(windowMin),
         capPercent: Number(cap),
         unsold,
+        ...(image ? { image } : {}),
       },
       setSteps,
       { resumeFrom },
     );
 
-    setCreated({ id });
-    setSteps(null);
-    toast(`${name.trim()} is ready to open.`, "ok");
+    // Go straight to the new launch's own page on this site.
+    toast(`${name.trim()} is live.`, "ok");
+    router.push(`/launches/${encodeURIComponent(id)}`);
+    return;
   } catch (e) {
     if (!(e instanceof CreateStepError)) {
       toast(
@@ -122,7 +144,7 @@ export function CreateForm() {
   }
 
   const failedStep = steps?.find((x) => x.state === "failed");
-  if (steps && !created) {
+  if (steps) {
     return (
       <Card className="mx-auto max-w-xl p-8" aria-busy={running}>
         <h2 className="text-xl font-semibold tracking-tight">Creating {name.trim()}</h2>
@@ -146,29 +168,6 @@ export function CreateForm() {
             <Button tone="ghost" onClick={() => setSteps(null)}>Back to the form</Button>
           </div>
         )}
-      </Card>
-    );
-  }
-
-  if (created) {
-    const link = `https://sealed.example/launches/${created.id}`;
-    return (
-      <Card className="mx-auto max-w-xl border-verified/30 p-8 text-center">
-        <span className="mx-auto grid size-14 place-items-center rounded-none bg-verified text-black"><Check className="size-7" /></span>
-        <h2 className="mt-5 text-2xl font-semibold tracking-tight">{name.trim()} is ready to open</h2>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted">
-          Share the link, and bids stay sealed until the close.
-        </p>
-        <div className="mt-6 flex items-center gap-2 rounded-none border border-line-strong bg-bg p-2 pl-4 text-left">
-          <Mono className="flex-1 truncate text-sm text-muted">{link}</Mono>
-          <Button tone="ghost" className="px-3 py-2" onClick={() => { void navigator.clipboard?.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
-            {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          </Button>
-        </div>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/launches/moonbean" tone="seal">See how a live launch looks</ButtonLink>
-          <Button tone="ghost" onClick={() => { setCreated(null); setTouched(false); }}>Create another</Button>
-        </div>
       </Card>
     );
   }
@@ -214,6 +213,32 @@ export function CreateForm() {
             </select>
           </Field>
         </div>
+        <div>
+          <span className="text-sm text-muted">Token image <span className="text-faint">(optional)</span></span>
+          <div className="mt-2 flex items-center gap-4">
+            <TokenArt hue={hueOf(name + symbol)} image={image} symbol={symbol || name || "?"} size={64} />
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center border border-line-strong px-4 py-2.5 text-sm hover:bg-white/5">
+                Choose from gallery
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!f) return;
+                    setImageError("");
+                    try { setImage(await shrinkImage(f)); } catch (err) { setImageError(err instanceof Error ? err.message : "Could not use that image."); }
+                  }}
+                />
+              </label>
+              {image && <button type="button" onClick={() => setImage(undefined)} className="text-xs text-muted underline underline-offset-4 hover:text-text">Remove</button>}
+            </div>
+          </div>
+          {imageError && <p className="mt-1.5 text-xs text-danger" role="alert">{imageError}</p>}
+          <p className="mt-1.5 text-xs text-faint">Cropped to a square and resized in your browser. Shown on the launch card and page.</p>
+        </div>
         <fieldset>
           <legend className="text-sm font-medium">If the supply does not sell out</legend>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
@@ -235,7 +260,7 @@ export function CreateForm() {
         <p className="mb-3 text-xs uppercase tracking-wider text-faint">Preview</p>
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <TokenArt hue={hueOf(name + symbol)} symbol={symbol || name || "?"} size={64} />
+            <TokenArt hue={hueOf(name + symbol)} image={image} symbol={symbol || name || "?"} size={64} />
             <div>
               <p className="text-xl font-semibold tracking-tight">{name.trim() || "Your token"}</p>
               <p className="font-mono text-sm text-muted">${symbol || "SYMBOL"}</p>

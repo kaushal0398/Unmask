@@ -1,7 +1,7 @@
 import { cx } from "@/components/ui";
 
 /** A token's picture: a lit orb in its colour, with its mascot (or first letter). No image to load. */
-export function TokenArt({ hue, symbol, emoji, size = 48, className }: { hue: number; symbol: string; emoji?: string; size?: number; className?: string }) {
+export function TokenArt({ hue, symbol, emoji, image, size = 48, className }: { hue: number; symbol: string; emoji?: string; image?: string; size?: number; className?: string }) {
   return (
     <div
       aria-hidden
@@ -14,7 +14,12 @@ export function TokenArt({ hue, symbol, emoji, size = 48, className }: { hue: nu
         boxShadow: `0 0 ${size * 0.6}px hsl(${hue} 90% 55% / 0.28), inset 0 -${size * 0.1}px ${size * 0.2}px rgb(0 0 0 / 0.25)`,
       }}
     >
-      {emoji ?? symbol.slice(0, 1)}
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt="" className="size-full object-cover" />
+      ) : (
+        (emoji ?? symbol.slice(0, 1))
+      )}
     </div>
   );
 }

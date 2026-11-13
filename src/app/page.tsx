@@ -56,25 +56,6 @@ export default function Home() {
 
       <Ticker />
 
-      {/* Numbers strip */}
-      <section>
-        <Container>
-          <dl className="grid grid-cols-2 md:grid-cols-4 [&>div]:px-5 [&>div]:py-8 first:[&>div]:pl-0">
-            {[
-              ["1", "clearing price for every winner", "text-price"],
-              ["0", "bids readable while bidding is open", "text-seal-fg"],
-              ["100%", "of unused funds refunded", "text-verified"],
-              ["5", "checks anyone can re-run in a browser", "text-near"],
-            ].map(([n, label, color]) => (
-              <div key={label}>
-                <dt className={`font-mono text-4xl font-semibold tracking-tight sm:text-5xl ${color}`}>{n}</dt>
-                <dd className="mt-2 text-sm text-muted">{label}</dd>
-              </div>
-            ))}
-          </dl>
-        </Container>
-      </section>
-
       {/* The race */}
       <section id="race" className="scroll-mt-20 py-20 sm:py-28">
         <Container>

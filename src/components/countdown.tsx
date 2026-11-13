@@ -4,16 +4,18 @@ import { cx } from "@/components/ui";
 import { useNow, useOpenedAt } from "@/lib/use-now";
 
 /** Time left on a demo launch that closes `closesInMs` after the page was opened. Blank until the browser has the time. */
-export function useRemaining(closesInMs: number): number | null {
+export function useRemaining(closesInMs: number, closesAt?: string): number | null {
   const now = useNow();
   const opened = useOpenedAt();
+  // A real launch has a real deadline: count down to it on the wall clock.
+  if (closesAt) return now === null ? null : Math.max(0, new Date(closesAt).getTime() - now);
   return now === null || opened === null ? null : Math.max(0, opened + closesInMs - now);
 }
 
 const two = (n: number) => String(n).padStart(2, "0");
 
-export function Countdown({ closesInMs, size = "lg", className }: { closesInMs: number; size?: "sm" | "lg"; className?: string }) {
-  const left = useRemaining(closesInMs);
+export function Countdown({ closesInMs = 0, closesAt, size = "lg", className }: { closesInMs?: number; closesAt?: string; size?: "sm" | "lg"; className?: string }) {
+  const left = useRemaining(closesInMs, closesAt);
   const total = left === null ? null : Math.floor(left / 1000);
   const parts = total === null ? ["--", "--", "--"] : [two(Math.floor(total / 3600)), two(Math.floor((total % 3600) / 60)), two(total % 60)];
   const labels = ["hours", "min", "sec"];

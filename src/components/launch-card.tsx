@@ -36,26 +36,31 @@ export function LaunchCard({ launch, index = 0 }: { launch: Launch; index?: numb
       >
         {/* Solid colour header: flat, bright, no gradient */}
         <div className="relative h-40 overflow-hidden" style={{ background: `hsl(${h} 90% 62%)` }}>
-          <motion.span aria-hidden className="absolute -bottom-2 right-4 select-none text-[112px] leading-none" animate={{ rotate: [-6, 6, -6], y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 5 + index * 0.6, ease: "easeInOut" }}>
-            {launch.emoji}
-          </motion.span>
+          {launch.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={launch.image} alt="" className="absolute inset-0 size-full object-cover" />
+          ) : (
+            <motion.span aria-hidden className="absolute -bottom-2 right-4 select-none text-[112px] leading-none" animate={{ rotate: [-6, 6, -6], y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 5 + index * 0.6, ease: "easeInOut" }}>
+              {launch.emoji}
+            </motion.span>
+          )}
           <div className="absolute left-4 top-4"><StatusBadge status={launch.status} /></div>
           <span className="absolute right-4 top-4 font-mono text-[10px] font-bold tracking-widest text-black/60">No. {String(index + 1).padStart(3, "0")}</span>
           <span className="absolute bottom-4 left-4 border-2 border-black bg-bg px-3 py-1 font-mono text-sm font-bold" style={{ color: `hsl(${h} 90% 70%)` }}>${launch.symbol}</span>
         </div>
         <div className="p-5">
           <h3 className="text-2xl font-semibold tracking-tight">{launch.name}</h3>
-          <p className="mt-1.5 line-clamp-2 min-h-10 text-sm leading-relaxed text-muted">{launch.tagline}</p>
-          {launch.status === "open" && launch.closesInMs !== undefined && (
+          {launch.status === "open" && (launch.closesAt || launch.closesInMs !== undefined) && (
             <div className="mt-4 flex items-center justify-between border border-seal bg-seal px-3.5 py-2.5 text-black">
               <span className="text-xs font-bold uppercase tracking-wider">closes in</span>
-              <Countdown closesInMs={launch.closesInMs} size="sm" className="font-bold text-black" />
+              <Countdown closesInMs={launch.closesInMs} closesAt={launch.closesAt} size="sm" className="font-bold text-black" />
             </div>
           )}
-          <dl className="mt-4 grid grid-cols-3 gap-px border border-line bg-line text-center">
+          <dl className="mt-4 grid grid-cols-2 gap-px sm:grid-cols-4 border border-line bg-line text-center">
             {[
               ["Supply", compact(launch.supply), "text-near"],
               [outcome ? "Cleared" : "Reserve", usd(outcome ? outcome.price : launch.reserve), outcome ? "text-verified" : "text-price"],
+              ["Mkt cap", usd((outcome ? outcome.price : launch.reserve) * launch.supply, { compact: true }), "text-text"],
               ["Bids", launch.bidCount.toLocaleString("en-US"), "text-seal-fg"],
             ].map(([k, v, c]) => (
               <div key={k} className="bg-surface px-2 py-3">
