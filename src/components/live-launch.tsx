@@ -8,6 +8,7 @@ import { BackendResult } from "@/components/backend-result";
 import { BidForm } from "@/components/bid-form";
 import { Countdown } from "@/components/countdown";
 import { StatusBadge } from "@/components/launch-card";
+import { TokenMarket } from "@/components/token-market";
 import { SealedStack } from "@/components/sealed-stack";
 import { TokenArt } from "@/components/token-art";
 import { ButtonLink, Card, Mono, Stat } from "@/components/ui";
@@ -75,6 +76,7 @@ function OpenView({ l, sample }: { l: Launch; sample: boolean }) {
         <Card className="p-6 sm:p-8">
           <Facts l={l} />
         </Card>
+        <TokenMarket symbol={l.symbol} supply={l.supply} reserve={l.reserve} />
       </div>
       <div className="space-y-6">
         <BidForm launch={l} />
@@ -128,7 +130,7 @@ function SettledView({ l }: { l: Launch }) {
   // Backend-created launches have no demo outcome: show the backend's own result, or say there is none yet.
   // Never assume a settlement result exists.
   if (!o) {
-    return <BackendResult launch={{ id: l.id, symbol: l.symbol, creator: l.creator, supply: l.supply }} />;
+    return <BackendResult launch={{ id: l.id, symbol: l.symbol, creator: l.creator, supply: l.supply, reserve: l.reserve }} />;
   }
 
   const sampled = l.status !== "settled" && l.bidCount > (l.bids?.length ?? 0);
@@ -158,6 +160,8 @@ function SettledView({ l }: { l: Launch }) {
           </dl>
         </div>
       </Card>
+
+      <TokenMarket symbol={l.symbol} supply={l.supply} reserve={l.reserve} price={o.price} raised={o.raised} bids={o.fills.map((f) => f.bid)} />
 
       <div>
         <h2 className="text-2xl font-semibold tracking-tight">The sealed bids, opened</h2>

@@ -2,6 +2,7 @@
 
 import { Bot, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { TokenMarket } from "@/components/token-market";
 import { ResultCard } from "@/components/result-card";
 import { useToast } from "@/components/toast";
 import { useWallet } from "@/components/wallet";
@@ -21,7 +22,7 @@ const short = (a: string) => (a.length > 22 ? `${a.slice(0, 10)}…${a.slice(-6)
  * refunds and tokens would go, and what the evidence is (and is not). Nothing on this page is invented: if the
  * backend has no result yet it says so, and the creator can ask it to settle.
  */
-export function BackendResult({ launch }: { launch: { id: string; symbol: string; creator: string; supply: number } }) {
+export function BackendResult({ launch }: { launch: { id: string; symbol: string; creator: string; supply: number; reserve: number } }) {
   const { account, auth } = useWallet();
   const toast = useToast();
   const [state, setState] = useState<State>({ kind: "loading" });
@@ -92,6 +93,8 @@ export function BackendResult({ launch }: { launch: { id: string; symbol: string
           </dl>
         </div>
       </Card>
+
+      <TokenMarket symbol={launch.symbol} supply={launch.supply} reserve={launch.reserve} price={r.clearingPrice} raised={r.raised} bids={r.allocations} />
 
       {mine && <ResultCard card={mine} />}
 
