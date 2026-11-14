@@ -304,12 +304,13 @@ export interface LaunchApi {
   /** Take the funds back. Works while the check is `locked` or `expired`. */
   reclaimPaymentCheck(id: string): Promise<PaymentCheck>;
 
-  submitBid(bid: SealedBid): Promise<{ receiptId: string }>;
+  /** `approval` is the wallet's signature over this bid (see src/lib/action.ts). The backend requires it. */
+  submitBid(bid: SealedBid, approval?: import("@/lib/action").ActionSig): Promise<{ receiptId: string }>;
   /** Cancel a bid: reclaims its payment check. Only before the close. */
   withdrawBid(launchId: string, bidder: string): Promise<void>;
 
   /** Runs the steps in order, reporting each. Rejects with `CreateStepError`; call again with `resumeFrom` to continue. */
-  createLaunch(input: CreateLaunchInput, onStep: (steps: CreateStep[]) => void, opts?: { resumeFrom?: CreateStepId }): Promise<{ id: string }>;
+  createLaunch(input: CreateLaunchInput, onStep: (steps: CreateStep[]) => void, opts?: { resumeFrom?: CreateStepId; account?: string; sign?: (message: string) => Promise<import("@/lib/action").ActionSig | null> }): Promise<{ id: string }>;
 
   /** Fetch the authenticated wallet's bids from the backend. */
   getMyBids(): Promise<MyBid[]>;

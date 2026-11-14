@@ -15,6 +15,7 @@ import {
   type ReceiptVerification,
 } from "@/lib/api/types";
 import { MockLaunchApi } from "@/lib/api/mock";
+import { createMessage } from "@/lib/action";
 import { readTokenImage } from "@/lib/token-image";
 import type { RawResult } from "@/lib/verify-result";
 
@@ -344,12 +345,13 @@ export class HttpLaunchApi implements LaunchApi {
   async createLaunch(
     input: CreateLaunchInput,
     onStep: (steps: CreateStep[]) => void,
+    opts: Parameters<LaunchApi["createLaunch"]>[2] = {},
   ): Promise<{ id: string }> {
     const token = this.requireSession();
 
     const step: CreateStep = {
       id: "register-launch",
-      label: "Saving launch configuration to the backend",
+      label: "Approve in your wallet, then save the launch",
       state: "running",
     };
 
@@ -368,6 +370,22 @@ export class HttpLaunchApi implements LaunchApi {
       const closesAt = new Date(
         opensAt.getTime() + input.windowMinutes * 60_000,
       );
+
+      // The wallet must approve this exact launch (a gas-free signature) before the backend will create it.
+      let actionSig: import("@/lib/action").ActionSig | null = null;
+      if (opts.sign && opts.account) {
+        actionSig = await opts.sign(
+          createMessage({
+            account: opts.account,
+            name: input.name.trim(),
+            symbol: input.symbol.toUpperCase(),
+            supplyAtomic: tokenAtomic,
+            reserveAtomic,
+            closesAt: closesAt.toISOString(),
+            issuedAt: new Date().toISOString(),
+          }),
+        );
+      }
 
       const response = await request<{ launch: BackendLaunch }>(
         "/v1/launches",
@@ -388,6 +406,7 @@ export class HttpLaunchApi implements LaunchApi {
                 : null,
             opensAt: opensAt.toISOString(),
             closesAt: closesAt.toISOString(),
+            ...(actionSig ? { actionSig } : {}),
           }),
         },
         token,
@@ -526,6 +545,7 @@ export class HttpLaunchApi implements LaunchApi {
 
   async submitBid(
     bid: Parameters<LaunchApi["submitBid"]>[0],
+    approval?: import("@/lib/action").ActionSig,
   ): Promise<{ receiptId: string }> {
     const token = this.requireSession();
 
@@ -539,6 +559,7 @@ export class HttpLaunchApi implements LaunchApi {
           commitment: bid.commitment,
           paymentCheckId: bid.paymentCheckId,
           keyId: bid.keyId,
+          ...(approval ? { actionSig: approval } : {}),
         }),
       },
       token,

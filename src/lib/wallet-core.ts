@@ -5,6 +5,7 @@
  */
 
 import { AGENT_RECIPIENT, rulesMessage, rulesNonce, type AgentRules } from "@/lib/agent";
+import { ACTION_RECIPIENT, actionNonce, type ActionSig } from "@/lib/action";
 
 export type NearNetwork = "mainnet" | "testnet";
 
@@ -268,5 +269,22 @@ export async function signAgentRules(connector: ConnectorLike, rules: AgentRules
   } catch (error) {
     if (error instanceof WalletError) throw error;
     throw new WalletError(looksCancelled(error) ? "cancelled" : "failed", looksCancelled(error) ? "You closed the wallet without signing." : "The wallet could not sign the rules.");
+  }
+}
+
+/**
+ * Ask the connected wallet to approve one action (a gas-free NEP-413 signature over a readable message).
+ * Throws a WalletError if the wallet is closed, refuses, or signs for a different account.
+ */
+export async function signAction(connector: ConnectorLike, account: string, message: string): Promise<ActionSig> {
+  try {
+    const wallet = connector.wallet ? await connector.wallet() : await connector.connect();
+    const signed = await wallet.signMessage({ message, recipient: ACTION_RECIPIENT, nonce: await actionNonce(message) });
+    if (!signed.signature || !signed.publicKey) throw new WalletError("failed", "The wallet returned no signature.");
+    if (signed.accountId !== account) throw new WalletError("failed", "The wallet account that signed does not match the account you are signed in with.");
+    return { message, publicKey: signed.publicKey, signature: signed.signature };
+  } catch (error) {
+    if (error instanceof WalletError) throw error;
+    throw new WalletError(looksCancelled(error) ? "cancelled" : "failed", looksCancelled(error) ? "You closed the wallet without approving." : "The wallet could not sign this approval.");
   }
 }

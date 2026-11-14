@@ -11,11 +11,13 @@ import {
 } from "react";
 
 import { useToast } from "@/components/toast";
+import type { ActionSig } from "@/lib/action";
 import type { AgentRules } from "@/lib/agent";
 
 import {
   WalletError,
   networkFromEnv,
+  signAction,
   signAgentRules,
   signInWithWallet,
   type ConnectorLike,
@@ -34,6 +36,8 @@ type Wallet = {
   disconnect: () => Promise<void>;
   /** Sign agent rules with the connected wallet. Null in demo mode, where nothing can be signed. */
   signRules: (rules: AgentRules) => Promise<{ signature: string; publicKey: string } | null>;
+  /** Ask the wallet to approve one action (create launch, place bid). Null in demo mode, where nothing can be signed. */
+  signAction: (message: string) => Promise<ActionSig | null>;
 };
 
 const Ctx = createContext<Wallet>({
@@ -45,6 +49,7 @@ const Ctx = createContext<Wallet>({
   connectDemo: () => {},
   disconnect: async () => {},
   signRules: async () => null,
+  signAction: async () => null,
 });
 
 export const DEMO_ACCOUNT = "you.near";
@@ -146,6 +151,14 @@ export function WalletProvider({
     [connector, mode],
   );
 
+  const signActionCb = useCallback(
+    async (message: string) => {
+      if (mode !== "real" || !connector || !account) return null;
+      return signAction(connector, account, message);
+    },
+    [connector, mode, account],
+  );
+
   const value = useMemo(
     () => ({
       account,
@@ -156,8 +169,9 @@ export function WalletProvider({
       connectDemo,
       disconnect,
       signRules,
+      signAction: signActionCb,
     }),
-    [account, mode, busy, auth, connect, connectDemo, disconnect, signRules],
+    [account, mode, busy, auth, connect, connectDemo, disconnect, signRules, signActionCb],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
